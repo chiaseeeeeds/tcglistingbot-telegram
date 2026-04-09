@@ -88,6 +88,13 @@ This file translates the PRD into buildable feature slices.
 - KYC
 - public dashboards
 
+## 3A. Explicit Roadmap TODOs
+
+- implement completed-sale price history capture
+- implement seller verified-sales updates on transaction completion
+- implement buyer strikes and blacklist enforcement during claims
+- add seller-facing sold history and reputation views
+
 ## 4. Implementation Notes
 
 ### Error handling expectations

@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import atexit
+import fcntl
 import logging
-from typing import Iterable
+from pathlib import Path
+from typing import IO, Iterable
 
 from telegram.ext import Application, ApplicationBuilder
 
@@ -17,6 +20,8 @@ from handlers.setup import register_setup_handlers
 from handlers.start import register_start_handlers
 from handlers.transactions import register_transaction_handlers
 
+LOCK_HANDLE: IO[str] | None = None
+
 
 def configure_logging() -> None:
     """Configure process-wide logging for the bot runtime."""
@@ -29,6 +34,45 @@ def configure_logging() -> None:
     logging.getLogger('httpx').setLevel(logging.WARNING)
     logging.getLogger('httpcore').setLevel(logging.WARNING)
     logging.getLogger('telegram.vendor.ptb_urllib3.urllib3').setLevel(logging.WARNING)
+
+
+def acquire_single_instance_lock() -> None:
+    """Prevent multiple polling bot instances from running at the same time."""
+
+    global LOCK_HANDLE
+    lock_path = Path('.logs/bot.lock')
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    lock_handle = lock_path.open('w')
+    try:
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError as exc:
+        raise SystemExit(
+            'Another TCG Listing Bot process is already running. Stop it before starting a new one.'
+        ) from exc
+
+    lock_handle.write(str(Path.cwd()))
+    lock_handle.flush()
+    LOCK_HANDLE = lock_handle
+    atexit.register(release_single_instance_lock)
+
+
+def release_single_instance_lock() -> None:
+    """Release the polling singleton lock when the process exits."""
+
+    global LOCK_HANDLE
+    if LOCK_HANDLE is None:
+        return
+    try:
+        fcntl.flock(LOCK_HANDLE.fileno(), fcntl.LOCK_UN)
+    finally:
+        LOCK_HANDLE.close()
+        LOCK_HANDLE = None
+
+
+async def error_handler(update: object, context) -> None:
+    """Log uncaught Telegram handler exceptions with context."""
+
+    logging.getLogger(__name__).exception('Unhandled bot exception: %s', context.error)
 
 
 def register_handlers(application: Application) -> None:
@@ -46,6 +90,7 @@ def register_handlers(application: Application) -> None:
     )
     for registrar in registrars:
         registrar(application)
+    application.add_error_handler(error_handler)
 
 
 def build_application() -> Application:
@@ -61,11 +106,12 @@ def main() -> None:
     """Run the bot using webhook mode when configured, otherwise polling."""
 
     config = get_config()
+    acquire_single_instance_lock()
     application = build_application()
 
     if config.telegram_webhook_url:
         application.run_webhook(
-            listen="0.0.0.0",
+            listen='0.0.0.0',
             port=8443,
             webhook_url=config.telegram_webhook_url,
             allowed_updates=None,
@@ -75,6 +121,6 @@ def main() -> None:
     application.run_polling(allowed_updates=None)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     configure_logging()
     main()
