@@ -9,7 +9,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 from config import get_config
-from db.seller_configs import ensure_seller_config, get_seller_config_by_seller_id
+from db.seller_configs import ensure_seller_config
 from db.sellers import upsert_seller
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             f"Welcome back to <b>{config.bot_brand_name}</b> ✅\n\n"
             f"Bot: <code>{config.telegram_bot_username}</code>\n"
             f"Primary channel: <code>{seller_config.get('primary_channel_name') or 'Not set'}</code>\n\n"
-            "Use <code>/list</code> to start a listing or <code>/stats</code> for seller tools."
+            "Use <code>/list</code> to start a listing, <code>/stats</code> for seller tools, or <code>/ping</code> for a quick health check."
         )
     else:
         message = (
@@ -68,9 +68,20 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "<code>/help</code> — show help\n"
         "<code>/setup</code> — configure seller profile\n"
         "<code>/list</code> — start a listing\n"
-        "<code>/stats</code> — seller tools"
+        "<code>/cancel</code> — cancel the current flow\n"
+        "<code>/stats</code> — seller tools\n"
+        "<code>/ping</code> — quick health check"
     )
     await update.effective_message.reply_text(message, parse_mode='HTML')
+
+
+async def ping_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Return a tiny health-check response for live debugging."""
+
+    if update.effective_message is None:
+        return
+
+    await update.effective_message.reply_text('🏓 Pong. Bot is online.', parse_mode='HTML')
 
 
 def register_start_handlers(application: Application) -> None:
@@ -78,3 +89,4 @@ def register_start_handlers(application: Application) -> None:
 
     application.add_handler(CommandHandler('start', start_command))
     application.add_handler(CommandHandler('help', help_command))
+    application.add_handler(CommandHandler('ping', ping_command))

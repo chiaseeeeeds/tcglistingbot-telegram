@@ -1,2 +1,4 @@
-2026-04-09 16:14:03,675 INFO apscheduler.scheduler Scheduler started
-2026-04-09 16:14:03,675 INFO telegram.ext.Application Application started
+2026-04-09 16:22:21,890 INFO __main__ Starting bot process.
+2026-04-09 16:22:22,623 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-04-09 16:22:22,686 INFO apscheduler.scheduler Scheduler started
+2026-04-09 16:22:22,686 INFO telegram.ext.Application Application started

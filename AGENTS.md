@@ -133,3 +133,12 @@ Build in this order:
 
 If documentation in this repo conflicts with older attached drafts, prefer the repo versions.
 These files are the normalized source of truth for implementation.
+
+## Project Memory And Review
+
+After any meaningful implementation task:
+- update `MEMORY.md` with current state, known gaps, and immediate next priorities
+- append a concise review entry to `TASK_EVALUATIONS.md`
+- keep both files short, factual, and useful for the next work session
+
+When starting future work, read `MEMORY.md` after the normalized product docs for fast context.

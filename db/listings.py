@@ -10,6 +10,7 @@ from db.client import extract_many, extract_single, get_client
 def create_listing(
     *,
     seller_id: str,
+    card_id: str | None = None,
     card_name: str,
     game: str,
     price_sgd: float,
@@ -17,11 +18,14 @@ def create_listing(
     custom_description: str,
     posted_channel_id: int,
     posted_message_id: int,
+    primary_image_path: str | None = None,
+    tcgplayer_price_sgd: float | None = None,
 ) -> dict[str, Any]:
     """Insert a posted listing row and return the created record."""
 
     payload = {
         'seller_id': seller_id,
+        'card_id': card_id,
         'card_name': card_name,
         'game': game,
         'price_sgd': round(price_sgd, 2),
@@ -29,6 +33,8 @@ def create_listing(
         'custom_description': custom_description,
         'posted_channel_id': posted_channel_id,
         'posted_message_id': posted_message_id,
+        'primary_image_path': primary_image_path,
+        'tcgplayer_price_sgd': round(tcgplayer_price_sgd, 2) if tcgplayer_price_sgd is not None else None,
         'listing_type': 'fixed',
         'status': 'active',
     }

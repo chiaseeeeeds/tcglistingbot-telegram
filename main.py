@@ -8,6 +8,7 @@ import logging
 from pathlib import Path
 from typing import IO, Iterable
 
+from telegram import BotCommand
 from telegram.ext import Application, ApplicationBuilder
 
 from config import get_config
@@ -21,6 +22,13 @@ from handlers.start import register_start_handlers
 from handlers.transactions import register_transaction_handlers
 
 LOCK_HANDLE: IO[str] | None = None
+ALLOWED_UPDATES = [
+    'message',
+    'edited_message',
+    'channel_post',
+    'edited_channel_post',
+    'callback_query',
+]
 
 
 def configure_logging() -> None:
@@ -29,7 +37,7 @@ def configure_logging() -> None:
     config = get_config()
     logging.basicConfig(
         level=getattr(logging, config.log_level.upper(), logging.INFO),
-        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+        format='%(asctime)s %(levelname)s %(name)s %(message)s',
     )
     logging.getLogger('httpx').setLevel(logging.WARNING)
     logging.getLogger('httpcore').setLevel(logging.WARNING)
@@ -69,10 +77,38 @@ def release_single_instance_lock() -> None:
         LOCK_HANDLE = None
 
 
+async def post_init(application: Application) -> None:
+    """Register visible Telegram commands and log startup identity."""
+
+    config = get_config()
+    await application.bot.set_my_commands(
+        [
+            BotCommand('start', 'Open the bot home'),
+            BotCommand('help', 'Show available commands'),
+            BotCommand('setup', 'Configure seller profile'),
+            BotCommand('list', 'Start a new listing'),
+            BotCommand('cancel', 'Cancel current flow'),
+            BotCommand('stats', 'Open seller tools'),
+            BotCommand('ping', 'Quick bot health check'),
+        ]
+    )
+    me = await application.bot.get_me()
+    logging.getLogger(__name__).info(
+        'Bot ready as @%s (%s) in %s mode.',
+        me.username,
+        me.id,
+        'webhook' if config.telegram_webhook_url else 'polling',
+    )
+
+
 async def error_handler(update: object, context) -> None:
     """Log uncaught Telegram handler exceptions with context."""
 
-    logging.getLogger(__name__).exception('Unhandled bot exception: %s', context.error)
+    logging.getLogger(__name__).exception(
+        'Unhandled bot exception. update=%r error=%s',
+        update,
+        context.error,
+    )
 
 
 def register_handlers(application: Application) -> None:
@@ -97,7 +133,7 @@ def build_application() -> Application:
     """Build the Telegram application and attach handlers."""
 
     config = get_config()
-    application = ApplicationBuilder().token(config.telegram_bot_token).build()
+    application = ApplicationBuilder().token(config.telegram_bot_token).post_init(post_init).build()
     register_handlers(application)
     return application
 
@@ -109,16 +145,21 @@ def main() -> None:
     acquire_single_instance_lock()
     application = build_application()
 
+    logging.getLogger(__name__).info('Starting bot process.')
     if config.telegram_webhook_url:
         application.run_webhook(
             listen='0.0.0.0',
             port=8443,
             webhook_url=config.telegram_webhook_url,
-            allowed_updates=None,
+            allowed_updates=ALLOWED_UPDATES,
+            drop_pending_updates=True,
         )
         return
 
-    application.run_polling(allowed_updates=None)
+    application.run_polling(
+        allowed_updates=ALLOWED_UPDATES,
+        drop_pending_updates=True,
+    )
 
 
 if __name__ == '__main__':

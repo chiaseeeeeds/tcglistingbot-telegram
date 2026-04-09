@@ -194,6 +194,7 @@ def register_setup_handlers(application: Application) -> None:
     """Register setup-related command handlers on the Telegram application."""
 
     conversation = ConversationHandler(
+        allow_reentry=True,
         entry_points=[CommandHandler('setup', setup_entry)],
         states={
             DISPLAY_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, capture_display_name)],
