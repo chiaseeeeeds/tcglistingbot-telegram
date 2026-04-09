@@ -26,6 +26,9 @@ def configure_logging() -> None:
         level=getattr(logging, config.log_level.upper(), logging.INFO),
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
+    logging.getLogger('httpx').setLevel(logging.WARNING)
+    logging.getLogger('httpcore').setLevel(logging.WARNING)
+    logging.getLogger('telegram.vendor.ptb_urllib3.urllib3').setLevel(logging.WARNING)
 
 
 def register_handlers(application: Application) -> None:

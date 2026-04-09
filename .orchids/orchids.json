@@ -2,6 +2,8 @@
   "projectId": "3f8ce282-83f4-4274-afaa-08f0b23b12d4",
   "createdAt": 1775726111474,
   "version": "1.0",
-  "startupCommands": [],
+  "startupCommands": [
+    "python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt; .venv/bin/python main.py"
+  ],
   "templateId": "auto"
 }

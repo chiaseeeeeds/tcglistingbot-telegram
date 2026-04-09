@@ -58,9 +58,11 @@ create table if not exists cards (
     tcgplayer_url text,
     pricecharting_id integer,
     is_active boolean not null default true,
-    created_at timestamptz not null default now(),
-    unique (game, set_code, card_number, coalesce(variant, ''))
+    created_at timestamptz not null default now()
 );
+
+create unique index if not exists idx_cards_unique_identity
+    on cards (game, set_code, card_number, coalesce(variant, ''));
 
 create table if not exists listings (
     id uuid primary key default uuid_generate_v4(),
