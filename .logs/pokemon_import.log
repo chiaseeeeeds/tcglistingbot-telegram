@@ -1,0 +1,70 @@
+{"event": "import_started"}
+{"event": "download_started", "source": "https://github.com/tradingcarddex/Pokemon-Card-CSV/archive/refs/heads/main.zip"}
+{"event": "download_completed", "csv_files": 172, "elapsed_seconds": 4.59}
+{"event": "db_connect_started"}
+{"event": "db_connect_completed", "elapsed_seconds": 8.24}
+{"event": "set_mappings_loaded", "count": 180, "elapsed_seconds": 17.99}
+{"progress_files": "1/172", "current_file": "Pokemon-Base-Set-2.csv", "current_file_rows": 130, "staging_rows_imported": 130, "cards_upserted": 130, "unresolved_set_count": 0}
+{"progress_files": "2/172", "current_file": "Pokemon-Base.csv", "current_file_rows": 102, "staging_rows_imported": 232, "cards_upserted": 232, "unresolved_set_count": 0}
+{"progress_files": "3/172", "current_file": "Pokemon-Fossil.csv", "current_file_rows": 62, "staging_rows_imported": 294, "cards_upserted": 294, "unresolved_set_count": 0}
+{"progress_files": "4/172", "current_file": "Pokemon-Jungle.csv", "current_file_rows": 64, "staging_rows_imported": 358, "cards_upserted": 358, "unresolved_set_count": 0}
+{"progress_files": "5/172", "current_file": "Pokemon-Team-Rocket.csv", "current_file_rows": 83, "staging_rows_imported": 441, "cards_upserted": 441, "unresolved_set_count": 0}
+{"progress_files": "6/172", "current_file": "Pokemon-Wizards-Black-Star-Promos.csv", "current_file_rows": 53, "staging_rows_imported": 494, "cards_upserted": 494, "unresolved_set_count": 0}
+{"progress_files": "7/172", "current_file": "Pokemon-BW-Black-Star-Promos.csv", "current_file_rows": 101, "staging_rows_imported": 595, "cards_upserted": 595, "unresolved_set_count": 0}
+{"progress_files": "8/172", "current_file": "Pokemon-Black-and-White.csv", "current_file_rows": 115, "staging_rows_imported": 710, "cards_upserted": 710, "unresolved_set_count": 0}
+{"progress_files": "9/172", "current_file": "Pokemon-Boundaries-Crossed.csv", "current_file_rows": 153, "staging_rows_imported": 863, "cards_upserted": 863, "unresolved_set_count": 0}
+{"progress_files": "10/172", "current_file": "Pokemon-Dark-Explorers.csv", "current_file_rows": 111, "staging_rows_imported": 974, "cards_upserted": 974, "unresolved_set_count": 0}
+{"progress_files": "11/172", "current_file": "Pokemon-Dragon-Vault.csv", "current_file_rows": 21, "staging_rows_imported": 995, "cards_upserted": 995, "unresolved_set_count": 0}
+{"progress_files": "12/172", "current_file": "Pokemon-Dragons-Exalted.csv", "current_file_rows": 128, "staging_rows_imported": 1123, "cards_upserted": 1123, "unresolved_set_count": 0}
+{"progress_files": "13/172", "current_file": "Pokemon-Emerging-Powers.csv", "current_file_rows": 98, "staging_rows_imported": 1221, "cards_upserted": 1221, "unresolved_set_count": 0}
+{"progress_files": "14/172", "current_file": "Pokemon-Legendary-Treasures.csv", "current_file_rows": 140, "staging_rows_imported": 1361, "cards_upserted": 1361, "unresolved_set_count": 0}
+{"progress_files": "15/172", "current_file": "Pokemon-Next-Destinies.csv", "current_file_rows": 103, "staging_rows_imported": 1464, "cards_upserted": 1464, "unresolved_set_count": 0}
+{"progress_files": "16/172", "current_file": "Pokemon-Noble-Victories.csv", "current_file_rows": 102, "staging_rows_imported": 1566, "cards_upserted": 1566, "unresolved_set_count": 0}
+{"progress_files": "17/172", "current_file": "Pokemon-Plasma-Blast.csv", "current_file_rows": 105, "staging_rows_imported": 1671, "cards_upserted": 1671, "unresolved_set_count": 0}
+{"progress_files": "18/172", "current_file": "Pokemon-Plasma-Freeze.csv", "current_file_rows": 122, "staging_rows_imported": 1793, "cards_upserted": 1793, "unresolved_set_count": 0}
+{"progress_files": "19/172", "current_file": "Pokemon-Plasma-Storm.csv", "current_file_rows": 138, "staging_rows_imported": 1931, "cards_upserted": 1931, "unresolved_set_count": 0}
+{"progress_files": "20/172", "current_file": "Pokemon-DP-Black-Star-Promos.csv", "current_file_rows": 56, "staging_rows_imported": 1987, "cards_upserted": 1987, "unresolved_set_count": 0}
+{"progress_files": "21/172", "current_file": "Pokemon-Diamond-and-Pearl.csv", "current_file_rows": 130, "staging_rows_imported": 2117, "cards_upserted": 2117, "unresolved_set_count": 0}
+{"progress_files": "22/172", "current_file": "Pokemon-Great-Encounters.csv", "current_file_rows": 106, "staging_rows_imported": 2223, "cards_upserted": 2223, "unresolved_set_count": 0}
+{"progress_files": "23/172", "current_file": "Pokemon-Legends-Awakened.csv", "current_file_rows": 146, "staging_rows_imported": 2369, "cards_upserted": 2369, "unresolved_set_count": 0}
+{"progress_files": "24/172", "current_file": "Pokemon-Majestic-Dawn.csv", "current_file_rows": 100, "staging_rows_imported": 2469, "cards_upserted": 2469, "unresolved_set_count": 0}
+{"progress_files": "25/172", "current_file": "Pokemon-Mysterious-Treasures.csv", "current_file_rows": 124, "staging_rows_imported": 2593, "cards_upserted": 2593, "unresolved_set_count": 0}
+{"progress_files": "26/172", "current_file": "Pokemon-Secret-Wonders.csv", "current_file_rows": 132, "staging_rows_imported": 2725, "cards_upserted": 2725, "unresolved_set_count": 0}
+{"progress_files": "27/172", "current_file": "Pokemon-Stormfront.csv", "current_file_rows": 106, "staging_rows_imported": 2831, "cards_upserted": 2831, "unresolved_set_count": 0}
+{"progress_files": "28/172", "current_file": "Pokemon-Aquapolis.csv", "current_file_rows": 182, "staging_rows_imported": 3013, "cards_upserted": 3013, "unresolved_set_count": 0}
+{"progress_files": "29/172", "current_file": "Pokemon-Expedition-Base-Set.csv", "current_file_rows": 165, "staging_rows_imported": 3178, "cards_upserted": 3178, "unresolved_set_count": 0}
+{"progress_files": "30/172", "current_file": "Pokemon-Skyridge.csv", "current_file_rows": 182, "staging_rows_imported": 3360, "cards_upserted": 3360, "unresolved_set_count": 0}
+{"progress_files": "31/172", "current_file": "Pokemon-Crystal-Guardians.csv", "current_file_rows": 100, "staging_rows_imported": 3460, "cards_upserted": 3460, "unresolved_set_count": 0}
+{"progress_files": "32/172", "current_file": "Pokemon-Delta-Species.csv", "current_file_rows": 114, "staging_rows_imported": 3574, "cards_upserted": 3574, "unresolved_set_count": 0}
+{"progress_files": "33/172", "current_file": "Pokemon-Deoxys.csv", "current_file_rows": 108, "staging_rows_imported": 3682, "cards_upserted": 3682, "unresolved_set_count": 0}
+{"progress_files": "34/172", "current_file": "Pokemon-Dragon-Frontiers.csv", "current_file_rows": 101, "staging_rows_imported": 3783, "cards_upserted": 3783, "unresolved_set_count": 0}
+{"progress_files": "35/172", "current_file": "Pokemon-Dragon.csv", "current_file_rows": 100, "staging_rows_imported": 3883, "cards_upserted": 3883, "unresolved_set_count": 0}
+{"progress_files": "36/172", "current_file": "Pokemon-EX-Trainer-Kit-2-Minun.csv", "current_file_rows": 12, "staging_rows_imported": 3895, "cards_upserted": 3895, "unresolved_set_count": 0}
+{"progress_files": "37/172", "current_file": "Pokemon-EX-Trainer-Kit-2-Plusle.csv", "current_file_rows": 12, "staging_rows_imported": 3907, "cards_upserted": 3907, "unresolved_set_count": 0}
+{"progress_files": "38/172", "current_file": "Pokemon-EX-Trainer-Kit-Latias.csv", "current_file_rows": 10, "staging_rows_imported": 3917, "cards_upserted": 3917, "unresolved_set_count": 0}
+{"progress_files": "39/172", "current_file": "Pokemon-EX-Trainer-Kit-Latios.csv", "current_file_rows": 10, "staging_rows_imported": 3927, "cards_upserted": 3927, "unresolved_set_count": 0}
+{"progress_files": "40/172", "current_file": "Pokemon-Emerald.csv", "current_file_rows": 107, "staging_rows_imported": 4034, "cards_upserted": 4034, "unresolved_set_count": 0}
+{"progress_files": "41/172", "current_file": "Pokemon-FireRed-and-LeafGreen.csv", "current_file_rows": 116, "staging_rows_imported": 4150, "cards_upserted": 4150, "unresolved_set_count": 0}
+{"progress_files": "42/172", "current_file": "Pokemon-Hidden-Legends.csv", "current_file_rows": 102, "staging_rows_imported": 4252, "cards_upserted": 4252, "unresolved_set_count": 0}
+{"progress_files": "43/172", "current_file": "Pokemon-Holon-Phantoms.csv", "current_file_rows": 111, "staging_rows_imported": 4363, "cards_upserted": 4363, "unresolved_set_count": 0}
+{"progress_files": "44/172", "current_file": "Pokemon-Legend-Maker.csv", "current_file_rows": 93, "staging_rows_imported": 4456, "cards_upserted": 4456, "unresolved_set_count": 0}
+{"progress_files": "45/172", "current_file": "Pokemon-Power-Keepers.csv", "current_file_rows": 108, "staging_rows_imported": 4564, "cards_upserted": 4564, "unresolved_set_count": 0}
+{"progress_files": "46/172", "current_file": "Pokemon-Ruby-and-Sapphire.csv", "current_file_rows": 109, "staging_rows_imported": 4673, "cards_upserted": 4673, "unresolved_set_count": 0}
+{"progress_files": "47/172", "current_file": "Pokemon-Sandstorm.csv", "current_file_rows": 100, "staging_rows_imported": 4773, "cards_upserted": 4773, "unresolved_set_count": 0}
+{"progress_files": "48/172", "current_file": "Pokemon-Team-Magma-vs-Team-Aqua.csv", "current_file_rows": 97, "staging_rows_imported": 4870, "cards_upserted": 4870, "unresolved_set_count": 0}
+{"progress_files": "49/172", "current_file": "Pokemon-Team-Rocket-Returns.csv", "current_file_rows": 111, "staging_rows_imported": 4981, "cards_upserted": 4981, "unresolved_set_count": 0}
+{"progress_files": "50/172", "current_file": "Pokemon-Unseen-Forces.csv", "current_file_rows": 145, "staging_rows_imported": 5126, "cards_upserted": 5126, "unresolved_set_count": 0}
+{"progress_files": "51/172", "current_file": "Pokemon-Gym-Challenge.csv", "current_file_rows": 132, "staging_rows_imported": 5258, "cards_upserted": 5258, "unresolved_set_count": 0}
+{"progress_files": "52/172", "current_file": "Pokemon-Gym-Heroes.csv", "current_file_rows": 132, "staging_rows_imported": 5390, "cards_upserted": 5390, "unresolved_set_count": 0}
+{"progress_files": "53/172", "current_file": "Pokemon-Call-of-Legends.csv", "current_file_rows": 106, "staging_rows_imported": 5496, "cards_upserted": 5496, "unresolved_set_count": 0}
+{"progress_files": "54/172", "current_file": "Pokemon-HGSS-Black-Star-Promos.csv", "current_file_rows": 25, "staging_rows_imported": 5521, "cards_upserted": 5521, "unresolved_set_count": 0}
+{"progress_files": "55/172", "current_file": "Pokemon-HSTriumphant.csv", "current_file_rows": 103, "staging_rows_imported": 5624, "cards_upserted": 5624, "unresolved_set_count": 0}
+{"progress_files": "56/172", "current_file": "Pokemon-HSUndaunted.csv", "current_file_rows": 91, "staging_rows_imported": 5715, "cards_upserted": 5715, "unresolved_set_count": 0}
+{"progress_files": "57/172", "current_file": "Pokemon-HSUnleashed.csv", "current_file_rows": 96, "staging_rows_imported": 5811, "cards_upserted": 5811, "unresolved_set_count": 0}
+{"progress_files": "58/172", "current_file": "Pokemon-HeartGold-and-SoulSilver.csv", "current_file_rows": 124, "staging_rows_imported": 5935, "cards_upserted": 5935, "unresolved_set_count": 0}
+{"progress_files": "59/172", "current_file": "Pokemon-Ascended-Heroes.csv", "current_file_rows": 295, "staging_rows_imported": 6230, "cards_upserted": 6230, "unresolved_set_count": 0}
+{"progress_files": "60/172", "current_file": "Pokemon-Mega-Evolution.csv", "current_file_rows": 188, "staging_rows_imported": 6418, "cards_upserted": 6418, "unresolved_set_count": 0}
+{"progress_files": "61/172", "current_file": "Pokemon-Perfect-Order.csv", "current_file_rows": 124, "staging_rows_imported": 6542, "cards_upserted": 6542, "unresolved_set_count": 0}
+{"progress_files": "62/172", "current_file": "Pokemon-Phantasmal-Flames.csv", "current_file_rows": 130, "staging_rows_imported": 6672, "cards_upserted": 6672, "unresolved_set_count": 0}
+{"progress_files": "63/172", "current_file": "Pokemon-Nintendo-Black-Star-Promos.csv", "current_file_rows": 40, "staging_rows_imported": 6712, "cards_upserted": 6712, "unresolved_set_count": 0}
+{"progress_files": "64/172", "current_file": "Pokemon-Neo-Destiny.csv", "current_file_rows": 113, "staging_rows_imported": 6825, "cards_upserted": 6825, "unresolved_set_count": 0}
