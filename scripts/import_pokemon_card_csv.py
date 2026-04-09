@@ -149,6 +149,23 @@ def resolve_set_mapping(set_name: str, set_mappings: dict[str, dict[str, Any]]) 
         'latios trainer kit': {'set_name': 'Latios Trainer Kit', 'set_code': 'LTI'},
         'minun trainer kit 2': {'set_name': 'EX Trainer Kit 2 Minun', 'set_code': 'TK2M'},
         'plusle trainer kit 2': {'set_name': 'EX Trainer Kit 2 Plusle', 'set_code': 'TK2P'},
+        'vivid voltage': {'set_name': 'Sword & Shield—Vivid Voltage', 'set_code': 'VIV'},
+        'ancient origins': {'set_name': 'XY—Ancient Origins', 'set_code': 'AOR'},
+        'breakpoint': {'set_name': 'XY—BREAKpoint', 'set_code': 'BKP'},
+        'breakthrough': {'set_name': 'XY—BREAKthrough', 'set_code': 'BKT'},
+        'double crisis': {'set_name': 'Double Crisis', 'set_code': 'DCR'},
+        'fates collide': {'set_name': 'XY—Fates Collide', 'set_code': 'FCO'},
+        'flashfire': {'set_name': 'XY—Flashfire', 'set_code': 'FLF'},
+        'furious fists': {'set_name': 'XY—Furious Fists', 'set_code': 'FFI'},
+        'generations': {'set_name': 'Generations', 'set_code': 'GEN'},
+        'kalos starter set': {'set_name': 'XY—Kalos Starter Set', 'set_code': 'KSS'},
+        'phantom forces': {'set_name': 'XY—Phantom Forces', 'set_code': 'PHF'},
+        'primal clash': {'set_name': 'XY—Primal Clash', 'set_code': 'PRC'},
+        'roaring skies': {'set_name': 'XY—Roaring Skies', 'set_code': 'ROS'},
+        'steam siege': {'set_name': 'XY—Steam Siege', 'set_code': 'STS'},
+        'xy black star promos': {'set_name': 'XY Black Star Promos', 'set_code': 'XYP'},
+        'xy': {'set_name': 'XY', 'set_code': 'XY'},
+        'white flare': {'set_name': 'Scarlet & Violet—White Flare', 'set_code': 'WHT'},
     }
     if canonical in explicit_map:
         return explicit_map[canonical]
