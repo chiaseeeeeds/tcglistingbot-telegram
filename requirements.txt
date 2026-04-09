@@ -1,0 +1,12 @@
+python-telegram-bot==22.0
+supabase==2.15.0
+python-dotenv==1.0.1
+httpx==0.28.1
+beautifulsoup4==4.13.3
+APScheduler==3.11.0
+Pillow==11.1.0
+pytesseract==0.3.13
+reportlab==4.3.1
+deep-translator==1.11.4
+google-cloud-vision==3.10.1
+opencv-python-headless==4.11.0.86
