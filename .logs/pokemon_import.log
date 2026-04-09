@@ -68,3 +68,11 @@
 {"progress_files": "62/172", "current_file": "Pokemon-Phantasmal-Flames.csv", "current_file_rows": 130, "staging_rows_imported": 6672, "cards_upserted": 6672, "unresolved_set_count": 0}
 {"progress_files": "63/172", "current_file": "Pokemon-Nintendo-Black-Star-Promos.csv", "current_file_rows": 40, "staging_rows_imported": 6712, "cards_upserted": 6712, "unresolved_set_count": 0}
 {"progress_files": "64/172", "current_file": "Pokemon-Neo-Destiny.csv", "current_file_rows": 113, "staging_rows_imported": 6825, "cards_upserted": 6825, "unresolved_set_count": 0}
+{"progress_files": "65/172", "current_file": "Pokemon-Neo-Discovery.csv", "current_file_rows": 75, "staging_rows_imported": 6900, "cards_upserted": 6900, "unresolved_set_count": 0}
+{"progress_files": "66/172", "current_file": "Pokemon-Neo-Genesis.csv", "current_file_rows": 111, "staging_rows_imported": 7011, "cards_upserted": 7011, "unresolved_set_count": 0}
+{"progress_files": "67/172", "current_file": "Pokemon-Neo-Revelation.csv", "current_file_rows": 66, "staging_rows_imported": 7077, "cards_upserted": 7077, "unresolved_set_count": 0}
+{"progress_files": "68/172", "current_file": "Pokemon-Best-of-Game.csv", "current_file_rows": 9, "staging_rows_imported": 7086, "cards_upserted": 7086, "unresolved_set_count": 0}
+{"progress_files": "69/172", "current_file": "Pokemon-Futsal-Collection.csv", "current_file_rows": 5, "staging_rows_imported": 7091, "cards_upserted": 7091, "unresolved_set_count": 0}
+{"progress_files": "70/172", "current_file": "Pokemon-Legendary-Collection.csv", "current_file_rows": 110, "staging_rows_imported": 7201, "cards_upserted": 7201, "unresolved_set_count": 0}
+{"progress_files": "71/172", "current_file": "Pokemon-McDonalds-Collection-2011.csv", "current_file_rows": 12, "staging_rows_imported": 7213, "cards_upserted": 7213, "unresolved_set_count": 0}
+{"progress_files": "72/172", "current_file": "Pokemon-McDonalds-Collection-2012.csv", "current_file_rows": 12, "staging_rows_imported": 7225, "cards_upserted": 7225, "unresolved_set_count": 0}
