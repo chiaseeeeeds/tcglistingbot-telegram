@@ -60,3 +60,27 @@ Use this log after meaningful implementation tasks.
 - what was weak: exact crop ratios may still need tuning across different photo framing styles
 - follow-up: add OCR debug output for identifier lane and support seller-submitted tighter crops when needed
 - confidence: medium
+
+
+## 2026-04-09 — PriceCharting Catalog Staging Import
+- date: 2026-04-09
+- task: add a bulk PriceCharting catalog ingest path
+- goal: preserve external catalog data for later mapping into the bot's normalized `cards` table
+- outcome: added a staging table migration, CSV import script, and import workflow documentation
+- validation: importer script compiled successfully
+- what went well: avoids unsafe assumptions about PriceCharting field structure by storing raw payloads first
+- what was weak: still requires a downloaded PriceCharting CSV export and a follow-up resolver to map staged rows into `cards`
+- follow-up: apply the migration, import a real CSV export, then build the Pokémon resolver from staged rows
+- confidence: medium
+
+
+## 2026-04-09 — Pokémon EN Catalog Pipeline
+- date: 2026-04-09
+- task: build a real Pokémon EN catalog pipeline from Bulbapedia + Pokemon-Card-CSV
+- goal: create resolver-friendly set metadata and card rows for OCR-based identifier matching
+- outcome: added `pokemon_sets`, `pokemon_cards_staging`, Bulbapedia importer, Pokémon CSV importer, and normalization docs
+- validation: Bulbapedia parser returns 179 set rows; set mapping dry run resolves 163 of 172 CSV files; live import has started populating staging and `cards`
+- what went well: the two-source architecture cleanly separates set-code mapping from card-row ingestion
+- what was weak: the full bulk import is still relatively slow and a handful of set aliases still need tuning
+- follow-up: finish the full import, review unresolved aliases, then connect OCR resolution to `pokemon_sets` + `cards`
+- confidence: medium

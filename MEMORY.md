@@ -18,6 +18,9 @@
 - identifier-focused OCR now uses an EN-only bottom-left identifier lane first, with JP OCR isolated to broader name text
 - local catalog matching works against seeded cards first
 - listing posting still requires seller confirmation before posting
+- PriceCharting staging import path exists for bulk external catalog ingestion
+- Pokémon EN set metadata importer exists from Bulbapedia
+- Pokémon EN card catalog importer exists from Pokemon-Card-CSV
 
 ### Important Constraints
 - do not auto-post without explicit seller confirmation
@@ -29,6 +32,8 @@
 ### Known Gaps
 - photo flow currently works best with one clear front image
 - live website price references are not fully integrated yet
+- raw PriceCharting rows still need a resolver before they can reliably populate `cards`
+- Pokémon EN import currently auto-resolves most set names but still leaves a few manual aliases to tune
 - OCR for Japanese names is improved but still likely weaker than dedicated hosted vision models
 - card identification is still local-catalog and low-volume friendly
 - claim monitoring, queue advancement, and SOLD lifecycle are still todo
