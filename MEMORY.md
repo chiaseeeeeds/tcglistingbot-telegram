@@ -21,6 +21,7 @@
 - PriceCharting staging import path exists for bulk external catalog ingestion
 - Pokémon EN set metadata importer exists from Bulbapedia
 - Pokémon EN card catalog importer exists from Pokemon-Card-CSV
+- All 172 Pokemon-Card-CSV files now resolve to a set mapping after alias tuning
 
 ### Important Constraints
 - do not auto-post without explicit seller confirmation
@@ -33,7 +34,7 @@
 - photo flow currently works best with one clear front image
 - live website price references are not fully integrated yet
 - raw PriceCharting rows still need a resolver before they can reliably populate `cards`
-- Pokémon EN import currently auto-resolves most set names but still leaves a few manual aliases to tune
+- Pokémon EN import currently has full set-name resolution, but the bulk importer still needs performance tuning/commit visibility
 - OCR for Japanese names is improved but still likely weaker than dedicated hosted vision models
 - card identification is still local-catalog and low-volume friendly
 - claim monitoring, queue advancement, and SOLD lifecycle are still todo
@@ -50,3 +51,5 @@
 - after any meaningful task, update this file with new current state and next risks
 - keep this file concise and factual
 - use `TASK_EVALUATIONS.md` for task-by-task review entries
+- `TODO.md` now tracks PRD gap status
+- `ROADMAP.md` now tracks phased delivery order

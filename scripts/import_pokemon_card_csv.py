@@ -11,6 +11,7 @@ import tempfile
 import unicodedata
 import uuid
 import zipfile
+import time
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +34,11 @@ MANUAL_SET_NAME_OVERRIDES = {
     'POP Series 1': 'POP Series 1',
     'McDonald Collection 2017': 'McDonald\'s Collection 2017',
 }
+
+
+def log_progress(event: str, **details: Any) -> None:
+    payload = {'event': event, **details}
+    print(json.dumps(payload), flush=True)
 
 
 def get_database_url() -> str:
@@ -78,6 +84,15 @@ def canonicalize_set_name(value: str) -> str:
         'go': 'pokemon go',
         '151': 'scarlet and violet 151',
         'pokemon go': 'pokemon go',
+        'deoxys': 'ex deoxys',
+        'dragon': 'ex dragon',
+        'team rocket returns': 'ex team rocket returns',
+        'evolutions': 'xy evolutions',
+        'futsal collection': 'pokemon futsal',
+        'ex trainer kit latias': 'latias trainer kit',
+        'ex trainer kit latios': 'latios trainer kit',
+        'ex trainer kit 2 minun': 'minun trainer kit 2',
+        'ex trainer kit 2 plusle': 'plusle trainer kit 2',
     }
     return alias_map.get(normalized, normalized)
 
@@ -128,6 +143,16 @@ def resolve_set_mapping(set_name: str, set_mappings: dict[str, dict[str, Any]]) 
     if exact:
         return exact
 
+
+    explicit_map = {
+        'latias trainer kit': {'set_name': 'Latias Trainer Kit', 'set_code': 'LTK'},
+        'latios trainer kit': {'set_name': 'Latios Trainer Kit', 'set_code': 'LTI'},
+        'minun trainer kit 2': {'set_name': 'EX Trainer Kit 2 Minun', 'set_code': 'TK2M'},
+        'plusle trainer kit 2': {'set_name': 'EX Trainer Kit 2 Plusle', 'set_code': 'TK2P'},
+    }
+    if canonical in explicit_map:
+        return explicit_map[canonical]
+
     candidates = []
     for mapped_name, mapped_value in set_mappings.items():
         if canonical in mapped_name or mapped_name in canonical:
@@ -147,6 +172,22 @@ def fetch_set_mappings(connection: psycopg.Connection) -> dict[str, dict[str, An
     return {
         canonicalize_set_name(set_name): {'set_code': set_code, 'series_name': series_name, 'set_name': set_name}
         for set_name, set_code, series_name in rows
+    }
+
+
+def fetch_existing_cards(connection: psycopg.Connection) -> dict[tuple[str, str, str], str]:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            select id, set_code, card_number, coalesce(variant, '')
+            from cards
+            where game = 'pokemon'
+            """
+        )
+        rows = cursor.fetchall()
+    return {
+        (set_code, card_number, variant): str(card_id)
+        for card_id, set_code, card_number, variant in rows
     }
 
 
@@ -180,9 +221,13 @@ def fetch_csv_rows(csv_entry: dict[str, str]) -> list[dict[str, Any]]:
 
 
 def import_all() -> dict[str, Any]:
+    started_at = time.perf_counter()
+    log_progress('import_started')
     database_url = get_database_url()
     batch_id = str(uuid.uuid4())
+    log_progress('download_started', source=GITHUB_ZIP_URL)
     csv_index = download_repo_archive()
+    log_progress('download_completed', csv_files=len(csv_index), elapsed_seconds=round(time.perf_counter() - started_at, 2))
 
     staging_sql = """
         insert into pokemon_cards_staging (
@@ -230,6 +275,23 @@ def import_all() -> dict[str, Any]:
             updated_at = now()
     """
 
+    card_update_sql = """
+        update cards as card
+        set set_name = staging.set_name,
+            card_name_en = staging.card_name,
+            rarity = staging.rarity,
+            variant = nullif(staging.variant, ''),
+            is_active = true
+        from pokemon_cards_staging as staging
+        where staging.import_batch_id = %s
+          and staging.source_file = %s
+          and staging.set_code is not null
+          and card.game = 'pokemon'
+          and card.set_code = staging.set_code
+          and card.card_number = staging.card_number
+          and coalesce(card.variant, '') = staging.variant
+    """
+
     card_insert_sql = """
         insert into cards (
             game,
@@ -242,26 +304,61 @@ def import_all() -> dict[str, Any]:
             is_active,
             created_at
         )
-        values (
+        select
             'pokemon',
-            %(set_code)s,
-            %(set_name)s,
-            %(card_number)s,
-            %(card_name_en)s,
-            %(rarity)s,
-            %(variant)s,
+            staging.set_code,
+            staging.set_name,
+            staging.card_number,
+            staging.card_name,
+            staging.rarity,
+            nullif(staging.variant, ''),
             true,
             now()
-        )
-        returning id
+        from (
+            select distinct on (source.set_code, source.card_number, source.variant)
+                source.set_code,
+                source.set_name,
+                source.card_number,
+                source.card_name,
+                source.rarity,
+                source.variant
+            from pokemon_cards_staging as source
+            where source.import_batch_id = %s
+              and source.source_file = %s
+              and source.set_code is not null
+            order by source.set_code, source.card_number, source.variant, source.card_name
+        ) as staging
+        left join cards as card
+            on card.game = 'pokemon'
+           and card.set_code = staging.set_code
+           and card.card_number = staging.card_number
+           and coalesce(card.variant, '') = staging.variant
+        where card.id is null
+    """
+
+    staging_link_sql = """
+        update pokemon_cards_staging as staging
+        set normalized_card_id = card.id,
+            updated_at = now()
+        from cards as card
+        where staging.import_batch_id = %s
+          and staging.source_file = %s
+          and staging.set_code is not null
+          and card.game = 'pokemon'
+          and card.set_code = staging.set_code
+          and card.card_number = staging.card_number
+          and coalesce(card.variant, '') = staging.variant
     """
 
     imported_staging = 0
     imported_cards = 0
     unresolved_sets: set[str] = set()
 
+    log_progress('db_connect_started')
     with psycopg.connect(database_url) as connection:
+        log_progress('db_connect_completed', elapsed_seconds=round(time.perf_counter() - started_at, 2))
         set_mappings = fetch_set_mappings(connection)
+        log_progress('set_mappings_loaded', count=len(set_mappings), elapsed_seconds=round(time.perf_counter() - started_at, 2))
         with connection.cursor() as cursor:
             for file_index, csv_entry in enumerate(csv_index, start=1):
                 rows = fetch_csv_rows(csv_entry)
@@ -270,88 +367,45 @@ def import_all() -> dict[str, Any]:
                 set_code = set_mapping['set_code'] if set_mapping else None
                 if not set_code:
                     unresolved_sets.add(set_name)
+                payloads: list[dict[str, Any]] = []
                 for row in rows:
                     card_number_left, printed_total = parse_card_number(row['Number'])
                     variant = derive_variant(row['Name'], row['Rarity']) or ''
-                    payload = {
-                        'language': 'en',
-                        'series_name': csv_entry['series_name'],
-                        'set_name': set_name,
-                        'set_code': set_code,
-                        'card_name': row['Name'],
-                        'card_number': card_number_left,
-                        'printed_total': printed_total,
-                        'rarity': row['Rarity'],
-                        'variant': variant,
-                        'source_file': csv_entry['file_name'],
-                        'source_url': csv_entry['html_url'],
-                        'source_name': SOURCE_NAME,
-                        'raw_payload': Json(row),
-                        'import_batch_id': batch_id,
-                    }
-                    cursor.execute(staging_sql, payload)
-                    imported_staging += 1
-                    if set_code:
-                        cursor.execute(
-                            """
-                            select id from cards
-                            where game = 'pokemon'
-                              and set_code = %s
-                              and card_number = %s
-                              and coalesce(variant, '') = %s
-                            limit 1
-                            """,
-                            (set_code, card_number_left, variant),
-                        )
-                        existing = cursor.fetchone()
-                        if existing:
-                            card_id = existing[0]
-                            cursor.execute(
-                                """
-                                update cards
-                                set set_name = %s,
-                                    card_name_en = %s,
-                                    rarity = %s,
-                                    variant = %s,
-                                    is_active = true
-                                where id = %s
-                                """,
-                                (set_name, row['Name'], row['Rarity'], variant or None, card_id),
-                            )
-                        else:
-                            cursor.execute(
-                                card_insert_sql,
-                                {
-                                    'set_code': set_code,
-                                    'set_name': set_name,
-                                    'card_number': card_number_left,
-                                    'card_name_en': row['Name'],
-                                    'rarity': row['Rarity'],
-                                    'variant': variant or None,
-                                },
-                            )
-                            card_id = cursor.fetchone()[0]
-                        cursor.execute(
-                            """
-                            update pokemon_cards_staging
-                            set normalized_card_id = %s, updated_at = now()
-                            where language = 'en'
-                              and set_name = %s
-                              and card_name = %s
-                              and card_number = %s
-                              and variant = %s
-                            """,
-                            (card_id, set_name, row['Name'], card_number_left, variant),
-                        )
-                        imported_cards += 1
+                    payloads.append(
+                        {
+                            'language': 'en',
+                            'series_name': csv_entry['series_name'],
+                            'set_name': set_name,
+                            'set_code': set_code,
+                            'card_name': row['Name'],
+                            'card_number': card_number_left,
+                            'printed_total': printed_total,
+                            'rarity': row['Rarity'],
+                            'variant': variant,
+                            'source_file': csv_entry['file_name'],
+                            'source_url': csv_entry['html_url'],
+                            'source_name': SOURCE_NAME,
+                            'raw_payload': Json(row),
+                            'import_batch_id': batch_id,
+                        }
+                    )
+                if payloads:
+                    cursor.executemany(staging_sql, payloads)
+                    imported_staging += len(payloads)
+                if set_code and payloads:
+                    cursor.execute(card_update_sql, (batch_id, csv_entry['file_name']))
+                    cursor.execute(card_insert_sql, (batch_id, csv_entry['file_name']))
+                    cursor.execute(staging_link_sql, (batch_id, csv_entry['file_name']))
+                    imported_cards += len(payloads)
                 connection.commit()
-                if file_index % 10 == 0 or file_index == len(csv_index):
-                    print(json.dumps({
-                        'progress_files': f'{file_index}/{len(csv_index)}',
-                        'staging_rows_imported': imported_staging,
-                        'cards_upserted': imported_cards,
-                        'unresolved_set_count': len(unresolved_sets),
-                    }), flush=True)
+                print(json.dumps({
+                    'progress_files': f'{file_index}/{len(csv_index)}',
+                    'current_file': csv_entry['file_name'],
+                    'current_file_rows': len(rows),
+                    'staging_rows_imported': imported_staging,
+                    'cards_upserted': imported_cards,
+                    'unresolved_set_count': len(unresolved_sets),
+                }), flush=True)
 
     return {
         'batch_id': batch_id,

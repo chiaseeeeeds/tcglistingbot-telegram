@@ -84,3 +84,27 @@ Use this log after meaningful implementation tasks.
 - what was weak: the full bulk import is still relatively slow and a handful of set aliases still need tuning
 - follow-up: finish the full import, review unresolved aliases, then connect OCR resolution to `pokemon_sets` + `cards`
 - confidence: medium
+
+
+## 2026-04-09 — Pokémon EN Alias Completion
+- date: 2026-04-09
+- task: close the remaining set-name resolution gaps between Bulbapedia and Pokemon-Card-CSV
+- goal: get full set mapping coverage before OCR resolver hookup
+- outcome: explicit alias rules now resolve all 172 CSV files to a set mapping
+- validation: dry run reports `resolved 172 unresolved 0`
+- what went well: most remaining gaps were naming-style mismatches rather than missing catalog data
+- what was weak: the full importer is still slower than expected and needs better commit/progress behavior
+- follow-up: optimize the bulk importer, finish the clean load, then connect OCR lookup to `cards`
+- confidence: high
+
+
+## 2026-04-09 — PRD Gap Checklist and Roadmap
+- date: 2026-04-09
+- task: compare current build against the repo PRD and turn the result into execution docs
+- goal: create a shared, repo-native checklist and phased roadmap instead of relying on chat memory
+- outcome: added `TODO.md` as the PRD gap checklist and `ROADMAP.md` as the phased delivery plan
+- validation: docs written and linked into project memory
+- what went well: gives a clear sequence that matches the product guardrails and current implementation state
+- what was weak: status still depends on the in-flight Pokémon EN import finishing cleanly
+- follow-up: use `TODO.md` and `ROADMAP.md` as the primary planning surface for the next implementation phases
+- confidence: high
