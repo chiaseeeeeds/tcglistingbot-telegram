@@ -15,7 +15,8 @@
 - seller setup persists in Supabase
 - `/list` now starts as a photo-first flow in DM
 - OCR provider is local Tesseract
-- OCR now focuses only on the bottom-left printed identifier lane for live `/list` matching, with tighter crops to reduce false matches from other card text
+- `/list` OCR now detects and rectifies the card first, then reads Pokémon identifier ROIs relative to the normalized card instead of the raw photo
+- OCR debug artifacts are now saved locally for failed tuning sessions
 - local catalog matching works against seeded cards first
 - listing posting still requires seller confirmation before posting
 - PriceCharting staging import path exists for bulk external catalog ingestion
@@ -38,13 +39,13 @@
 - live website price references are not fully integrated yet
 - raw PriceCharting rows still need a resolver before they can reliably populate `cards`
 - Pokémon EN import is complete, but the bulk loader still benefits from resumable per-file execution in unstable network environments
-- OCR is now intentionally bottom-left-first for Pokémon identifiers; real-photo tuning is still needed for framing, glare, and tiny print
+- card detection and rectification are now in place, but real-photo tuning is still needed for glare, partial crops, and non-Pokémon layouts
 - card identification is still local-catalog and low-volume friendly
 - claim monitoring, queue advancement, and SOLD lifecycle are still todo
 - seller/buyer reputation and dedicated price history are still todo
 
 ### Near-Term Priorities
-1. live-test and tune OCR-to-catalog matching in `/list`
+1. live-test rectified card-relative OCR in `/list` on real Pokémon photos
 2. add first real exact-card listing history by using the updated `/list` flow
 3. connect live external price reference providers
 4. support front + back photo intake

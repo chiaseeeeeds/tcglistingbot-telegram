@@ -268,7 +268,8 @@ async def capture_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         context.user_data['listing_card_id'] = identification.card_id
         reasons = '\n'.join(f'• {reason}' for reason in identification.match_reasons) or '• OCR text roughly matched the local catalog.'
         await update.effective_message.reply_text(
-            '<b>I found a likely card match</b>\n\n'
+            warning_block
+            + '<b>I found a likely card match</b>\n\n'
             f'Title: <code>{identification.display_name}</code>\n'
             f'Confidence: <code>{identification.confidence:.2f}</code>\n'
             f'Reasons:\n{reasons}\n\n'
@@ -280,7 +281,8 @@ async def capture_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 
     context.user_data['listing_detection_mode'] = 'needs_identifier'
     await update.effective_message.reply_text(
-        '<b>I could not confidently identify the card from OCR.</b>\n\n'
+        warning_block
+        + '<b>I could not confidently identify the card from OCR.</b>\n\n'
         f'OCR text: <code>{raw_text[:220] or "No usable text detected"}</code>\n\n'
         'Reply with the printed identifier like <code>PAF 234/091</code>.\n'
         'If you prefer, you can still enter the listing title manually.',

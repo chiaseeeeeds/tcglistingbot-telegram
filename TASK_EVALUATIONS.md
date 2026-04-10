@@ -168,3 +168,16 @@ Use this log after meaningful implementation tasks.
 - follow-up: test `/list` on several Pokémon EN cards and inspect failed identifiers to tune crop bounds again if needed
 - confidence: medium
 
+
+
+## 2026-04-10 — Card Rectification OCR Pipeline
+- date: 2026-04-10
+- task: replace raw-photo bottom-left OCR with card-detected, rectified, card-relative OCR
+- goal: stop reading the playmat/background and make the identifier zone relative to the actual card
+- outcome: added OpenCV-based card detection and perspective rectification, moved OCR to run after game selection, introduced Pokémon-specific identifier ROI windows on normalized cards, and saved OCR debug artifacts locally for failed tuning sessions
+- validation: `python3 -m py_compile services/card_detection.py services/ocr.py services/card_identifier.py handlers/listing.py`; synthetic end-to-end smoke test extracted `IDENTIFIER: PAF234/091`; bot restarted cleanly in polling mode
+- what went well: the architecture now matches the real problem by converting raw photos into card-relative coordinate space before OCR
+- what was weak: real-user photos still need live tuning for crop windows, glare, and edge cases where contour detection is imperfect
+- follow-up: test `/list` on several real Pokémon cards and inspect saved debug artifacts for any misses before adding top-3 candidate selection
+- confidence: medium
+

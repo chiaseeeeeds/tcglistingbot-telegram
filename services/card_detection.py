@@ -1,4 +1,4 @@
-"""Card detection and perspective rectification helpers."""
+"""Card detection and candidate crop helpers."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from PIL import Image
 TARGET_CARD_WIDTH = 744
 TARGET_CARD_HEIGHT = 1039
 _CARD_RATIO = TARGET_CARD_HEIGHT / TARGET_CARD_WIDTH
+_CARD_WIDTH_RATIO = TARGET_CARD_WIDTH / TARGET_CARD_HEIGHT
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,15 @@ class CardDetectionResult:
     image: Image.Image
     detected: bool
     method: str
+    confidence: float
+
+
+@dataclass(frozen=True)
+class CardImageCandidate:
+    """A normalized card candidate used for OCR scoring."""
+
+    image: Image.Image
+    source: str
     confidence: float
 
 
@@ -61,10 +71,28 @@ def _warp_card(image: np.ndarray, points: np.ndarray) -> Image.Image:
     return Image.fromarray(rgb)
 
 
-def _score_quad(points: np.ndarray, image_area: float) -> float:
+def _score_quad(points: np.ndarray, image_width: int, image_height: int) -> float:
+    image_area = float(image_width * image_height)
     area = cv2.contourArea(points.astype('float32'))
     if area <= 0:
         return -1.0
+
+    area_ratio = area / max(image_area, 1.0)
+    min_x, min_y = points.min(axis=0)
+    max_x, max_y = points.max(axis=0)
+    edge_margin_x = image_width * 0.015
+    edge_margin_y = image_height * 0.015
+    edge_hits = sum(
+        [
+            min_x <= edge_margin_x,
+            min_y <= edge_margin_y,
+            max_x >= image_width - edge_margin_x,
+            max_y >= image_height - edge_margin_y,
+        ]
+    )
+    if edge_hits == 4 and area_ratio > 0.9:
+        return -1.0
+
     width, height = _rectified_dimensions(_order_points(points.astype('float32')))
     if width <= 0 or height <= 0:
         return -1.0
@@ -72,13 +100,16 @@ def _score_quad(points: np.ndarray, image_area: float) -> float:
     ratio_error = abs(ratio - _CARD_RATIO)
     if ratio_error > 0.45:
         return -1.0
-    area_score = min(area / max(image_area, 1.0), 1.0)
+
+    area_score = min(area_ratio, 1.0)
     ratio_score = max(0.0, 1.0 - ratio_error)
-    return area_score * 0.7 + ratio_score * 0.3
+    edge_penalty = 0.08 * edge_hits
+    return area_score * 0.7 + ratio_score * 0.3 - edge_penalty
 
 
 def _find_best_quadrilateral(image: np.ndarray) -> tuple[np.ndarray | None, str, float]:
-    image_area = float(image.shape[0] * image.shape[1])
+    image_height, image_width = image.shape[:2]
+    image_area = float(image_height * image_width)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 
@@ -114,7 +145,7 @@ def _find_best_quadrilateral(image: np.ndarray) -> tuple[np.ndarray | None, str,
             if len(approx) != 4:
                 continue
             points = approx.reshape(4, 2)
-            score = _score_quad(points, image_area)
+            score = _score_quad(points, image_width, image_height)
             if score > best_score:
                 best_points = points
                 best_method = method_name
@@ -130,7 +161,7 @@ def _find_best_quadrilateral(image: np.ndarray) -> tuple[np.ndarray | None, str,
             continue
         rect = cv2.minAreaRect(contour)
         box = cv2.boxPoints(rect)
-        score = _score_quad(box, image_area)
+        score = _score_quad(box, image_width, image_height)
         if score > best_score:
             best_points = box
             best_method = 'min_area_rect'
@@ -164,3 +195,70 @@ def detect_and_rectify_card(image_path: str | Path) -> CardDetectionResult:
         method=method,
         confidence=round(float(confidence), 3),
     )
+
+
+def _normalized_center_crop(
+    image: Image.Image,
+    *,
+    scale: float,
+    offset_x: float = 0.0,
+    offset_y: float = 0.0,
+) -> Image.Image:
+    width, height = image.size
+    target_height = min(int(height * scale), int(width / _CARD_WIDTH_RATIO))
+    target_width = int(target_height * _CARD_WIDTH_RATIO)
+
+    center_x = width / 2 + width * offset_x
+    center_y = height / 2 + height * offset_y
+
+    left = int(round(center_x - target_width / 2))
+    top = int(round(center_y - target_height / 2))
+    left = max(0, min(left, width - target_width))
+    top = max(0, min(top, height - target_height))
+    right = left + target_width
+    bottom = top + target_height
+
+    return image.crop((left, top, right, bottom)).resize((TARGET_CARD_WIDTH, TARGET_CARD_HEIGHT))
+
+
+def extract_card_candidates(image_path: str | Path) -> list[CardImageCandidate]:
+    """Return multiple normalized card candidates for OCR scoring."""
+
+    path = Path(image_path)
+    source_image = Image.open(path).convert('RGB')
+    candidates: list[CardImageCandidate] = []
+
+    detected = detect_and_rectify_card(path)
+    if detected.detected:
+        candidates.append(
+            CardImageCandidate(
+                image=detected.image,
+                source=f'detected_{detected.method}',
+                confidence=detected.confidence,
+            )
+        )
+
+    fallback_specs = [
+        ('center_medium', 0.82, 0.0, 0.0),
+        ('center_large', 0.92, 0.0, 0.0),
+        ('center_small', 0.72, 0.0, 0.0),
+        ('center_left', 0.82, -0.05, 0.0),
+        ('center_right', 0.82, 0.05, 0.0),
+        ('center_up', 0.82, 0.0, -0.04),
+        ('center_down', 0.82, 0.0, 0.04),
+    ]
+    for source, scale, offset_x, offset_y in fallback_specs:
+        candidates.append(
+            CardImageCandidate(
+                image=_normalized_center_crop(
+                    source_image,
+                    scale=scale,
+                    offset_x=offset_x,
+                    offset_y=offset_y,
+                ),
+                source=source,
+                confidence=0.25,
+            )
+        )
+
+    return candidates
