@@ -22,6 +22,7 @@ from db.listings import create_listing
 from db.seller_configs import get_seller_config_by_seller_id
 from db.sellers import get_seller_by_telegram_id
 from services.card_identifier import identify_card_from_text, parse_manual_identifier
+from services.game_detection import detect_game_from_image
 from services.image_storage import upload_listing_photo
 from services.ocr import OCRNotConfiguredError, extract_text_from_image
 from services.price_lookup import PriceReference, lookup_price_references
@@ -29,7 +30,7 @@ from utils.formatters import format_fixed_price_listing
 
 logger = logging.getLogger(__name__)
 
-PHOTO, GAME, TITLE, PRICE, NOTES, CONFIRM = range(6)
+PHOTO, TITLE, PRICE, NOTES, CONFIRM = range(5)
 SUPPORTED_GAMES = {'pokemon', 'onepiece'}
 TEMP_PHOTO_DIR = Path(gettempdir()) / 'tcg-listing-bot'
 
@@ -164,7 +165,7 @@ async def photo_entry(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
 
 async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Store a listing photo locally, run OCR, and continue the flow."""
+    """Store a listing photo locally, auto-detect the game, run OCR, and continue the flow."""
 
     if update.effective_message is None or not update.effective_message.photo:
         await update.effective_message.reply_text('Please send a card photo to continue.', parse_mode='HTML')
@@ -189,12 +190,46 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             if storage_path:
                 context.user_data['listing_storage_path'] = storage_path
 
+        detected_game = await asyncio.to_thread(detect_game_from_image, str(local_path))
+        game = detected_game.game if detected_game.game in SUPPORTED_GAMES else 'pokemon'
+        context.user_data['listing_game'] = game
+
+        ocr_result = await asyncio.to_thread(extract_text_from_image, str(local_path), game=game)
+        context.user_data['listing_ocr_text'] = ocr_result.text
+        raw_text = str(ocr_result.text or '')
+        identification = await asyncio.to_thread(identify_card_from_text, raw_text=raw_text, game=game)
+
+        warning_lines = [f'• Auto-detected game: {game} ({detected_game.reason}).']
+        warning_lines.extend(f'• {warning}' for warning in ocr_result.warnings)
+        warning_block = '\n'.join(warning_lines) + '\n\n'
+
+        if identification.matched and identification.confidence >= 0.45:
+            context.user_data['listing_detection_mode'] = 'matched'
+            context.user_data['listing_suggested_title'] = identification.display_name
+            context.user_data['listing_card_id'] = identification.card_id
+            reasons = '\n'.join(f'• {reason}' for reason in identification.match_reasons) or '• OCR text roughly matched the local catalog.'
+            await update.effective_message.reply_text(
+                warning_block
+                + '<b>I found a likely card match</b>\n\n'
+                f'Title: <code>{identification.display_name}</code>\n'
+                f'Confidence: <code>{identification.confidence:.2f}</code>\n'
+                f'Reasons:\n{reasons}\n\n'
+                'Reply with <code>yes</code> to use this title, or send the corrected title manually.\n'
+                'If OCR got the card wrong, you can also reply with the printed identifier like <code>PAF 234/091</code>.',
+                parse_mode='HTML',
+            )
+            return TITLE
+
+        context.user_data['listing_detection_mode'] = 'needs_identifier'
         await update.effective_message.reply_text(
-            'Photo received.\n\n'
-            'Which game is this card from? Reply with <code>pokemon</code> or <code>onepiece</code>.',
+            warning_block
+            + '<b>I could not confidently identify the card from OCR.</b>\n\n'
+            f'OCR text: <code>{raw_text[:220] or "No usable text detected"}</code>\n\n'
+            'Reply with the printed identifier like <code>PAF 234/091</code>.\n'
+            'If you prefer, you can still enter the listing title manually.',
             parse_mode='HTML',
         )
-        return GAME
+        return TITLE
     except OCRNotConfiguredError as exc:
         logger.exception('OCR provider misconfigured during listing flow: %s', exc)
         await update.effective_message.reply_text(
@@ -213,83 +248,14 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 
 async def capture_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Capture the game, identify the card, and move to title confirmation."""
+    """Legacy fallback state; prompt the seller to send the photo again."""
 
-    if update.effective_message is None or update.effective_message.text is None:
-        return GAME
-
-    game = update.effective_message.text.strip().lower()
-    if game not in SUPPORTED_GAMES:
+    if update.effective_message is not None:
         await update.effective_message.reply_text(
-            'Please reply with <code>pokemon</code> or <code>onepiece</code>.',
+            'Game selection is now automatic. Please send the card photo again.',
             parse_mode='HTML',
         )
-        return GAME
-
-    context.user_data['listing_game'] = game
-
-    photo_path = str(context.user_data.get('listing_photo_path') or '')
-    if not photo_path:
-        await update.effective_message.reply_text(
-            'I lost the uploaded photo for this listing. Please send the card photo again.',
-            parse_mode='HTML',
-        )
-        return PHOTO
-
-    try:
-        ocr_result = await asyncio.to_thread(extract_text_from_image, photo_path, game=game)
-    except OCRNotConfiguredError as exc:
-        logger.exception('OCR provider misconfigured during listing flow: %s', exc)
-        await update.effective_message.reply_text(
-            'OCR is not configured correctly right now. Please try again later or enter the title manually after I restore OCR.',
-            parse_mode='HTML',
-        )
-        _clear_listing_state(context)
-        return ConversationHandler.END
-    except Exception as exc:
-        logger.exception('Failed to OCR listing photo after game selection: %s', exc)
-        await update.effective_message.reply_text(
-            'I could not process the card text from that photo. Please send a clearer single-card image and try again.',
-            parse_mode='HTML',
-        )
-        return PHOTO
-
-    context.user_data['listing_ocr_text'] = ocr_result.text
-    raw_text = str(ocr_result.text or '')
-    identification = await asyncio.to_thread(identify_card_from_text, raw_text=raw_text, game=game)
-
-    warning_block = ''
-    if ocr_result.warnings:
-        warning_block = '\n'.join(f'• {warning}' for warning in ocr_result.warnings) + '\n\n'
-
-    if identification.matched:
-        context.user_data['listing_detection_mode'] = 'matched'
-        context.user_data['listing_suggested_title'] = identification.display_name
-        context.user_data['listing_card_id'] = identification.card_id
-        reasons = '\n'.join(f'• {reason}' for reason in identification.match_reasons) or '• OCR text roughly matched the local catalog.'
-        await update.effective_message.reply_text(
-            warning_block
-            + '<b>I found a likely card match</b>\n\n'
-            f'Title: <code>{identification.display_name}</code>\n'
-            f'Confidence: <code>{identification.confidence:.2f}</code>\n'
-            f'Reasons:\n{reasons}\n\n'
-            'Reply with <code>yes</code> to use this title, or send the corrected title manually.\n'
-            'If OCR got the card wrong, you can also reply with the printed identifier like <code>PAF 234/091</code>.',
-            parse_mode='HTML',
-        )
-        return TITLE
-
-    context.user_data['listing_detection_mode'] = 'needs_identifier'
-    await update.effective_message.reply_text(
-        warning_block
-        + '<b>I could not confidently identify the card from OCR.</b>\n\n'
-        f'OCR text: <code>{raw_text[:220] or "No usable text detected"}</code>\n\n'
-        'Reply with the printed identifier like <code>PAF 234/091</code>.\n'
-        'If you prefer, you can still enter the listing title manually.',
-        parse_mode='HTML',
-    )
-    return TITLE
-
+    return PHOTO
 
 async def capture_title(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Capture a confirmed title or resolve a manual identifier before pricing."""
@@ -485,7 +451,6 @@ def register_listing_handlers(application: Application) -> None:
         ],
         states={
             PHOTO: [MessageHandler(filters.ChatType.PRIVATE & filters.PHOTO, capture_photo)],
-            GAME: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_game)],
             TITLE: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_title)],
             PRICE: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_price)],
             NOTES: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_notes)],

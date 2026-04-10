@@ -181,3 +181,16 @@ Use this log after meaningful implementation tasks.
 - follow-up: test `/list` on several real Pokémon cards and inspect saved debug artifacts for any misses before adding top-3 candidate selection
 - confidence: medium
 
+
+
+## 2026-04-10 — Multi-Candidate OCR And Full-Catalog Matching
+- date: 2026-04-10
+- task: make OCR resilient when one crop has the right number but another crop has the right name
+- goal: correctly resolve real Pokémon photos even when contour detection is imperfect and OCR signals are split across multiple candidate crops
+- outcome: added centered fallback card candidates, top-name OCR, cross-candidate signal aggregation, mismatch penalties in fuzzy matching, and fixed Supabase card pagination so the resolver can see all 19,917 imported Pokémon cards
+- validation: the same saved real Charizard photo now resolves in code to `Charizard ex Illustration Rare (Paldean Fates)` after OCR + catalog matching; bot restarted cleanly in polling mode
+- what went well: the pipeline now behaves like a recognizer instead of a single-pass OCR crop, and the pagination fix removed a major hidden catalog blind spot
+- what was weak: OCR still misreads the set code itself (`SEN` vs `PAF`), so the current success depends on combining number + name rather than exact identifier parsing alone
+- follow-up: live-test `/list` again on real Telegram photos, then add top-3 candidate UI when confidence stays medium
+- confidence: medium
+

@@ -101,11 +101,11 @@ def _score_identifier_candidates(
             score += 0.1
             reasons.append('Base variant matched by default.')
 
-        if card_name_en and card_name_en.lower() in raw_lower:
+        if card_name_en and len(card_name_en.strip()) >= 3 and card_name_en.lower() in raw_lower:
             score += 0.2
             reasons.append(f'Exact English name matched: {card_name_en}')
 
-        if card_name_jp and card_name_jp.lower() in raw_lower:
+        if card_name_jp and len(card_name_jp.strip()) >= 2 and card_name_jp.lower() in raw_lower:
             score += 0.2
             reasons.append(f'Exact Japanese name matched: {card_name_jp}')
 
@@ -207,30 +207,38 @@ def identify_card_from_text(*, raw_text: str, game: str) -> CardIdentificationRe
             score += token_score * 0.55
             reasons.append(f"Name token overlap: {', '.join(sorted(overlap))}")
 
-        if set_code and set_code.lower() in raw_lower:
+        if set_code and re.search(r'\b' + re.escape(set_code.lower()) + r'\b', raw_lower):
             score += 0.25
             reasons.append(f'Set code matched in OCR text: {set_code}')
 
         if detected_set_code and set_code and detected_set_code == set_code.lower():
             score += 0.35
             reasons.append(f'Detected set code matched identifier block: {set_code}')
+        elif detected_set_code and set_code:
+            score -= 0.1
 
-        if card_number and card_number.lower() in raw_lower:
+        allow_numeric_match = bool(
+            (detected_set_code and set_code and detected_set_code == set_code.lower())
+            or (len(detected_left_number) >= 2 and overlap)
+        )
+        if allow_numeric_match and card_number and re.search(r'\b' + re.escape(card_number.lower()) + r'\b', raw_lower):
             score += 0.15
             reasons.append(f'Card number matched in OCR text: {card_number}')
 
-        if detected_left_number and card_number and detected_left_number == card_number.lstrip('0'):
+        if allow_numeric_match and detected_left_number and card_number and detected_left_number == card_number.lstrip('0'):
             score += 0.35
             reasons.append(f'Printed number matched identifier block: {detected_print_number}')
-        elif detected_left_number and card_number and detected_left_number.zfill(len(card_number)) == card_number:
+        elif allow_numeric_match and detected_left_number and card_number and detected_left_number.zfill(len(card_number)) == card_number:
             score += 0.35
             reasons.append(f'Printed number matched identifier block: {detected_print_number}')
+        elif detected_left_number and allow_numeric_match and card_number:
+            score -= 0.35
 
-        if card_name_en and card_name_en.lower() in raw_lower:
+        if card_name_en and len(card_name_en.strip()) >= 3 and card_name_en.lower() in raw_lower:
             score += 0.2
             reasons.append(f'Exact English name matched: {card_name_en}')
 
-        if card_name_jp and card_name_jp.lower() in raw_lower:
+        if card_name_jp and len(card_name_jp.strip()) >= 2 and card_name_jp.lower() in raw_lower:
             score += 0.2
             reasons.append(f'Exact Japanese name matched: {card_name_jp}')
 

@@ -241,11 +241,9 @@ def extract_card_candidates(image_path: str | Path) -> list[CardImageCandidate]:
     fallback_specs = [
         ('center_medium', 0.82, 0.0, 0.0),
         ('center_large', 0.92, 0.0, 0.0),
-        ('center_small', 0.72, 0.0, 0.0),
         ('center_left', 0.82, -0.05, 0.0),
         ('center_right', 0.82, 0.05, 0.0),
         ('center_up', 0.82, 0.0, -0.04),
-        ('center_down', 0.82, 0.0, 0.04),
     ]
     for source, scale, offset_x, offset_y in fallback_specs:
         candidates.append(

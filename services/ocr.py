@@ -26,9 +26,10 @@ _POKEMON_IDENTIFIER_WINDOWS: list[tuple[float, float, float, float]] = [
     (0.02, 0.91, 0.23, 0.985),
 ]
 _POKEMON_NAME_WINDOWS: list[tuple[float, float, float, float]] = [
+    (0.16, 0.01, 0.58, 0.07),
+    (0.14, 0.00, 0.62, 0.08),
     (0.14, 0.01, 0.72, 0.10),
     (0.11, 0.00, 0.78, 0.12),
-    (0.16, 0.015, 0.68, 0.09),
 ]
 _GENERIC_IDENTIFIER_WINDOWS: list[tuple[float, float, float, float]] = [
     (0.00, 0.84, 0.35, 0.99),
@@ -177,18 +178,36 @@ def _select_best_identifier(chunks: list[str]) -> tuple[str, int]:
 
 
 def _select_best_name(chunks: list[str]) -> tuple[str, int]:
+    stopwords = {
+        'from', 'evolves', 'pokemon', 'ability', 'when', 'your', 'bench', 'damage',
+        'prevent', 'opponent', 'this', 'long', 'as', 'play', 'hand', 'turn', 'attach',
+    }
     best_chunk = ''
     best_score = -1
     for chunk in chunks:
         body = chunk.split(':', 1)[1].strip() if ':' in chunk else chunk.strip()
-        alpha_count = sum(char.isalpha() for char in body)
-        token_count = len([token for token in re.findall(r'[A-Za-z]{2,}', body)])
-        score = alpha_count + token_count * 6
-        if 'EX' in body.upper():
+        tokens = re.findall(r'[A-Za-z]{2,}', body)
+        if not tokens:
+            continue
+        candidate_tokens = tokens[:4]
+        candidate_body = ' '.join(candidate_tokens)
+        alpha_count = sum(char.isalpha() for char in candidate_body)
+        token_count = len(candidate_tokens)
+        noise_chars = max(len(body) - alpha_count - candidate_body.count(' '), 0)
+        stopword_hits = sum(token.lower() in stopwords for token in candidate_tokens)
+        score = alpha_count * 2 + token_count * 10 - noise_chars * 3 - max(len(body) - 36, 0) * 4
+        if 1 <= token_count <= 3:
+            score += 18
+        if 'EX' in candidate_body.upper():
+            score += 24
+        if stopword_hits:
+            score -= stopword_hits * 22
+        if candidate_tokens and len(candidate_tokens[0]) >= 6:
             score += 8
         if score > best_score:
+            prefix = chunk.split(':', 1)[0].strip() if ':' in chunk else 'NAME_EN'
             best_score = score
-            best_chunk = chunk
+            best_chunk = f'{prefix}: {candidate_body}'
     return best_chunk.strip(), max(best_score, 0)
 
 
@@ -220,6 +239,31 @@ def _write_debug_artifacts(
     )
 
 
+def _quick_rank_candidate(*, candidate: CardImageCandidate, game: str | None) -> int:
+    score = int(candidate.confidence * 20)
+    windows = _name_windows_for_game(game)[:2]
+    if not windows:
+        return score
+    for window in windows:
+        roi = _prepare_name_roi(_crop_relative(candidate.image, window))
+        try:
+            text = pytesseract.image_to_string(roi, lang='eng', config='--psm 7')
+        except pytesseract.TesseractError:
+            continue
+        normalized = _normalize_text(text)
+        if not normalized:
+            continue
+        tokens = re.findall(r'[A-Za-z]{3,}', normalized)
+        score += len(tokens) * 10
+        if 'HP' in normalized.upper():
+            score += 12
+        if 'EX' in normalized.upper():
+            score += 12
+    if candidate.source.startswith('detected_'):
+        score += 8
+    return score
+
+
 def _score_candidate(
     *,
     candidate: CardImageCandidate,
@@ -248,10 +292,12 @@ def _score_candidate(
         text_chunks.append(best_name)
     text = _dedupe_text_chunks(text_chunks)
 
-    score = int(identifier_score + name_score + candidate.confidence * 20)
+    score = int(identifier_score * 3 + name_score + candidate.confidence * 20)
     if candidate.source.startswith('detected_'):
         score += 10
     if best_identifier and best_name:
+        score += 40
+    elif best_identifier:
         score += 25
     return _CandidateOCR(
         source=candidate.source,
@@ -280,16 +326,36 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
 
     try:
         candidates = extract_card_candidates(path)
-        scored_candidates = [_score_candidate(candidate=candidate, game=game) for candidate in candidates]
+        ranked_candidates = sorted(
+            candidates,
+            key=lambda candidate: _quick_rank_candidate(candidate=candidate, game=game),
+            reverse=True,
+        )
+        finalists = ranked_candidates[:3]
+        detected_finalists = [candidate for candidate in ranked_candidates if candidate.source.startswith('detected_')]
+        if detected_finalists and detected_finalists[0] not in finalists:
+            finalists = finalists[:2] + [detected_finalists[0]]
+        scored_candidates = [_score_candidate(candidate=candidate, game=game) for candidate in finalists]
         best_candidate = max(scored_candidates, key=lambda item: item.score)
+        all_identifier_chunks = [chunk for candidate in scored_candidates for chunk in candidate.identifier_chunks]
+        all_name_chunks = [chunk for candidate in scored_candidates for chunk in candidate.name_chunks]
+        best_identifier, _ = _select_best_identifier(all_identifier_chunks)
+        best_name, _ = _select_best_name(all_name_chunks)
+        aggregated_text = _dedupe_text_chunks(
+            [
+                f'IDENTIFIER: {best_identifier}' if best_identifier else '',
+                best_name,
+            ]
+        )
         for candidate in scored_candidates:
             _write_debug_artifacts(source_path=path, candidate=candidate)
         logger.info(
-            'OCR selected candidate %s for %s with score=%s text=%s',
+            'OCR selected candidate %s for %s with score=%s text=%s aggregated=%s',
             best_candidate.source,
             path.name,
             best_candidate.score,
             best_candidate.text,
+            aggregated_text,
         )
     except pytesseract.TesseractNotFoundError as exc:
         raise OCRNotConfiguredError('Tesseract is not installed on the runtime host.') from exc
@@ -304,9 +370,9 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
     elif not best_candidate.source.startswith('detected_'):
         warnings.append('I used a fallback centered card crop because the direct card detection result looked weaker.')
 
-    if len(best_candidate.text) < 4:
+    if len(aggregated_text) < 4:
         warnings.append('OCR returned very little text. A clearer photo may help.')
-    if 'IDENTIFIER:' not in best_candidate.text:
+    if 'IDENTIFIER:' not in aggregated_text:
         warnings.append('Printed identifier was not detected clearly. Manual code input may still help.')
 
-    return OCRResult(text=best_candidate.text, provider=provider, warnings=warnings)
+    return OCRResult(text=aggregated_text, provider=provider, warnings=warnings)

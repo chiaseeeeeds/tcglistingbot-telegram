@@ -17,6 +17,8 @@
 - OCR provider is local Tesseract
 - `/list` OCR now detects and rectifies the card first, then reads Pokémon identifier ROIs relative to the normalized card instead of the raw photo
 - OCR debug artifacts are now saved locally for failed tuning sessions
+- OCR now aggregates signals across multiple fallback card crops, combining top-name OCR and identifier OCR instead of relying on one crop only
+- Catalog reads now page through the full `cards` table, so fuzzy resolution can use all imported Pokémon rows
 - local catalog matching works against seeded cards first
 - listing posting still requires seller confirmation before posting
 - PriceCharting staging import path exists for bulk external catalog ingestion
@@ -39,7 +41,7 @@
 - live website price references are not fully integrated yet
 - raw PriceCharting rows still need a resolver before they can reliably populate `cards`
 - Pokémon EN import is complete, but the bulk loader still benefits from resumable per-file execution in unstable network environments
-- card detection and rectification are now in place, but real-photo tuning is still needed for glare, partial crops, and non-Pokémon layouts
+- multi-candidate OCR and full-catalog matching now work on the tested real Charizard photo, but live-photo tuning is still needed for glare, partial crops, and non-Pokémon layouts
 - card identification is still local-catalog and low-volume friendly
 - claim monitoring, queue advancement, and SOLD lifecycle are still todo
 - seller/buyer reputation and dedicated price history are still todo
