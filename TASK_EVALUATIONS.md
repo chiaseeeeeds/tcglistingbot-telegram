@@ -108,3 +108,50 @@ Use this log after meaningful implementation tasks.
 - what was weak: status still depends on the in-flight Pokémon EN import finishing cleanly
 - follow-up: use `TODO.md` and `ROADMAP.md` as the primary planning surface for the next implementation phases
 - confidence: high
+
+## 2026-04-10 — Pokémon EN Catalog Completion
+- date: 2026-04-10
+- task: finish the clean Pokémon EN catalog load into `pokemon_cards_staging` and `cards`
+- goal: fully import the Pokemon-Card-CSV source into Supabase with stable set mapping and identity normalization
+- outcome: completed 172/172 source file import, loaded 20,202 staging rows, and materialized 19,917 distinct Pokémon card identities with zero unresolved set codes and zero unlinked normalized rows
+- validation: final DB checks confirmed `source_files=172`, `unresolved_rows=0`, `null_normalized_rows=0`, `distinct_card_identities_in_staging=19917`, and `duplicate_live_identities=0`
+- what went well: set-based SQL upserts plus per-file resumable execution turned an unstable bulk import into a finishable workflow
+- what was weak: long-lived bulk DB sessions remained fragile against transient network failures, so a one-file-per-process fallback was needed to finish reliably
+- follow-up: point the OCR resolver at the completed Pokémon EN catalog and add a first-class import report script
+- confidence: high
+
+
+## 2026-04-10 — OCR To Catalog Resolver Wiring
+- date: 2026-04-10
+- task: connect `/list` identifier OCR and manual fallback to the imported Pokémon EN `cards` catalog
+- goal: resolve cards by printed identifier before falling back to manual title entry
+- outcome: added DB-backed exact lookup by `set_code + card_number`, kept fuzzy catalog matching as fallback, and updated `/list` so sellers can reply with identifiers like `PAF 234/091` when OCR is uncertain
+- validation: direct resolver checks matched `PAF 234/091`, `WHT 050/086`, `BLK 060/086`, and `SSP 001/191` against live catalog rows
+- what went well: the completed catalog made exact identifier matching straightforward and much more reliable than token-only fuzzy search
+- what was weak: live Telegram retest is still needed to tune conversational UX and confidence thresholds with real seller photos
+- follow-up: test `/list` live with Pokémon EN cards, then tie pricing to resolved card identity
+- confidence: medium
+
+
+## 2026-04-10 — Card-Aware Price References
+- date: 2026-04-10
+- task: make `/list` pricing prefer resolved card identity instead of title-only matching
+- goal: show sellers tighter history-based price references once OCR/manual identifier resolution finds a `card_id`
+- outcome: updated price lookup to query exact `listings.card_id` history first, then gracefully fall back to title matching when exact-card history does not exist yet
+- validation: code compiled successfully and direct service checks returned cleanly for exact-card and fallback inputs
+- what went well: the change stayed small because `listing_card_id` was already flowing through the conversation state
+- what was weak: there is still little or no historical listing data for many exact cards, so most sellers will still see empty refs until more listings accumulate or external providers are added
+- follow-up: integrate external pricing providers and add live Telegram flow testing with resolved Pokémon cards
+- confidence: high
+
+
+## 2026-04-10 — Product Status Checklist
+- date: 2026-04-10
+- task: summarize the bot into a plain-language readiness checklist
+- goal: make it easy to see what works now, what is partial, what is missing, and what comes next
+- outcome: added `STATUS.md` with working-now, partial, missing, and next-milestone sections
+- validation: checklist content matches current `TODO.md` and `MEMORY.md` state
+- what went well: turns a large feature set into a practical operator-facing snapshot
+- what was weak: status still depends on live Telegram testing for real-world OCR quality
+- follow-up: keep `STATUS.md` updated after each major milestone
+- confidence: high

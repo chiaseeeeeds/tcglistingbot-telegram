@@ -45,9 +45,9 @@
 - DONE: Bulbapedia Pokémon EN set importer
 - DONE: Pokemon-Card-CSV importer
 - DONE: set alias coverage reaches 172/172 file resolution
-- PARTIAL: full clean bulk import completion and validation
-- TODO: final OCR identifier resolver against imported `cards`
-- TODO: fallback prompt for manual `series code + serial code`
+- DONE: full clean bulk import completion and validation
+- PARTIAL: final OCR identifier resolver against imported `cards`
+- PARTIAL: fallback prompt for manual `series code + serial code`
 - TODO: Japanese catalog source and importer
 - TODO: One Piece catalog source and importer
 

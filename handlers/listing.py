@@ -21,7 +21,7 @@ from telegram.ext import (
 from db.listings import create_listing
 from db.seller_configs import get_seller_config_by_seller_id
 from db.sellers import get_seller_by_telegram_id
-from services.card_identifier import identify_card_from_text
+from services.card_identifier import identify_card_from_text, parse_manual_identifier
 from services.image_storage import upload_listing_photo
 from services.ocr import OCRNotConfiguredError, extract_text_from_image
 from services.price_lookup import PriceReference, lookup_price_references
@@ -50,6 +50,7 @@ def _clear_listing_state(context: ContextTypes.DEFAULT_TYPE) -> None:
         'listing_title',
         'listing_suggested_title',
         'listing_card_id',
+        'listing_detection_mode',
         'listing_price_sgd',
         'listing_notes',
         'listing_price_refs',
@@ -238,6 +239,7 @@ async def capture_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     identification = await asyncio.to_thread(identify_card_from_text, raw_text=raw_text, game=game)
 
     if identification.matched:
+        context.user_data['listing_detection_mode'] = 'matched'
         context.user_data['listing_suggested_title'] = identification.display_name
         context.user_data['listing_card_id'] = identification.card_id
         reasons = '\n'.join(f'• {reason}' for reason in identification.match_reasons) or '• OCR text roughly matched the local catalog.'
@@ -246,22 +248,25 @@ async def capture_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             f'Title: <code>{identification.display_name}</code>\n'
             f'Confidence: <code>{identification.confidence:.2f}</code>\n'
             f'Reasons:\n{reasons}\n\n'
-            'Reply with <code>yes</code> to use this title, or send the corrected title manually.',
+            'Reply with <code>yes</code> to use this title, or send the corrected title manually.\n'
+            'If OCR got the card wrong, you can also reply with the printed identifier like <code>PAF 234/091</code>.',
             parse_mode='HTML',
         )
         return TITLE
 
+    context.user_data['listing_detection_mode'] = 'needs_identifier'
     await update.effective_message.reply_text(
         '<b>I could not confidently identify the card from OCR.</b>\n\n'
         f'OCR text: <code>{raw_text[:220] or "No usable text detected"}</code>\n\n'
-        'Please enter the listing title manually.',
+        'Reply with the printed identifier like <code>PAF 234/091</code>.\n'
+        'If you prefer, you can still enter the listing title manually.',
         parse_mode='HTML',
     )
     return TITLE
 
 
 async def capture_title(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Capture or confirm the title, then show price references before asking final price."""
+    """Capture a confirmed title or resolve a manual identifier before pricing."""
 
     if update.effective_message is None or update.effective_message.text is None:
         return TITLE
@@ -270,13 +275,43 @@ async def capture_title(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     if raw_text.lower() == 'yes' and context.user_data.get('listing_suggested_title'):
         title = str(context.user_data['listing_suggested_title'])
     else:
-        title = raw_text
+        manual_identifier = parse_manual_identifier(raw_text)
+        if manual_identifier is not None:
+            identifier_text = (
+                f"IDENTIFIER: {manual_identifier['detected_set_code']} {manual_identifier['detected_print_number']}"
+            )
+            identification = await asyncio.to_thread(
+                identify_card_from_text,
+                raw_text=identifier_text,
+                game=str(context.user_data['listing_game']),
+            )
+            if identification.matched:
+                context.user_data['listing_detection_mode'] = 'matched'
+                context.user_data['listing_suggested_title'] = identification.display_name
+                context.user_data['listing_card_id'] = identification.card_id
+                title = identification.display_name
+                await update.effective_message.reply_text(
+                    '<b>Identifier matched successfully.</b>\n\n'
+                    f'Title: <code>{identification.display_name}</code>\n'
+                    f'Confidence: <code>{identification.confidence:.2f}</code>',
+                    parse_mode='HTML',
+                )
+            else:
+                await update.effective_message.reply_text(
+                    'I still could not match that identifier. Reply with another code like '
+                    '<code>PAF 234/091</code> or send the title manually.',
+                    parse_mode='HTML',
+                )
+                return TITLE
+        else:
+            title = raw_text
 
     context.user_data['listing_title'] = title
     price_refs = await asyncio.to_thread(
         lookup_price_references,
         game=str(context.user_data['listing_game']),
         card_name=title,
+        card_id=context.user_data.get('listing_card_id'),
     )
     context.user_data['listing_price_refs'] = price_refs
     await update.effective_message.reply_text(

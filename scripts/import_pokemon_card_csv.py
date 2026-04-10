@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import argparse
 import json
 import os
 import re
@@ -35,6 +36,10 @@ MANUAL_SET_NAME_OVERRIDES = {
     'McDonald Collection 2017': 'McDonald\'s Collection 2017',
 }
 
+
+
+MAX_FILE_RETRIES = 3
+RETRY_SLEEP_SECONDS = 3
 
 def log_progress(event: str, **details: Any) -> None:
     payload = {'event': event, **details}
@@ -180,71 +185,49 @@ def resolve_set_mapping(set_name: str, set_mappings: dict[str, dict[str, Any]]) 
     return None
 
 
-def fetch_set_mappings(connection: psycopg.Connection) -> dict[str, dict[str, Any]]:
+def fetch_imported_source_files(connection: psycopg.Connection) -> set[str]:
     with connection.cursor() as cursor:
-        cursor.execute(
-            "select set_name, set_code, series_name from pokemon_sets where language = 'en'"
-        )
+        cursor.execute("select distinct source_file from pokemon_cards_staging")
         rows = cursor.fetchall()
-    return {
-        canonicalize_set_name(set_name): {'set_code': set_code, 'series_name': series_name, 'set_name': set_name}
-        for set_name, set_code, series_name in rows
-    }
+    return {row[0] for row in rows}
 
 
-def fetch_existing_cards(connection: psycopg.Connection) -> dict[tuple[str, str, str], str]:
-    with connection.cursor() as cursor:
-        cursor.execute(
-            """
-            select id, set_code, card_number, coalesce(variant, '')
-            from cards
-            where game = 'pokemon'
-            """
+def build_staging_payloads(csv_entry: dict[str, str], set_name: str, set_code: str | None, batch_id: str) -> list[dict[str, Any]]:
+    payloads: list[dict[str, Any]] = []
+    for row in fetch_csv_rows(csv_entry):
+        card_number_left, printed_total = parse_card_number(row['Number'])
+        variant = derive_variant(row['Name'], row['Rarity']) or ''
+        payloads.append(
+            {
+                'language': 'en',
+                'series_name': csv_entry['series_name'],
+                'set_name': set_name,
+                'set_code': set_code,
+                'card_name': row['Name'],
+                'card_number': card_number_left,
+                'printed_total': printed_total,
+                'rarity': row['Rarity'],
+                'variant': variant,
+                'source_file': csv_entry['file_name'],
+                'source_url': csv_entry['html_url'],
+                'source_name': SOURCE_NAME,
+                'raw_payload': row,
+                'import_batch_id': batch_id,
+            }
         )
-        rows = cursor.fetchall()
-    return {
-        (set_code, card_number, variant): str(card_id)
-        for card_id, set_code, card_number, variant in rows
-    }
+    return payloads
 
 
-def parse_card_number(value: str) -> tuple[str, str | None]:
-    normalized = normalize_whitespace(value)
-    match = CARD_NUMBER_RE.match(normalized)
-    if not match:
-        return normalized, None
-    return match.group('left'), match.group('right')
-
-
-def derive_variant(card_name: str, rarity: str) -> str | None:
-    for hint in VARIANT_HINTS:
-        if hint.lower() in card_name.lower() or hint.lower() in rarity.lower():
-            return hint
-    return None
-
-
-def fetch_csv_rows(csv_entry: dict[str, str]) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    with Path(csv_entry['local_path']).open('r', encoding='utf-8-sig', newline='') as handle:
-        reader = csv.DictReader(handle)
-        for row in reader:
-            name = normalize_whitespace(row.get('Name', ''))
-            number = normalize_whitespace(row.get('Number', ''))
-            rarity = normalize_whitespace(row.get('Rarity', ''))
-            if not name or not number:
-                continue
-            rows.append({'Name': name, 'Number': number, 'Rarity': rarity})
-    return rows
-
-
-def import_all() -> dict[str, Any]:
-    started_at = time.perf_counter()
-    log_progress('import_started')
-    database_url = get_database_url()
-    batch_id = str(uuid.uuid4())
-    log_progress('download_started', source=GITHUB_ZIP_URL)
-    csv_index = download_repo_archive()
-    log_progress('download_completed', csv_files=len(csv_index), elapsed_seconds=round(time.perf_counter() - started_at, 2))
+def process_file(
+    database_url: str,
+    csv_entry: dict[str, str],
+    set_mappings: dict[str, dict[str, Any]],
+    batch_id: str,
+) -> dict[str, Any]:
+    set_name = slug_to_set_name(csv_entry['file_name'])
+    set_mapping = resolve_set_mapping(set_name, set_mappings)
+    set_code = set_mapping['set_code'] if set_mapping else None
+    payloads = build_staging_payloads(csv_entry, set_name, set_code, batch_id)
 
     staging_sql = """
         insert into pokemon_cards_staging (
@@ -263,21 +246,36 @@ def import_all() -> dict[str, Any]:
             raw_payload,
             import_batch_id
         )
-        values (
-            %(language)s,
-            %(series_name)s,
-            %(set_name)s,
-            %(set_code)s,
-            %(card_name)s,
-            %(card_number)s,
-            %(printed_total)s,
-            %(rarity)s,
-            %(variant)s,
-            %(source_file)s,
-            %(source_url)s,
-            %(source_name)s,
-            %(raw_payload)s,
-            %(import_batch_id)s
+        select
+            record.language,
+            record.series_name,
+            record.set_name,
+            record.set_code,
+            record.card_name,
+            record.card_number,
+            record.printed_total,
+            record.rarity,
+            record.variant,
+            record.source_file,
+            record.source_url,
+            record.source_name,
+            record.raw_payload,
+            record.import_batch_id
+        from jsonb_to_recordset(%s::jsonb) as record(
+            language text,
+            series_name text,
+            set_name text,
+            set_code text,
+            card_name text,
+            card_number text,
+            printed_total text,
+            rarity text,
+            variant text,
+            source_file text,
+            source_url text,
+            source_name text,
+            raw_payload jsonb,
+            import_batch_id text
         )
         on conflict (language, set_name, card_name, card_number, variant)
         do update set
@@ -367,66 +365,149 @@ def import_all() -> dict[str, Any]:
           and coalesce(card.variant, '') = staging.variant
     """
 
-    imported_staging = 0
-    imported_cards = 0
-    unresolved_sets: set[str] = set()
+    if not payloads:
+        return {'rows': 0, 'cards': 0, 'set_name': set_name, 'set_code': set_code}
+
+    with psycopg.connect(database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(staging_sql, (json.dumps(payloads),))
+            cards_upserted = 0
+            if set_code:
+                cursor.execute(card_update_sql, (batch_id, csv_entry['file_name']))
+                cursor.execute(card_insert_sql, (batch_id, csv_entry['file_name']))
+                cursor.execute(staging_link_sql, (batch_id, csv_entry['file_name']))
+                cards_upserted = len(payloads)
+            connection.commit()
+    return {'rows': len(payloads), 'cards': cards_upserted, 'set_name': set_name, 'set_code': set_code}
+
+
+def fetch_set_mappings(connection: psycopg.Connection) -> dict[str, dict[str, Any]]:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "select set_name, set_code, series_name from pokemon_sets where language = 'en'"
+        )
+        rows = cursor.fetchall()
+    return {
+        canonicalize_set_name(set_name): {'set_code': set_code, 'series_name': series_name, 'set_name': set_name}
+        for set_name, set_code, series_name in rows
+    }
+
+
+def fetch_existing_cards(connection: psycopg.Connection) -> dict[tuple[str, str, str], str]:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            select id, set_code, card_number, coalesce(variant, '')
+            from cards
+            where game = 'pokemon'
+            """
+        )
+        rows = cursor.fetchall()
+    return {
+        (set_code, card_number, variant): str(card_id)
+        for card_id, set_code, card_number, variant in rows
+    }
+
+
+def parse_card_number(value: str) -> tuple[str, str | None]:
+    normalized = normalize_whitespace(value)
+    match = CARD_NUMBER_RE.match(normalized)
+    if not match:
+        return normalized, None
+    return match.group('left'), match.group('right')
+
+
+def derive_variant(card_name: str, rarity: str) -> str | None:
+    for hint in VARIANT_HINTS:
+        if hint.lower() in card_name.lower() or hint.lower() in rarity.lower():
+            return hint
+    return None
+
+
+def fetch_csv_rows(csv_entry: dict[str, str]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    with Path(csv_entry['local_path']).open('r', encoding='utf-8-sig', newline='') as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            name = normalize_whitespace(row.get('Name', ''))
+            number = normalize_whitespace(row.get('Number', ''))
+            rarity = normalize_whitespace(row.get('Rarity', ''))
+            if not name or not number:
+                continue
+            rows.append({'Name': name, 'Number': number, 'Rarity': rarity})
+    return rows
+
+
+def import_all(resume: bool = True) -> dict[str, Any]:
+    started_at = time.perf_counter()
+    log_progress('import_started', resume=resume)
+    database_url = get_database_url()
+    batch_id = str(uuid.uuid4())
+    log_progress('download_started', source=GITHUB_ZIP_URL)
+    csv_index = download_repo_archive()
+    log_progress('download_completed', csv_files=len(csv_index), elapsed_seconds=round(time.perf_counter() - started_at, 2))
 
     log_progress('db_connect_started')
     with psycopg.connect(database_url) as connection:
         log_progress('db_connect_completed', elapsed_seconds=round(time.perf_counter() - started_at, 2))
         set_mappings = fetch_set_mappings(connection)
-        log_progress('set_mappings_loaded', count=len(set_mappings), elapsed_seconds=round(time.perf_counter() - started_at, 2))
-        with connection.cursor() as cursor:
-            for file_index, csv_entry in enumerate(csv_index, start=1):
-                rows = fetch_csv_rows(csv_entry)
-                set_name = slug_to_set_name(csv_entry['file_name'])
-                set_mapping = resolve_set_mapping(set_name, set_mappings)
-                set_code = set_mapping['set_code'] if set_mapping else None
-                if not set_code:
-                    unresolved_sets.add(set_name)
-                payloads: list[dict[str, Any]] = []
-                for row in rows:
-                    card_number_left, printed_total = parse_card_number(row['Number'])
-                    variant = derive_variant(row['Name'], row['Rarity']) or ''
-                    payloads.append(
-                        {
-                            'language': 'en',
-                            'series_name': csv_entry['series_name'],
-                            'set_name': set_name,
-                            'set_code': set_code,
-                            'card_name': row['Name'],
-                            'card_number': card_number_left,
-                            'printed_total': printed_total,
-                            'rarity': row['Rarity'],
-                            'variant': variant,
-                            'source_file': csv_entry['file_name'],
-                            'source_url': csv_entry['html_url'],
-                            'source_name': SOURCE_NAME,
-                            'raw_payload': Json(row),
-                            'import_batch_id': batch_id,
-                        }
-                    )
-                if payloads:
-                    cursor.executemany(staging_sql, payloads)
-                    imported_staging += len(payloads)
-                if set_code and payloads:
-                    cursor.execute(card_update_sql, (batch_id, csv_entry['file_name']))
-                    cursor.execute(card_insert_sql, (batch_id, csv_entry['file_name']))
-                    cursor.execute(staging_link_sql, (batch_id, csv_entry['file_name']))
-                    imported_cards += len(payloads)
-                connection.commit()
-                print(json.dumps({
-                    'progress_files': f'{file_index}/{len(csv_index)}',
-                    'current_file': csv_entry['file_name'],
-                    'current_file_rows': len(rows),
-                    'staging_rows_imported': imported_staging,
-                    'cards_upserted': imported_cards,
-                    'unresolved_set_count': len(unresolved_sets),
-                }), flush=True)
+        imported_source_files = fetch_imported_source_files(connection) if resume else set()
+    log_progress(
+        'set_mappings_loaded',
+        count=len(set_mappings),
+        imported_source_files=len(imported_source_files),
+        elapsed_seconds=round(time.perf_counter() - started_at, 2),
+    )
+
+    imported_staging = 0
+    imported_cards = 0
+    unresolved_sets: set[str] = set()
+    skipped_files = 0
+
+    for file_index, csv_entry in enumerate(csv_index, start=1):
+        file_name = csv_entry['file_name']
+        if file_name in imported_source_files:
+            skipped_files += 1
+            log_progress('file_skipped', progress_files=f'{file_index}/{len(csv_index)}', current_file=file_name)
+            continue
+
+        last_error: Exception | None = None
+        for attempt in range(1, MAX_FILE_RETRIES + 1):
+            try:
+                result = process_file(database_url, csv_entry, set_mappings, batch_id)
+                imported_staging += result['rows']
+                imported_cards += result['cards']
+                if not result['set_code']:
+                    unresolved_sets.add(result['set_name'])
+                log_progress(
+                    'file_imported',
+                    progress_files=f'{file_index}/{len(csv_index)}',
+                    current_file=file_name,
+                    current_file_rows=result['rows'],
+                    staging_rows_imported=imported_staging,
+                    cards_upserted=imported_cards,
+                    unresolved_set_count=len(unresolved_sets),
+                    attempt=attempt,
+                )
+                imported_source_files.add(file_name)
+                break
+            except (psycopg.OperationalError, psycopg.InterfaceError, OSError) as exc:
+                last_error = exc
+                log_progress(
+                    'file_retry',
+                    progress_files=f'{file_index}/{len(csv_index)}',
+                    current_file=file_name,
+                    attempt=attempt,
+                    error=str(exc),
+                )
+                time.sleep(RETRY_SLEEP_SECONDS * attempt)
+        else:
+            raise RuntimeError(f'Failed to import {file_name} after {MAX_FILE_RETRIES} attempts') from last_error
 
     return {
         'batch_id': batch_id,
         'csv_files': len(csv_index),
+        'skipped_files': skipped_files,
         'staging_rows_imported': imported_staging,
         'cards_upserted': imported_cards,
         'unresolved_sets': sorted(unresolved_sets),
@@ -435,7 +516,11 @@ def import_all() -> dict[str, Any]:
 
 
 def main() -> None:
-    result = import_all()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--no-resume', action='store_true', help='Reprocess all files instead of skipping already imported source files.')
+    args = parser.parse_args()
+
+    result = import_all(resume=not args.no_resume)
     print(json.dumps(result, indent=2))
 
 

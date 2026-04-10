@@ -26,3 +26,19 @@ def get_card_by_id(card_id: str) -> dict[str, Any] | None:
 
     response = get_client().table('cards').select('*').eq('id', card_id).limit(1).execute()
     return extract_single(response)
+
+def list_cards_by_identifier(*, game: str, set_code: str, card_number: str) -> list[dict[str, Any]]:
+    """Return active catalog cards matching a specific set code and card number."""
+
+    response = (
+        get_client()
+        .table('cards')
+        .select('*')
+        .eq('game', game)
+        .eq('set_code', set_code)
+        .eq('card_number', card_number)
+        .eq('is_active', True)
+        .execute()
+    )
+    return extract_many(response)
+
