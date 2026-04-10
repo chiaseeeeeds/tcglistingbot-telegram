@@ -189,16 +189,8 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             if storage_path:
                 context.user_data['listing_storage_path'] = storage_path
 
-        ocr_result = await asyncio.to_thread(extract_text_from_image, str(local_path))
-        context.user_data['listing_ocr_text'] = ocr_result.text
-
-        warning_block = ''
-        if ocr_result.warnings:
-            warning_block = '\n'.join(f'• {warning}' for warning in ocr_result.warnings) + '\n\n'
-
         await update.effective_message.reply_text(
             'Photo received.\n\n'
-            f'{warning_block}'
             'Which game is this card from? Reply with <code>pokemon</code> or <code>onepiece</code>.',
             parse_mode='HTML',
         )
@@ -235,8 +227,40 @@ async def capture_game(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         return GAME
 
     context.user_data['listing_game'] = game
-    raw_text = str(context.user_data.get('listing_ocr_text') or '')
+
+    photo_path = str(context.user_data.get('listing_photo_path') or '')
+    if not photo_path:
+        await update.effective_message.reply_text(
+            'I lost the uploaded photo for this listing. Please send the card photo again.',
+            parse_mode='HTML',
+        )
+        return PHOTO
+
+    try:
+        ocr_result = await asyncio.to_thread(extract_text_from_image, photo_path, game=game)
+    except OCRNotConfiguredError as exc:
+        logger.exception('OCR provider misconfigured during listing flow: %s', exc)
+        await update.effective_message.reply_text(
+            'OCR is not configured correctly right now. Please try again later or enter the title manually after I restore OCR.',
+            parse_mode='HTML',
+        )
+        _clear_listing_state(context)
+        return ConversationHandler.END
+    except Exception as exc:
+        logger.exception('Failed to OCR listing photo after game selection: %s', exc)
+        await update.effective_message.reply_text(
+            'I could not process the card text from that photo. Please send a clearer single-card image and try again.',
+            parse_mode='HTML',
+        )
+        return PHOTO
+
+    context.user_data['listing_ocr_text'] = ocr_result.text
+    raw_text = str(ocr_result.text or '')
     identification = await asyncio.to_thread(identify_card_from_text, raw_text=raw_text, game=game)
+
+    warning_block = ''
+    if ocr_result.warnings:
+        warning_block = '\n'.join(f'• {warning}' for warning in ocr_result.warnings) + '\n\n'
 
     if identification.matched:
         context.user_data['listing_detection_mode'] = 'matched'
