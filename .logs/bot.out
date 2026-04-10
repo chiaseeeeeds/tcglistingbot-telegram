@@ -1,0 +1,5 @@
+2026-04-10 21:38:34,381 INFO __main__ Starting bot process.
+2026-04-10 21:38:34,933 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-04-10 21:38:34,999 INFO apscheduler.scheduler Scheduler started
+2026-04-10 21:38:34,999 INFO telegram.ext.Application Application started
+2026-04-10 21:49:51,777 WARNING services.image_storage Failed to upload listing photo /var/folders/x9/ffgkn9zj5f96zsngx6n5pqm00000gn/T/tcg-listing-bot/4aa14f10-dc53-4ece-91bf-6c9a31ea6af2.jpg to storage bucket tcg-listing-bot-images: {'statusCode': 404, 'error': Bucket not found, 'message': Bucket not found}

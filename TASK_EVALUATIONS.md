@@ -155,3 +155,16 @@ Use this log after meaningful implementation tasks.
 - what was weak: status still depends on live Telegram testing for real-world OCR quality
 - follow-up: keep `STATUS.md` updated after each major milestone
 - confidence: high
+
+
+## 2026-04-10 — Bottom-Left OCR Hard Focus
+- date: 2026-04-10
+- task: force OCR and matching to focus on the bottom-left printed identifier lane
+- goal: stop false matches caused by stray full-card text such as a lone `N`
+- outcome: narrowed OCR crops to tighter bottom-left regions, removed broader name OCR from the live matching payload, and ignored one-letter alphabetic tokens in fuzzy matching
+- validation: `python3 -m py_compile services/ocr.py services/card_identifier.py handlers/listing.py main.py`; bot restarted cleanly in polling mode
+- what went well: the change attacks both sources of bad matches: noisy crop area and overly permissive token overlap
+- what was weak: live Telegram retesting on real photos is still needed to tune the exact crop ratios
+- follow-up: test `/list` on several Pokémon EN cards and inspect failed identifiers to tune crop bounds again if needed
+- confidence: medium
+

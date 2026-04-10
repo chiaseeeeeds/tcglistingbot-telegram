@@ -27,7 +27,13 @@ class CardIdentificationResult:
 
 
 def _tokenize(value: str) -> set[str]:
-    return {token.lower() for token in _TOKEN_RE.findall(value)}
+    tokens: set[str] = set()
+    for token in _TOKEN_RE.findall(value):
+        normalized = token.lower()
+        if normalized.isalpha() and len(normalized) < 2:
+            continue
+        tokens.add(normalized)
+    return tokens
 
 
 def _extract_identifiers(raw_text: str) -> dict[str, str]:

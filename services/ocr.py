@@ -15,6 +15,7 @@ from config import get_config
 logger = logging.getLogger(__name__)
 
 _IDENTIFIER_PATTERN = re.compile(r'\b[A-Z]{2,5}\s*(?:EN|JP)?\s*\d{1,3}/\d{1,3}\b|\b\d{1,3}/\d{1,3}\b')
+_STRICT_IDENTIFIER_PATTERN = re.compile(r'^(?:[A-Z]{2,5}\s*(?:EN|JP)?\s*)?\d{1,3}/\d{1,3}$')
 
 
 class OCRNotConfiguredError(RuntimeError):
@@ -51,29 +52,22 @@ def _bottom_left_identifier_crop(image: Image.Image) -> Image.Image:
     """Crop the lower-left region where set code / card number commonly appears."""
 
     width, height = image.size
-    cropped = image.crop((0, int(height * 0.68), int(width * 0.42), height))
-    enlarged = cropped.resize((max(cropped.width * 4, 1), max(cropped.height * 4, 1)))
-    boosted = ImageEnhance.Contrast(enlarged).enhance(3.0)
-    return ImageOps.autocontrast(boosted)
+    cropped = image.crop((0, int(height * 0.74), int(width * 0.28), int(height * 0.96)))
+    enlarged = cropped.resize((max(cropped.width * 6, 1), max(cropped.height * 6, 1)))
+    boosted = ImageEnhance.Contrast(enlarged).enhance(3.6)
+    sharpened = boosted.filter(ImageFilter.SHARPEN)
+    return ImageOps.autocontrast(sharpened)
 
 
 def _bottom_left_identifier_crop_tight(image: Image.Image) -> Image.Image:
     """Crop an even tighter lower-left lane for printed identifier recovery."""
 
     width, height = image.size
-    cropped = image.crop((0, int(height * 0.76), int(width * 0.32), height))
-    enlarged = cropped.resize((max(cropped.width * 5, 1), max(cropped.height * 5, 1)))
-    boosted = ImageEnhance.Contrast(enlarged).enhance(3.4)
-    return ImageOps.autocontrast(boosted)
-
-
-def _full_text_crop(image: Image.Image) -> Image.Image:
-    """Keep a broader view for name and larger text OCR."""
-
-    width, height = image.size
-    cropped = image.crop((0, 0, width, int(height * 0.88)))
-    enlarged = cropped.resize((max(cropped.width * 2, 1), max(cropped.height * 2, 1)))
-    return ImageOps.autocontrast(enlarged)
+    cropped = image.crop((0, int(height * 0.80), int(width * 0.22), int(height * 0.95)))
+    enlarged = cropped.resize((max(cropped.width * 8, 1), max(cropped.height * 8, 1)))
+    boosted = ImageEnhance.Contrast(enlarged).enhance(4.0)
+    sharpened = boosted.filter(ImageFilter.SHARPEN)
+    return ImageOps.autocontrast(sharpened)
 
 
 def _normalize_text(text: str) -> str:
@@ -103,28 +97,6 @@ def _ocr_identifier_passes(image: Image.Image) -> list[str]:
     return outputs
 
 
-def _ocr_name_passes(image: Image.Image) -> list[str]:
-    """Run broader OCR for names/text, separated by language lane."""
-
-    configs = [
-        ('eng', '--psm 6'),
-        ('eng', '--psm 11'),
-        ('jpn+jpn_vert', '--psm 6'),
-        ('jpn+jpn_vert', '--psm 11'),
-    ]
-    outputs: list[str] = []
-    for lang, config in configs:
-        try:
-            text = pytesseract.image_to_string(image, lang=lang, config=config)
-        except pytesseract.TesseractError:
-            continue
-        normalized = _normalize_text(text)
-        if normalized:
-            prefix = 'NAME_EN' if lang == 'eng' else 'NAME_JP'
-            outputs.append(f'{prefix}: {normalized}')
-    return outputs
-
-
 def _select_best_identifier(chunks: list[str]) -> str:
     """Pick the most useful identifier chunk from OCR outputs."""
 
@@ -132,15 +104,21 @@ def _select_best_identifier(chunks: list[str]) -> str:
     best_score = -1
     for chunk in chunks:
         match = _IDENTIFIER_PATTERN.search(chunk)
+        strict_match = bool(match and _STRICT_IDENTIFIER_PATTERN.match(match.group(0).strip()))
         score = 0
-        if match:
+        if strict_match and match:
             score += 100 + len(match.group(0))
+        elif match:
+            score += 25 + len(match.group(0))
         score += sum(char.isdigit() for char in chunk)
-        score += sum(char.isalpha() for char in chunk)
+        score -= max(sum(char.isalpha() for char in chunk) - 5, 0)
         if score > best_score:
             best_score = score
             best_chunk = match.group(0) if match else chunk
-    return best_chunk.strip()
+    selected = best_chunk.strip()
+    if selected and not _IDENTIFIER_PATTERN.search(selected):
+        return ''
+    return selected
 
 
 def _dedupe_text_chunks(chunks: list[str]) -> str:
@@ -175,18 +153,14 @@ def extract_text_from_image(image_path: str | Path) -> OCRResult:
         processed = _prepare_image(path)
         identifier_crop = _bottom_left_identifier_crop(processed)
         identifier_crop_tight = _bottom_left_identifier_crop_tight(processed)
-        full_text_crop = _full_text_crop(processed)
-
         identifier_chunks = []
         identifier_chunks.extend(_ocr_identifier_passes(identifier_crop))
         identifier_chunks.extend(_ocr_identifier_passes(identifier_crop_tight))
         best_identifier = _select_best_identifier(identifier_chunks)
 
-        name_chunks = _ocr_name_passes(full_text_crop)
         text_chunks = []
         if best_identifier:
             text_chunks.append(f'IDENTIFIER: {best_identifier}')
-        text_chunks.extend(name_chunks)
         normalized = _dedupe_text_chunks(text_chunks)
     except pytesseract.TesseractNotFoundError as exc:
         raise OCRNotConfiguredError('Tesseract is not installed on the runtime host.') from exc
