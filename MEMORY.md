@@ -19,6 +19,15 @@
 - OCR debug artifacts are now saved locally for failed tuning sessions
 - OCR now aggregates signals across multiple fallback card crops, combining top-name OCR and identifier OCR instead of relying on one crop only
 - Catalog reads now page through the full `cards` table, so fuzzy resolution can use all imported Pokémon rows
+- `/list` now auto-detects the game instead of asking the seller first, with a current Pokémon-first bias while One Piece support is still maturing
+- matcher now fails safe on weak number-only OCR instead of forcing random catalog hits
+- Google Vision OCR is now supported as an optional provider when credentials are configured
+- Pokémon live price references are now pulled from Pokémon TCG API market data and normalized to SGD with live FX rates
+- in-process card catalog reads are now cached, which reduces repeated matcher latency during `/list`
+- OCR identifier recovery now votes across noisy compact number blobs like `2344182` and uses stronger lower-left identifier probes
+- medium-confidence modern Pokémon hits like `Team Rocket's Crobat ex` and `Team Rocket's Nidoking ex` now resolve from printed number + weak name fragments instead of failing or hallucinating the wrong base-set card
+- old low-number cards now use a shortlist-style name + printed number fallback, so ambiguous cards like Base/Base Set 2 era reprints can be chosen from top candidates instead of being auto-matched incorrectly
+- basic discussion-thread claim handling is now wired for bot-posted listings, backed by the atomic claim RPC
 - local catalog matching works against seeded cards first
 - listing posting still requires seller confirmation before posting
 - PriceCharting staging import path exists for bulk external catalog ingestion
@@ -33,25 +42,26 @@
 - do not auto-post without explicit seller confirmation
 - do not depend on marketplace, escrow, or KYC in Phase 1
 - external pricing should degrade gracefully when unavailable
-- comment-based claim automation is still pending
+- discussion-thread claim handling now resolves more reply/message shapes, but still needs live discussion-group verification
 - Railway/webhook deployment is still pending for always-on hosting
+- local Orchids startup now uses `nohup` + `.logs/bot.pid`, which is more stable than the old foreground startup but still not equivalent to proper hosting/supervision
 
 ### Known Gaps
 - photo flow currently works best with one clear front image
-- live website price references are not fully integrated yet
+- live website price references now work for matched Pokémon cards via Pokémon TCG API + FX normalization; One Piece still falls back gracefully
 - raw PriceCharting rows still need a resolver before they can reliably populate `cards`
 - Pokémon EN import is complete, but the bulk loader still benefits from resumable per-file execution in unstable network environments
-- multi-candidate OCR and full-catalog matching now work on the tested real Charizard photo, but live-photo tuning is still needed for glare, partial crops, and non-Pokémon layouts
+- multi-candidate OCR and full-catalog matching now work better on tested real Pokémon photos, but latency is still high and live-photo tuning is still needed for glare, partial crops, and non-Pokémon layouts
 - card identification is still local-catalog and low-volume friendly
 - claim monitoring, queue advancement, and SOLD lifecycle are still todo
 - seller/buyer reputation and dedicated price history are still todo
 
 ### Near-Term Priorities
-1. live-test rectified card-relative OCR in `/list` on real Pokémon photos
-2. add first real exact-card listing history by using the updated `/list` flow
-3. connect live external price reference providers
+1. live-test the updated OCR heuristics on more real Pokémon photos, especially glare and older cards
+2. verify linked discussion-thread `Claim` handling against real Telegram reply/update shapes
+3. add a real One Piece external pricing path or provider-backed fallback
 4. support front + back photo intake
-5. implement discussion-comment claim handling
+5. improve old-card disambiguation further with set-symbol or layout cues after shortlist fallback
 
 ### Working Rules For Future Tasks
 - after any meaningful task, update this file with new current state and next risks

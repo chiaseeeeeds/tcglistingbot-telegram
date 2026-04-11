@@ -72,3 +72,19 @@ def count_active_listings_for_seller(seller_id: str) -> int:
         .execute()
     )
     return int(response.count or 0)
+
+
+def get_listing_by_posted_message(*, posted_message_id: int, posted_channel_id: int | None = None) -> dict[str, Any] | None:
+    """Return an active or claim-pending listing by channel message identity."""
+
+    query = (
+        get_client()
+        .table('listings')
+        .select('*')
+        .eq('posted_message_id', posted_message_id)
+        .in_('status', ['active', 'claim_pending'])
+    )
+    if posted_channel_id is not None:
+        query = query.eq('posted_channel_id', posted_channel_id)
+    response = query.limit(1).execute()
+    return extract_single(response)

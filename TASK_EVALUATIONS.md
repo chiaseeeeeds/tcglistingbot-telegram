@@ -194,3 +194,65 @@ Use this log after meaningful implementation tasks.
 - follow-up: live-test `/list` again on real Telegram photos, then add top-3 candidate UI when confidence stays medium
 - confidence: medium
 
+
+
+## 2026-04-10 — Auto Game Detection And Safer OCR Matching
+- date: 2026-04-10
+- task: remove the manual game prompt and stop weak OCR from forcing clearly wrong catalog matches
+- goal: auto-detect the game on photo upload, reduce seller friction, and make low-quality OCR fail safe instead of confidently picking random cards
+- outcome: `/list` now auto-detects the game on photo upload, weak one-digit / number-only OCR no longer drives fuzzy matches, and the tested Crobat photo now returns `Unknown card` instead of a false `Alakazam` hit
+- validation: `python3 -m py_compile handlers/listing.py services/game_detection.py services/ocr.py services/card_identifier.py`; live OCR checks show the Charizard photo resolves while the Crobat photo safely does not match the wrong card
+- what went well: seller friction is lower and the matcher now prefers no answer over a bad answer when catalog evidence is weak
+- what was weak: auto game detection currently biases toward Pokémon because the One Piece path and catalog are still underbuilt; local Tesseract runtime is still slow on multi-candidate scans
+- follow-up: add One Piece-specific OCR/catalog support, then replace slow local OCR with a faster high-accuracy vision path or staged hosted fallback
+- confidence: medium
+
+
+
+## 2026-04-10 — Claim Wiring And OCR Provider Upgrade Path
+- date: 2026-04-10
+- task: wire basic comment claims and add an OCR provider path beyond local Tesseract
+- goal: make `Claim` comments start doing something on bot-posted listings and prepare a faster/more-accurate OCR option for production
+- outcome: added discussion-thread claim handling backed by the existing atomic claim RPC, seller/buyer DM notifications on successful claims, and optional Google Vision OCR support behind the existing `OCR_PROVIDER` config
+- validation: `python3 -m py_compile handlers/listing.py handlers/claims.py services/game_detection.py services/ocr.py services/card_identifier.py db/claims.py db/listings.py db/sellers.py`; bot restarted cleanly in polling mode
+- what went well: the repo now has a real path for discussion claim handling instead of a placeholder, and OCR can now graduate beyond local Tesseract without changing the listing flow shape
+- what was weak: live comment handling still depends on Telegram discussion reply mapping in the deployed chat configuration, and live external pricing is still not fully wired because provider access is missing or anti-bot protected
+- follow-up: live-test `Claim` in the linked discussion thread, then either add provider credentials or choose a sanctioned live price source that can be queried reliably from the bot
+- confidence: medium
+
+
+
+## 2026-04-11 — Live Pokémon Pricing And OCR/Claim Hardening
+- date: 2026-04-11
+- task: harden modern Pokémon OCR, add real external price references, and make linked-discussion claims easier to resolve
+- goal: improve real-photo card identification, stop stale history-only pricing, and reduce silent claim misses in Telegram discussion threads
+- outcome: cached full-card catalog reads, improved OCR identifier recovery from noisy bottom-left blobs, safer/less ambiguous catalog matching, Pokémon live price references via Pokémon TCG API + FX conversion, and broader reply-to-listing resolution for discussion-thread claims
+- validation: `python -m py_compile main.py config.py handlers/*.py db/*.py services/*.py jobs/*.py utils/*.py scripts/*.py`; local real-photo probes now resolve `Team Rocket's Crobat ex Illustration Rare (Destined Rivals)` from a noisy `234/182` OCR result and return live price references; bot restarted successfully in polling mode
+- what went well: the fix targeted the actual failure modes instead of overfitting one crop, and live pricing is now genuinely external for matched Pokémon cards
+- what was weak: local Tesseract latency is still noticeable, and linked discussion-thread claim behavior still needs real Telegram verification beyond code-path hardening
+- follow-up: live-test `/list` and `Claim` on Telegram, then decide whether to switch production OCR to Google Vision or another faster hosted path
+- confidence: medium
+
+
+## 2026-04-11 — Old-Card Name+Number Shortlist Flow
+- date: 2026-04-11
+- task: build an era-aware fallback for older Pokémon cards that do not expose OCR-friendly set abbreviations
+- goal: use name + printed number to generate candidates for old/icon-era cards without forcing bad auto-matches
+- outcome: the matcher now returns ranked candidate options, low-number old-card matches fall back to shortlist mode, and `/list` accepts `1` / `2` / `3` replies to choose one of the suggested candidates directly
+- validation: `python -m py_compile main.py config.py handlers/*.py db/*.py services/*.py jobs/*.py utils/*.py scripts/*.py`; local probes show modern `234/182` Crobat still resolves while ambiguous older inputs like `Alakazam 1/06` and `Charizard 4/102` now return top-3 shortlist options instead of a single wrong match
+- what went well: the fallback is targeted to the old-card ambiguity problem and preserves the safer modern-number path
+- what was weak: shortlist ranking still relies on OCR text only, so some old-card ties will remain unresolved until set-symbol or layout cues are added
+- follow-up: add set-symbol/layout disambiguation for old sets and consider inline Telegram buttons instead of numeric replies for shortlist selection
+- confidence: high
+
+
+## 2026-04-11 — Local Bot Process Stability Triage
+- date: 2026-04-11
+- task: investigate repeated local bot downtime and make Orchids startup less fragile
+- goal: determine whether the bot is crashing versus being lost due to local process lifecycle, then relaunch it in a more stable way
+- outcome: verified there was no fresh crash trace in app logs, relaunched the bot successfully in detached mode, added pidfile tracking, and updated `.orchids/orchids.json` to start the bot with `nohup` and tail the log instead of relying on a foreground process
+- validation: bot restarted successfully and is running as PID from `.logs/bot.pid`; `.logs/bot.out` shows successful polling startup on 2026-04-11
+- what went well: this isolated the issue to local runtime/process supervision rather than an application exception path
+- what was weak: this is still a local-machine workaround, so sleep, restarts, or Orchids session changes can still interrupt service compared with Railway/webhook hosting
+- follow-up: move the bot to a real always-on host with process supervision and webhook delivery
+- confidence: high

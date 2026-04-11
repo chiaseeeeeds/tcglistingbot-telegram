@@ -1,10 +1,4 @@
-2026-04-10 23:25:10,516 INFO __main__ Starting bot process.
-2026-04-10 23:25:11,213 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
-2026-04-10 23:25:11,275 INFO apscheduler.scheduler Scheduler started
-2026-04-10 23:25:11,275 INFO telegram.ext.Application Application started
-2026-04-10 23:25:54,226 WARNING services.image_storage Failed to upload listing photo /var/folders/x9/ffgkn9zj5f96zsngx6n5pqm00000gn/T/tcg-listing-bot/d2e0cdf1-7509-414e-abf6-9c3ada220f4a.jpg to storage bucket tcg-listing-bot-images: {'statusCode': 404, 'error': Bucket not found, 'message': Bucket not found}
-2026-04-10 23:26:57,117 INFO services.ocr OCR selected candidate center_right for d2e0cdf1-7509-414e-abf6-9c3ada220f4a.jpg with score=516 text=IDENTIFIER: SEN234/091 | NAME_EN: hetiiza df OP aggregated=IDENTIFIER: SEN234/091 | NAME_EN: GPeiandv Charizard
-2026-04-10 23:28:14,572 INFO handlers.listing Posted listing e007b57e-0abc-4e9c-be32-1b05a02ea2f1 to channel -1003790220044.
-2026-04-10 23:28:54,308 WARNING services.image_storage Failed to upload listing photo /var/folders/x9/ffgkn9zj5f96zsngx6n5pqm00000gn/T/tcg-listing-bot/325925cf-bb67-4faf-b4f6-80b53fc7139a.jpg to storage bucket tcg-listing-bot-images: {'statusCode': 404, 'error': Bucket not found, 'message': Bucket not found}
-2026-04-10 23:29:07,250 WARNING services.image_storage Failed to upload listing photo /var/folders/x9/ffgkn9zj5f96zsngx6n5pqm00000gn/T/tcg-listing-bot/8d91c358-4ddc-44a7-b87c-52f1b500467d.jpg to storage bucket tcg-listing-bot-images: {'statusCode': 404, 'error': Bucket not found, 'message': Bucket not found}
-2026-04-10 23:30:31,550 INFO services.ocr OCR selected candidate center_up for 8d91c358-4ddc-44a7-b87c-52f1b500467d.jpg with score=450 text=IDENTIFIER: AIIM 1/06 aggregated=IDENTIFIER: AIIM 1/06 | NAME_EN: se etl ChOoDatacens
+2026-04-11 13:26:22,204 INFO __main__ Starting bot process.
+2026-04-11 13:26:23,028 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-04-11 13:26:23,114 INFO apscheduler.scheduler Scheduler started
+2026-04-11 13:26:23,115 INFO telegram.ext.Application Application started

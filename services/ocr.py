@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import io
 import logging
 import re
+from collections import Counter
+from functools import lru_cache
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import gettempdir
@@ -12,24 +15,34 @@ import pytesseract
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 
 from config import get_config
+from db.cards import list_cards_for_game
 from services.card_detection import CardImageCandidate, extract_card_candidates
 
 logger = logging.getLogger(__name__)
 
 _IDENTIFIER_PATTERN = re.compile(r'\b[A-Z]{2,5}\s*(?:EN|JP)?\s*\d{1,3}/\d{1,3}\b|\b\d{1,3}/\d{1,3}\b')
 _STRICT_IDENTIFIER_PATTERN = re.compile(r'^(?:[A-Z]{2,5}\s*(?:EN|JP)?\s*)?\d{1,3}/\d{1,3}$')
+_RATIO_PATTERN = re.compile(r'\b(\d{1,3}/\d{1,3})\b')
+_COMPACT_RATIO_PATTERN = re.compile(r'(?<!\d)(\d{6})(?!\d)')
+_NOISY_COMPACT_RATIO_PATTERN = re.compile(r'(?<!\d)(\d{7})(?!\d)')
+_SET_CODE_TOKEN_PATTERN = re.compile(r'[A-Z0-9]{2,5}')
+_SET_CODE_STOPWORDS = {
+    'NAME', 'EN', 'JP', 'HP', 'EX', 'GX', 'VMAX', 'VSTAR', 'TAG', 'TEAM', 'ROCKET', 'ROCKETS',
+    'ILLUS', 'WEAK', 'WEAKNESS', 'RESIST', 'RESISTANCE', 'BASIC', 'STAGE', 'ABILITY', 'TRAINER',
+    'POKEMON', 'CARD', 'ATTACK', 'DAMAGE', 'ENERGY', 'RAR', 'RARE', 'HOLO', 'SPECIAL', 'ULTRA',
+}
 
 _POKEMON_IDENTIFIER_WINDOWS: list[tuple[float, float, float, float]] = [
     (0.01, 0.88, 0.30, 0.985),
     (0.00, 0.86, 0.33, 0.99),
     (0.03, 0.90, 0.26, 0.99),
     (0.02, 0.91, 0.23, 0.985),
+    (0.00, 0.93, 0.20, 1.00),
 ]
 _POKEMON_NAME_WINDOWS: list[tuple[float, float, float, float]] = [
     (0.16, 0.01, 0.58, 0.07),
     (0.14, 0.00, 0.62, 0.08),
     (0.14, 0.01, 0.72, 0.10),
-    (0.11, 0.00, 0.78, 0.12),
 ]
 _GENERIC_IDENTIFIER_WINDOWS: list[tuple[float, float, float, float]] = [
     (0.00, 0.84, 0.35, 0.99),
@@ -44,8 +57,6 @@ class OCRNotConfiguredError(RuntimeError):
 
 @dataclass(frozen=True)
 class OCRResult:
-    """Best-effort OCR output extracted from a seller photo."""
-
     text: str
     provider: str
     warnings: list[str]
@@ -67,11 +78,22 @@ def get_ocr_provider_name() -> str:
     return get_config().ocr_provider
 
 
+@lru_cache(maxsize=4)
+def _known_set_codes(game: str | None) -> set[str]:
+    if not game:
+        return set()
+    return {
+        str(row.get('set_code') or '').strip().upper()
+        for row in list_cards_for_game(game)
+        if str(row.get('set_code') or '').strip()
+    }
+
+
 def _prepare_identifier_roi(image: Image.Image) -> Image.Image:
     grayscale = ImageOps.grayscale(image)
     contrast = ImageEnhance.Contrast(grayscale).enhance(3.5)
     sharpened = contrast.filter(ImageFilter.SHARPEN)
-    enlarged = sharpened.resize((max(sharpened.width * 6, 1), max(sharpened.height * 6, 1)))
+    enlarged = sharpened.resize((max(sharpened.width * 5, 1), max(sharpened.height * 5, 1)))
     return ImageOps.autocontrast(enlarged)
 
 
@@ -80,20 +102,13 @@ def _prepare_name_roi(image: Image.Image) -> Image.Image:
     contrast = ImageEnhance.Contrast(grayscale).enhance(2.8)
     sharpened = contrast.filter(ImageFilter.SHARPEN)
     enlarged = sharpened.resize((max(sharpened.width * 4, 1), max(sharpened.height * 4, 1)))
-    return ImageOps.autocontrast(sharpened.resize((max(enlarged.width, 1), max(enlarged.height, 1))))
+    return ImageOps.autocontrast(enlarged)
 
 
 def _crop_relative(image: Image.Image, window: tuple[float, float, float, float]) -> Image.Image:
     width, height = image.size
     left, top, right, bottom = window
-    return image.crop(
-        (
-            int(width * left),
-            int(height * top),
-            int(width * right),
-            int(height * bottom),
-        )
-    )
+    return image.crop((int(width * left), int(height * top), int(width * right), int(height * bottom)))
 
 
 def _identifier_windows_for_game(game: str | None) -> list[tuple[float, float, float, float]]:
@@ -112,18 +127,18 @@ def _normalize_text(text: str) -> str:
     return ' '.join(text.split())
 
 
-def _ocr_identifier_passes(image: Image.Image) -> list[str]:
+def _ocr_identifier_passes_tesseract(image: Image.Image) -> list[str]:
     configs = [
-        '--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/ ',
         '--psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/ ',
-        '--psm 11 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/ ',
+        '--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/ ',
     ]
     variants = [
         image,
+        image.point(lambda pixel: 255 if pixel > 152 else 0),
         ImageOps.invert(image),
-        image.point(lambda pixel: 255 if pixel > 150 else 0),
     ]
     outputs: list[str] = []
+    strict_hits = 0
     for variant in variants:
         for config in configs:
             try:
@@ -131,57 +146,170 @@ def _ocr_identifier_passes(image: Image.Image) -> list[str]:
             except pytesseract.TesseractError:
                 continue
             normalized = _normalize_text(text).upper()
-            if normalized:
-                outputs.append(normalized)
+            if not normalized:
+                continue
+            outputs.append(normalized)
+            if _STRICT_IDENTIFIER_PATTERN.match(normalized):
+                strict_hits += 1
+            if strict_hits >= 2:
+                return outputs
     return outputs
 
 
-def _ocr_name_passes(image: Image.Image) -> list[str]:
-    configs = [
-        ('eng', '--psm 7'),
-        ('eng', '--psm 6'),
-        ('jpn+jpn_vert', '--psm 7'),
-    ]
+def _useful_english_name(text: str) -> bool:
+    tokens = re.findall(r'[A-Za-z]{3,}', text)
+    if not tokens:
+        return False
+    return any(len(token) >= 5 for token in tokens)
+
+
+def _ocr_name_passes_tesseract(image: Image.Image) -> list[str]:
     outputs: list[str] = []
-    for lang, config in configs:
+    for config in ['--psm 7', '--psm 6']:
         try:
-            text = pytesseract.image_to_string(image, lang=lang, config=config)
+            text = pytesseract.image_to_string(image, lang='eng', config=config)
         except pytesseract.TesseractError:
             continue
         normalized = _normalize_text(text)
         if normalized:
-            prefix = 'NAME_EN' if lang == 'eng' else 'NAME_JP'
-            outputs.append(f'{prefix}: {normalized}')
+            outputs.append(f'NAME_EN: {normalized}')
+    if any(_useful_english_name(chunk) for chunk in outputs):
+        return outputs
+    try:
+        text = pytesseract.image_to_string(image, lang='jpn+jpn_vert', config='--psm 7')
+    except pytesseract.TesseractError:
+        return outputs
+    normalized = _normalize_text(text)
+    if normalized:
+        outputs.append(f'NAME_JP: {normalized}')
     return outputs
 
 
-def _select_best_identifier(chunks: list[str]) -> tuple[str, int]:
-    best_chunk = ''
-    best_score = -1
+def _google_vision_text(image: Image.Image) -> str:
+    try:
+        from google.cloud import vision
+    except Exception as exc:
+        raise OCRNotConfiguredError('google-cloud-vision is not installed.') from exc
+    client = vision.ImageAnnotatorClient()
+    buf = io.BytesIO()
+    image.save(buf, format='PNG')
+    request_image = vision.Image(content=buf.getvalue())
+    response = client.text_detection(image=request_image)
+    if response.error.message:
+        raise OCRNotConfiguredError(f'Google Vision OCR failed: {response.error.message}')
+    annotations = response.text_annotations or []
+    if not annotations:
+        return ''
+    return _normalize_text(annotations[0].description)
+
+
+def _ocr_identifier_passes(image: Image.Image) -> list[str]:
+    provider = get_ocr_provider_name()
+    if provider == 'google_vision':
+        text = _google_vision_text(image).upper()
+        return [text] if text else []
+    return _ocr_identifier_passes_tesseract(image)
+
+
+def _ocr_name_passes(image: Image.Image) -> list[str]:
+    provider = get_ocr_provider_name()
+    if provider == 'google_vision':
+        text = _google_vision_text(image)
+        return [f'NAME_EN: {text}'] if text else []
+    return _ocr_name_passes_tesseract(image)
+
+
+def _candidate_set_codes(chunks: list[str], *, game: str | None) -> Counter[str]:
+    scores: Counter[str] = Counter()
+    known_codes = _known_set_codes(game)
     for chunk in chunks:
-        match = _IDENTIFIER_PATTERN.search(chunk)
-        strict_match = bool(match and _STRICT_IDENTIFIER_PATTERN.match(match.group(0).strip()))
-        score = 0
-        if strict_match and match:
-            score += 120 + len(match.group(0))
-        elif match:
-            score += 30 + len(match.group(0))
-        score += sum(char.isdigit() for char in chunk) * 2
-        score -= max(sum(char.isalpha() for char in chunk) - 6, 0)
-        if score > best_score:
-            best_score = score
-            best_chunk = match.group(0) if match else chunk
-    selected = best_chunk.strip()
-    if selected and not _IDENTIFIER_PATTERN.search(selected):
+        upper_chunk = chunk.upper()
+        has_ratio = bool(_RATIO_PATTERN.search(upper_chunk) or _COMPACT_RATIO_PATTERN.search(upper_chunk.replace(' ', '')))
+        is_strict = bool(_STRICT_IDENTIFIER_PATTERN.match(upper_chunk.strip()))
+        for token in _SET_CODE_TOKEN_PATTERN.findall(upper_chunk):
+            if token in _SET_CODE_STOPWORDS:
+                continue
+            if known_codes and token not in known_codes:
+                continue
+            if token.isdigit():
+                continue
+            score = 1
+            if has_ratio:
+                score += 2
+            if is_strict:
+                score += 6
+            if len(token) in {3, 4}:
+                score += 1
+            scores[token] += score
+    return scores
+
+
+def _best_ratio(chunks: list[str]) -> tuple[str, int]:
+    scores: Counter[str] = Counter()
+    for chunk in chunks:
+        upper_chunk = chunk.upper()
+        match = _RATIO_PATTERN.search(upper_chunk)
+        if match:
+            scores[match.group(1)] += 140
+            continue
+        compact_match = _COMPACT_RATIO_PATTERN.search(upper_chunk.replace(' ', ''))
+        if compact_match:
+            digits = compact_match.group(1)
+            scores[f'{digits[:3]}/{digits[3:]}'] += 80
+        noisy_matches = _NOISY_COMPACT_RATIO_PATTERN.findall(upper_chunk.replace(' ', ''))
+        for digits in noisy_matches:
+            scores[f'{digits[:3]}/{digits[-3:]}'] += 55
+            for index in range(1, len(digits) - 1):
+                repaired = digits[:index] + digits[index + 1:]
+                if len(repaired) == 6:
+                    scores[f'{repaired[:3]}/{repaired[3:]}'] += 20
+    if not scores:
         return '', 0
-    return selected, max(best_score, 0)
+    ratio, score = scores.most_common(1)[0]
+    return ratio, score
+
+
+def _select_best_identifier(chunks: list[str], *, game: str | None) -> tuple[str, int]:
+    best_ratio, ratio_score = _best_ratio(chunks)
+    code_scores = _candidate_set_codes(chunks, game=game)
+    selected_code = ''
+    code_score = 0
+    if code_scores:
+        candidate_code, candidate_score = code_scores.most_common(1)[0]
+        if candidate_score >= 6:
+            selected_code = candidate_code
+            code_score = candidate_score
+    if best_ratio and selected_code:
+        return f'{selected_code} {best_ratio}', ratio_score + code_score
+    if best_ratio:
+        return best_ratio, ratio_score
+    return '', 0
+
+
+def _score_name_window(tokens: list[str], prefix: str) -> tuple[int, str]:
+    stopwords = {'from', 'evolves', 'pokemon', 'ability', 'when', 'your', 'bench', 'damage', 'prevent', 'opponent', 'this', 'long', 'as', 'play', 'hand', 'turn', 'attach'}
+    best_score = -1
+    best_body = ''
+    for start in range(len(tokens)):
+        for length in range(1, min(4, len(tokens) - start) + 1):
+            window_tokens = tokens[start:start + length]
+            candidate_body = ' '.join(window_tokens)
+            alpha_count = sum(char.isalpha() for char in candidate_body)
+            stopword_hits = sum(token.lower() in stopwords for token in window_tokens)
+            score = alpha_count * 2 + len(window_tokens) * 12 - stopword_hits * 24
+            if 1 <= len(window_tokens) <= 3:
+                score += 16
+            if any(len(token) >= 6 for token in window_tokens):
+                score += 8
+            if any(token.upper() in {'EX', 'GX', 'VMAX', 'VSTAR', 'V'} for token in window_tokens):
+                score += 18
+            if score > best_score:
+                best_score = score
+                best_body = candidate_body
+    return max(best_score, 0), f'{prefix}: {best_body}'.strip() if best_body else ''
 
 
 def _select_best_name(chunks: list[str]) -> tuple[str, int]:
-    stopwords = {
-        'from', 'evolves', 'pokemon', 'ability', 'when', 'your', 'bench', 'damage',
-        'prevent', 'opponent', 'this', 'long', 'as', 'play', 'hand', 'turn', 'attach',
-    }
     best_chunk = ''
     best_score = -1
     for chunk in chunks:
@@ -189,25 +317,11 @@ def _select_best_name(chunks: list[str]) -> tuple[str, int]:
         tokens = re.findall(r'[A-Za-z]{2,}', body)
         if not tokens:
             continue
-        candidate_tokens = tokens[:4]
-        candidate_body = ' '.join(candidate_tokens)
-        alpha_count = sum(char.isalpha() for char in candidate_body)
-        token_count = len(candidate_tokens)
-        noise_chars = max(len(body) - alpha_count - candidate_body.count(' '), 0)
-        stopword_hits = sum(token.lower() in stopwords for token in candidate_tokens)
-        score = alpha_count * 2 + token_count * 10 - noise_chars * 3 - max(len(body) - 36, 0) * 4
-        if 1 <= token_count <= 3:
-            score += 18
-        if 'EX' in candidate_body.upper():
-            score += 24
-        if stopword_hits:
-            score -= stopword_hits * 22
-        if candidate_tokens and len(candidate_tokens[0]) >= 6:
-            score += 8
+        prefix = chunk.split(':', 1)[0].strip() if ':' in chunk else 'NAME_EN'
+        score, candidate = _score_name_window(tokens, prefix)
         if score > best_score:
-            prefix = chunk.split(':', 1)[0].strip() if ':' in chunk else 'NAME_EN'
             best_score = score
-            best_chunk = f'{prefix}: {candidate_body}'
+            best_chunk = candidate
     return best_chunk.strip(), max(best_score, 0)
 
 
@@ -223,11 +337,7 @@ def _dedupe_text_chunks(chunks: list[str]) -> str:
     return ' | '.join(unique_chunks)
 
 
-def _write_debug_artifacts(
-    *,
-    source_path: Path,
-    candidate: _CandidateOCR,
-) -> None:
+def _write_debug_artifacts(*, source_path: Path, candidate: _CandidateOCR) -> None:
     debug_root = _DEBUG_DIR / source_path.stem / candidate.source
     debug_root.mkdir(parents=True, exist_ok=True)
     candidate.card_image.save(debug_root / 'card.png')
@@ -254,44 +364,31 @@ def _quick_rank_candidate(*, candidate: CardImageCandidate, game: str | None) ->
         if not normalized:
             continue
         tokens = re.findall(r'[A-Za-z]{3,}', normalized)
-        score += len(tokens) * 10
+        score += len(tokens) * 8
         if 'HP' in normalized.upper():
-            score += 12
+            score += 10
         if 'EX' in normalized.upper():
-            score += 12
+            score += 10
     if candidate.source.startswith('detected_'):
         score += 8
     return score
 
 
-def _score_candidate(
-    *,
-    candidate: CardImageCandidate,
-    game: str | None,
-) -> _CandidateOCR:
+def _score_candidate(*, candidate: CardImageCandidate, game: str | None) -> _CandidateOCR:
     roi_images: list[Image.Image] = []
     identifier_chunks: list[str] = []
     for window in _identifier_windows_for_game(game):
         roi = _prepare_identifier_roi(_crop_relative(candidate.image, window))
         roi_images.append(roi)
         identifier_chunks.extend(_ocr_identifier_passes(roi))
-
     name_chunks: list[str] = []
     for window in _name_windows_for_game(game):
         roi = _prepare_name_roi(_crop_relative(candidate.image, window))
         roi_images.append(roi)
         name_chunks.extend(_ocr_name_passes(roi))
-
-    best_identifier, identifier_score = _select_best_identifier(identifier_chunks)
+    best_identifier, identifier_score = _select_best_identifier(identifier_chunks, game=game)
     best_name, name_score = _select_best_name(name_chunks)
-
-    text_chunks: list[str] = []
-    if best_identifier:
-        text_chunks.append(f'IDENTIFIER: {best_identifier}')
-    if best_name:
-        text_chunks.append(best_name)
-    text = _dedupe_text_chunks(text_chunks)
-
+    text = _dedupe_text_chunks([f'IDENTIFIER: {best_identifier}' if best_identifier else '', best_name])
     score = int(identifier_score * 3 + name_score + candidate.confidence * 20)
     if candidate.source.startswith('detected_'):
         score += 10
@@ -299,38 +396,19 @@ def _score_candidate(
         score += 40
     elif best_identifier:
         score += 25
-    return _CandidateOCR(
-        source=candidate.source,
-        confidence=candidate.confidence,
-        text=text,
-        score=score,
-        identifier_chunks=identifier_chunks,
-        name_chunks=name_chunks,
-        card_image=candidate.image,
-        roi_images=roi_images,
-    )
+    return _CandidateOCR(candidate.source, candidate.confidence, text, score, identifier_chunks, name_chunks, candidate.image, roi_images)
 
 
 def extract_text_from_image(image_path: str | Path, *, game: str | None = None) -> OCRResult:
-    """Run OCR against multiple normalized card candidates and choose the best result."""
-
     provider = get_ocr_provider_name()
-    if provider != 'tesseract':
-        raise OCRNotConfiguredError(
-            f"OCR provider '{provider}' is not implemented yet in this environment."
-        )
-
+    if provider not in {'tesseract', 'google_vision'}:
+        raise OCRNotConfiguredError(f"OCR provider '{provider}' is not implemented yet in this environment.")
     path = Path(image_path)
     if not path.exists():
         raise FileNotFoundError(f'OCR image not found: {path}')
-
     try:
         candidates = extract_card_candidates(path)
-        ranked_candidates = sorted(
-            candidates,
-            key=lambda candidate: _quick_rank_candidate(candidate=candidate, game=game),
-            reverse=True,
-        )
+        ranked_candidates = sorted(candidates, key=lambda c: _quick_rank_candidate(candidate=c, game=game), reverse=True)
         finalists = ranked_candidates[:3]
         detected_finalists = [candidate for candidate in ranked_candidates if candidate.source.startswith('detected_')]
         if detected_finalists and detected_finalists[0] not in finalists:
@@ -339,14 +417,9 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
         best_candidate = max(scored_candidates, key=lambda item: item.score)
         all_identifier_chunks = [chunk for candidate in scored_candidates for chunk in candidate.identifier_chunks]
         all_name_chunks = [chunk for candidate in scored_candidates for chunk in candidate.name_chunks]
-        best_identifier, _ = _select_best_identifier(all_identifier_chunks)
+        best_identifier, _ = _select_best_identifier(all_identifier_chunks, game=game)
         best_name, _ = _select_best_name(all_name_chunks)
-        aggregated_text = _dedupe_text_chunks(
-            [
-                f'IDENTIFIER: {best_identifier}' if best_identifier else '',
-                best_name,
-            ]
-        )
+        aggregated_text = _dedupe_text_chunks([f'IDENTIFIER: {best_identifier}' if best_identifier else '', best_name])
         for candidate in scored_candidates:
             _write_debug_artifacts(source_path=path, candidate=candidate)
         logger.info(
@@ -362,17 +435,14 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
     except Exception as exc:
         logger.exception('OCR failed for image %s: %s', path, exc)
         raise RuntimeError(f'OCR failed for image {path.name}.') from exc
-
     warnings: list[str] = []
     detected_sources = [candidate for candidate in scored_candidates if candidate.source.startswith('detected_')]
     if not detected_sources:
         warnings.append('I could not isolate the card perfectly, so I used fallback card crops as well.')
     elif not best_candidate.source.startswith('detected_'):
         warnings.append('I used a fallback centered card crop because the direct card detection result looked weaker.')
-
     if len(aggregated_text) < 4:
         warnings.append('OCR returned very little text. A clearer photo may help.')
     if 'IDENTIFIER:' not in aggregated_text:
         warnings.append('Printed identifier was not detected clearly. Manual code input may still help.')
-
     return OCRResult(text=aggregated_text, provider=provider, warnings=warnings)

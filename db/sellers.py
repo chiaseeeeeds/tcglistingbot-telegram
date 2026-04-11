@@ -42,3 +42,10 @@ def upsert_seller(*, telegram_id: int, telegram_username: str | None, telegram_d
     if refreshed is None:
         raise RuntimeError('Failed to load seller after upsert.')
     return refreshed
+
+
+def get_seller_by_id(seller_id: str) -> dict[str, Any] | None:
+    """Fetch a seller row by primary key."""
+
+    response = get_client().table('sellers').select('*').eq('id', seller_id).limit(1).execute()
+    return extract_single(response)

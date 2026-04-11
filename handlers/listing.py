@@ -55,6 +55,7 @@ def _clear_listing_state(context: ContextTypes.DEFAULT_TYPE) -> None:
         'listing_price_sgd',
         'listing_notes',
         'listing_price_refs',
+        'listing_candidate_options',
     ]:
         context.user_data.pop(key, None)
 
@@ -94,6 +95,18 @@ def _format_price_reference_block(price_refs: list[PriceReference]) -> str:
         lines.append(
             f"• <b>{reference.source}</b>: <code>SGD {reference.amount_sgd:.2f}</code> — {reference.note}"
         )
+    return '\n'.join(lines)
+
+
+def _format_candidate_options(options: list[dict]) -> str:
+    if not options:
+        return ''
+    lines = ['<b>Likely matches</b>']
+    for index, option in enumerate(options[:3], start=1):
+        lines.append(
+            f"{index}. <code>{option['display_name']}</code> — conf <code>{float(option['confidence']):.2f}</code>"
+        )
+    lines.append('\nReply with <code>1</code>, <code>2</code>, or <code>3</code> to use one of these titles.')
     return '\n'.join(lines)
 
 
@@ -198,12 +211,14 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         context.user_data['listing_ocr_text'] = ocr_result.text
         raw_text = str(ocr_result.text or '')
         identification = await asyncio.to_thread(identify_card_from_text, raw_text=raw_text, game=game)
+        candidate_options = list(identification.candidate_options or [])
+        context.user_data['listing_candidate_options'] = candidate_options
 
         warning_lines = [f'• Auto-detected game: {game} ({detected_game.reason}).']
         warning_lines.extend(f'• {warning}' for warning in ocr_result.warnings)
         warning_block = '\n'.join(warning_lines) + '\n\n'
 
-        if identification.matched and identification.confidence >= 0.45:
+        if identification.matched and identification.confidence >= 0.6:
             context.user_data['listing_detection_mode'] = 'matched'
             context.user_data['listing_suggested_title'] = identification.display_name
             context.user_data['listing_card_id'] = identification.card_id
@@ -220,15 +235,47 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             )
             return TITLE
 
+        if identification.matched and identification.confidence >= 0.45:
+            context.user_data['listing_detection_mode'] = 'matched'
+            context.user_data['listing_suggested_title'] = identification.display_name
+            context.user_data['listing_card_id'] = identification.card_id
+            reasons = '\n'.join(f'• {reason}' for reason in identification.match_reasons) or '• OCR text roughly matched the local catalog.'
+            message = (
+                warning_block
+                + '<b>I found a possible card match, but I am not confident enough to auto-lock it in.</b>\n\n'
+                f'Title: <code>{identification.display_name}</code>\n'
+                f'Confidence: <code>{identification.confidence:.2f}</code>\n'
+                f'Reasons:\n{reasons}\n\n'
+            )
+            if candidate_options:
+                message += _format_candidate_options(candidate_options) + '\n\n'
+            message += (
+                'Reply with <code>yes</code> to use this title anyway, send <code>1</code>/<code>2</code>/<code>3</code> to choose from the shortlist, '
+                'or send the corrected title manually.\n'
+                'If you can see the printed identifier, sending it like <code>PAF 234/091</code> is safer.'
+            )
+            await update.effective_message.reply_text(message, parse_mode='HTML')
+            return TITLE
+
         context.user_data['listing_detection_mode'] = 'needs_identifier'
-        await update.effective_message.reply_text(
+        message = (
             warning_block
             + '<b>I could not confidently identify the card from OCR.</b>\n\n'
             f'OCR text: <code>{raw_text[:220] or "No usable text detected"}</code>\n\n'
-            'Reply with the printed identifier like <code>PAF 234/091</code>.\n'
-            'If you prefer, you can still enter the listing title manually.',
-            parse_mode='HTML',
         )
+        if candidate_options:
+            message += _format_candidate_options(candidate_options) + '\n\n'
+            message += (
+                'Reply with <code>1</code>, <code>2</code>, or <code>3</code> to choose one of these, '
+                'or send the printed identifier like <code>PAF 234/091</code>.\n'
+                'If you prefer, you can still enter the listing title manually.'
+            )
+        else:
+            message += (
+                'Reply with the printed identifier like <code>PAF 234/091</code>.\n'
+                'If you prefer, you can still enter the listing title manually.'
+            )
+        await update.effective_message.reply_text(message, parse_mode='HTML')
         return TITLE
     except OCRNotConfiguredError as exc:
         logger.exception('OCR provider misconfigured during listing flow: %s', exc)
@@ -266,6 +313,23 @@ async def capture_title(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     raw_text = update.effective_message.text.strip()
     if raw_text.lower() == 'yes' and context.user_data.get('listing_suggested_title'):
         title = str(context.user_data['listing_suggested_title'])
+    elif raw_text in {'1', '2', '3'} and context.user_data.get('listing_candidate_options'):
+        index = int(raw_text) - 1
+        options = list(context.user_data.get('listing_candidate_options') or [])
+        if index < 0 or index >= len(options):
+            await update.effective_message.reply_text('That shortlist option is not available. Reply with <code>1</code>, <code>2</code>, or <code>3</code>.', parse_mode='HTML')
+            return TITLE
+        selected = options[index]
+        title = str(selected['display_name'])
+        context.user_data['listing_detection_mode'] = 'matched'
+        context.user_data['listing_suggested_title'] = title
+        context.user_data['listing_card_id'] = selected.get('card_id')
+        await update.effective_message.reply_text(
+            '<b>Shortlist option selected.</b>\n\n'
+            f'Title: <code>{title}</code>\n'
+            f'Confidence: <code>{float(selected.get("confidence") or 0):.2f}</code>',
+            parse_mode='HTML',
+        )
     else:
         manual_identifier = parse_manual_identifier(raw_text)
         if manual_identifier is not None:
@@ -418,7 +482,7 @@ async def confirm_listing(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         posted_channel_id=sent_message.chat.id,
         posted_message_id=sent_message.message_id,
         primary_image_path=context.user_data.get('listing_storage_path'),
-        tcgplayer_price_sgd=price_refs[0].amount_sgd if price_refs else None,
+        tcgplayer_price_sgd=next((reference.amount_sgd for reference in price_refs if reference.source.startswith('TCGplayer')), None),
     )
     logger.info('Posted listing %s to channel %s.', listing['id'], sent_message.chat.id)
     await update.effective_message.reply_text(

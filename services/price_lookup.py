@@ -5,7 +5,9 @@ from __future__ import annotations
 import statistics
 from dataclasses import dataclass
 
+from db.cards import get_card_by_id
 from db.client import extract_many, get_client
+from services.pokemon_tcg_api import lookup_pokemon_live_prices
 
 
 @dataclass(frozen=True)
@@ -17,13 +19,7 @@ class PriceReference:
     note: str
 
 
-def lookup_price_references(*, game: str, card_name: str, card_id: str | None = None) -> list[PriceReference]:
-    """Return best-effort price references for the current draft.
-
-    v1 uses internal listing history as a safe fallback while external web sources are still being
-    wired up.
-    """
-
+def _history_references(*, game: str, card_name: str, card_id: str | None = None) -> list[PriceReference]:
     exact_rows: list[dict] = []
     if card_id:
         response = (
@@ -91,3 +87,25 @@ def lookup_price_references(*, game: str, card_name: str, card_id: str | None = 
             )
         )
     return references
+
+
+def lookup_price_references(*, game: str, card_name: str, card_id: str | None = None) -> list[PriceReference]:
+    """Return best-effort price references for the current draft."""
+
+    references: list[PriceReference] = []
+    if game == 'pokemon' and card_id:
+        card = get_card_by_id(card_id)
+        if card is not None:
+            live_refs = lookup_pokemon_live_prices(
+                card_name=str(card.get('card_name_en') or card.get('card_name_jp') or card_name),
+                card_number=str(card.get('card_number') or ''),
+                set_name=str(card.get('set_name') or ''),
+            )
+            references.extend(
+                PriceReference(source=item.source, amount_sgd=item.amount_sgd, note=item.note)
+                for item in live_refs
+            )
+
+    history_refs = _history_references(game=game, card_name=card_name, card_id=card_id)
+    references.extend(history_refs)
+    return references[:4]
