@@ -13,8 +13,8 @@ from db.pokemon_sets import get_pokemon_set_by_code, list_pokemon_sets
 
 _TOKEN_RE = re.compile(r'[A-Za-z0-9]+')
 _CARD_RATIO_RE = re.compile(r'\b(\d{1,3})\s*/\s*(\d{1,3})\b')
-_SET_BLOCK_RE = re.compile(r'\b([A-Z]{2,5})\s*(?:EN|JP)?\s*(\d{1,3}/\d{1,3})\b', re.IGNORECASE)
-_MANUAL_IDENTIFIER_RE = re.compile(r'^\s*([A-Z]{2,5})\s+(\d{1,3}/\d{1,3})\s*$', re.IGNORECASE)
+_SET_BLOCK_RE = re.compile(r'\b([A-Z0-9]{2,5})\s*(?:EN|JP)?\s*(\d{1,3}/\d{1,3})\b', re.IGNORECASE)
+_MANUAL_IDENTIFIER_RE = re.compile(r'^\s*([A-Z0-9]{2,5})\s+(\d{1,3}/\d{1,3})\s*$', re.IGNORECASE)
 _COMPACT_RATIO_RE = re.compile(r'(?<!\d)(\d{6})(?!\d)')
 _SET_NAME_SPLIT_RE = re.compile(r'\s*[—–:/|]+\s*')
 _NAME_STOPWORDS = {'name', 'identifier', 'pokemon', 'trainer', 'energy', 'stage', 'basic', 'ability'}

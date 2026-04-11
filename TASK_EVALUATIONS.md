@@ -406,3 +406,25 @@ Use this log after meaningful implementation tasks.
 - what was weak: the visible listing build marker had lagged behind the real OCR/service changes and needed to be bumped so live debugging remains trustworthy
 - follow-up: retest the same photo live and then stress-test more cards where the set code is partially visible but noisy, especially foil cards with tiny bottom-left abbreviations
 - user reaction: rightly called the previous result "really bad" because the printed ratio should not have ended at `Aerodactyl`; this task specifically addressed that generic failure mode
+
+## 2026-04-12 — OCR Resolver Evaluation Harness
+- date: 2026-04-12
+- task: stop relying on user-reported examples by building a reusable evaluation pipeline for OCR and resolver behavior
+- goal: make regressions and class-level failures visible through a manifest plus synthetic catalog audits instead of waiting for live chat complaints
+- outcome: added `scripts/evaluate_ocr_resolver.py` and `eval_cases/ocr_resolver_cases.json`; the script evaluates manifest cases and synthetic Pokémon catalog cases, reports pass/fail summaries plus failure reasons, and can emit JSON reports; while exercising synthetic cases it also exposed a generic parser bug, which was fixed by allowing digit-containing set codes like `B2` in `services/card_identifier.py`
+- validation: `python -m py_compile scripts/evaluate_ocr_resolver.py services/card_identifier.py` passed; seeded regression run passed `5/5`; synthetic cross-set smoke run passed `20/20`; bot restarted successfully and logged ready at 2026-04-12 02:20 local time
+- what went well: this changes the workflow from reactive patching toward repeatable evaluation, and it already surfaced one parser issue without the user needing to find it manually
+- what was weak: full synthetic sweeps are still relatively slow, and promo/alphanumeric identifier formats are not yet covered by the current numeric-focused synthetic generator
+- follow-up: add progress output and batching to the evaluator for larger full-catalog runs, then add a second audit mode for promo/alphanumeric identifiers like `BW95` and `TG28`
+- user reaction: explicitly said they should not have to keep doing the legwork of finding examples; this harness is the first concrete step toward fixing that process problem
+
+## 2026-04-12 — Documentation Update Rule Tightening
+- date: 2026-04-12
+- task: make post-task documentation updates explicit in repo instructions
+- goal: ensure future work sessions consistently update the operational docs, not just memory and task notes
+- outcome: updated `AGENTS.md` so meaningful implementation work now explicitly requires reviewing and updating `TODO.md` and `ROADMAP.md` whenever gaps, priorities, readiness, or sequencing have changed
+- validation: confirmed the new instruction block is present in `AGENTS.md` under `Project Memory And Review`
+- what went well: this turns an implied expectation into a written repo rule
+- what was weak: the rule helps future behavior but does not retroactively fix older sessions that missed those doc updates
+- follow-up: none beyond following the rule consistently
+- user reaction: explicitly requested that `TODO.md` and `ROADMAP.md` always be updated when necessary; this change captures that requirement in the repo instructions

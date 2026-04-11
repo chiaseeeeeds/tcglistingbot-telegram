@@ -107,3 +107,10 @@
 - `services/ocr.py` now recovers known set codes from noisy alphanumeric identifier chunks near the detected ratio, which converts OCR strings like `0 PFLEN F130/094` into `PFL 130/094` without any card-specific rules
 - `services/card_identifier.py` now has a generic `unique_print_ratio_match` path: when printed left-number + total uniquely identify a single catalog row, it resolves that card directly instead of wandering to unrelated same-number candidates
 - live bot restarted successfully at 2026-04-12 02:07 local time on visible build `ocr-build-2026-04-12-identifier-code-recovery-v9`
+- a manifest-driven OCR/resolver evaluation harness now exists at `scripts/evaluate_ocr_resolver.py` with seeded cases in `eval_cases/ocr_resolver_cases.json`
+- the evaluator supports both explicit regression cases and synthetic Pokémon catalog audits (`--synthetic-exact-identifier`, `--synthetic-unique-ratio`) so future work can test classes of failures across sets instead of relying on ad hoc user reports
+- initial harness runs passed 5/5 seeded regression cases and 20/20 synthetic cross-set smoke cases; JSON reports were written under `.logs/`
+- while building the harness, a generic parser gap was found and fixed: `services/card_identifier.py` now accepts digit-containing set codes like `B2` in identifier text instead of only letter-only codes
+- the current synthetic audit intentionally focuses on numeric printed-number cases; promo/alphanumeric identifier formats like `BW95` or `TG28` still need their own dedicated evaluation mode and resolver support
+- live bot restarted successfully at 2026-04-12 02:20 local time after the identifier parser update
+- `AGENTS.md` now explicitly requires updating `TODO.md` and `ROADMAP.md` alongside `MEMORY.md` and `TASK_EVALUATIONS.md` after meaningful implementation tasks whenever scope, priorities, or sequencing change

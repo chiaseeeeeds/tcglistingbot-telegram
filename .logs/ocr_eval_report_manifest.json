@@ -1,0 +1,277 @@
+{
+  "summary": {
+    "total_cases": 5,
+    "passed_cases": 5,
+    "failed_cases": 0,
+    "pass_rate": 100.0,
+    "failures_by_reason": {},
+    "failures_by_source": {},
+    "failures_by_tag": {}
+  },
+  "cases": [
+    {
+      "case_id": "text:nidoking-modern-noisy-name",
+      "source": "manifest:ocr_resolver_cases.json",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "regression",
+        "modern",
+        "identifier_first"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: 233/182 | NAME_EN: ortNidoKine",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Team Rocket's Nidoking ex Illustration Rare (Destined Rivals)",
+        "card_id": "2fae5d89-2f30-498a-bed3-2004f395080d",
+        "resolver": "pokemon_modern_identifier_first",
+        "set_code": "DRI",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "DRI",
+          "card_number": "233",
+          "resolver": "pokemon_modern_identifier_first",
+          "service_build": "card-identify-2026-04-12-name-number-priority-v3",
+          "catalog_size": "19917",
+          "detected_left_number": "233",
+          "number_candidate_count": "14",
+          "number_candidate_preview": "ASC,CEC,CRE,DRI,EVS,FST",
+          "detected_print_number": "233/182"
+        },
+        "candidate_options": [
+          {
+            "card_id": "2fae5d89-2f30-498a-bed3-2004f395080d",
+            "display_name": "Team Rocket's Nidoking ex Illustration Rare (Destined Rivals)",
+            "confidence": 0.99,
+            "set_code": "DRI",
+            "set_name": "Destined Rivals",
+            "card_number": "233",
+            "reasons": [
+              "Printed total matched set count: 182",
+              "Merged OCR name tokens resembled: nidoking",
+              "Card number matched in OCR text: 233"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Printed total matched set count: 182",
+          "Merged OCR name tokens resembled: nidoking",
+          "Card number matched in OCR text: 233",
+          "Printed number matched identifier block: 233/182"
+        ]
+      }
+    },
+    {
+      "case_id": "text:mega-lucario-identifier-first",
+      "source": "manifest:ocr_resolver_cases.json",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "regression",
+        "modern",
+        "identifier_first"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: 179/132 | NAME_EN: Mega Lucario",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.95,
+        "display_name": "Mega Lucario ex Illustration Rare (Mega Evolution)",
+        "card_id": "979a91ed-f87e-4011-bcad-98a2b3c89043",
+        "resolver": "unique_print_ratio_match",
+        "set_code": "MEG",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "MEG",
+          "card_number": "179",
+          "resolver": "unique_print_ratio_match",
+          "service_build": "card-identify-2026-04-12-name-number-priority-v3",
+          "catalog_size": "19917",
+          "detected_left_number": "179",
+          "number_candidate_count": "32",
+          "number_candidate_preview": "ASC,ASR,BRS,BST,CEC,CES",
+          "detected_print_number": "179/132"
+        },
+        "candidate_options": [
+          {
+            "card_id": "979a91ed-f87e-4011-bcad-98a2b3c89043",
+            "display_name": "Mega Lucario ex Illustration Rare (Mega Evolution)",
+            "confidence": 0.95,
+            "set_code": "MEG",
+            "set_name": "Mega Evolution",
+            "card_number": "179",
+            "reasons": [
+              "Printed number + total uniquely matched the catalog: 179/132",
+              "Unique set-total candidate resolved to MEG.",
+              "Name token overlap: lucario, mega"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Printed number + total uniquely matched the catalog: 179/132",
+          "Unique set-total candidate resolved to MEG.",
+          "Name token overlap: lucario, mega"
+        ]
+      }
+    },
+    {
+      "case_id": "text:phantasmal-flames-name-ratio",
+      "source": "manifest:ocr_resolver_cases.json",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "regression",
+        "set_alias",
+        "name_number"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: 130/094 | NAME_EN: Mega Charizard X ex | Phantasmal Flames",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Mega Charizard X ex (Phantasmal Flames)",
+        "card_id": "18f39fae-d977-4569-9dcb-b73a1640bec2",
+        "resolver": "exact_identifier",
+        "set_code": "PFL",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "PFL",
+          "card_number": "130",
+          "detected_print_number": "130/094",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-name-number-priority-v3"
+        },
+        "candidate_options": [
+          {
+            "card_id": "18f39fae-d977-4569-9dcb-b73a1640bec2",
+            "display_name": "Mega Charizard X ex (Phantasmal Flames)",
+            "confidence": 0.99,
+            "set_code": "PFL",
+            "set_name": "Phantasmal Flames",
+            "card_number": "130",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: charizard, ex, mega",
+              "Printed total matched set count: 94"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: charizard, ex, mega",
+          "Printed total matched set count: 94",
+          "Exact English name matched: Mega Charizard X ex"
+        ]
+      }
+    },
+    {
+      "case_id": "text:placeholder-fails-safe",
+      "source": "manifest:ocr_resolver_cases.json",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "control",
+        "fail_safe"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: ABC 123/456 | NAME_EN: Placeholder",
+      "ocr_text": null,
+      "identification": {
+        "matched": false,
+        "confidence": 0.45,
+        "display_name": "Unknown card",
+        "card_id": null,
+        "resolver": "generic_set_code_mismatch_guard",
+        "set_code": "ABC",
+        "metadata": {
+          "game": "pokemon",
+          "resolver": "generic_set_code_mismatch_guard",
+          "service_build": "card-identify-2026-04-12-name-number-priority-v3",
+          "catalog_size": "19917",
+          "detected_left_number": "123",
+          "number_candidate_count": "65",
+          "number_candidate_preview": "AQ,ASC,ASR,B2,BCR,BKP",
+          "detected_set_code": "ABC",
+          "detected_print_number": "123/456"
+        },
+        "candidate_options": [
+          {
+            "card_id": "590ff5f9-217f-4ecb-bdf6-85f19147c4a9",
+            "display_name": "Rosa's Encouragement Illustration Rare (Perfect Order)",
+            "confidence": 0.45,
+            "set_code": "POR",
+            "set_name": "Perfect Order",
+            "card_number": "123",
+            "reasons": [
+              "OCR-similar name tokens: encouragement",
+              "Card number matched in OCR text: 123",
+              "Printed number matched identifier block: 123/456"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "OCR saw a set code, but the best catalog hit came from a different set without strong enough name evidence.",
+          "This is treated as no-match to avoid hidden overfitting or accidental title hallucination."
+        ]
+      }
+    },
+    {
+      "case_id": "text:gold-charizard-noisy-set-code",
+      "source": "manifest:ocr_resolver_cases.json",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "regression",
+        "foil",
+        "set_code_recovery"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: PFL 130/094 | NAME_EN: VF ae MESA CNaniZangya",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Mega Charizard X ex (Phantasmal Flames)",
+        "card_id": "18f39fae-d977-4569-9dcb-b73a1640bec2",
+        "resolver": "exact_identifier",
+        "set_code": "PFL",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "PFL",
+          "card_number": "130",
+          "detected_print_number": "130/094",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-name-number-priority-v3"
+        },
+        "candidate_options": [
+          {
+            "card_id": "18f39fae-d977-4569-9dcb-b73a1640bec2",
+            "display_name": "Mega Charizard X ex (Phantasmal Flames)",
+            "confidence": 0.99,
+            "set_code": "PFL",
+            "set_name": "Phantasmal Flames",
+            "card_number": "130",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Printed total matched set count: 94"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Printed total matched set count: 94"
+        ]
+      }
+    }
+  ]
+}

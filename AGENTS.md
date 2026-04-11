@@ -139,6 +139,8 @@ These files are the normalized source of truth for implementation.
 After any meaningful implementation task:
 - update `MEMORY.md` with current state, known gaps, and immediate next priorities
 - append a concise review entry to `TASK_EVALUATIONS.md`
-- keep both files short, factual, and useful for the next work session
+- update `TODO.md` whenever implementation meaningfully changes current gaps, priorities, or what is actually done
+- update `ROADMAP.md` whenever implementation changes the recommended sequencing, phase readiness, or immediate next steps
+- keep these files short, factual, and useful for the next work session
 
 When starting future work, read `MEMORY.md` after the normalized product docs for fast context.

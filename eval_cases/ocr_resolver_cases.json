@@ -1,0 +1,64 @@
+{
+  "cases": [
+    {
+      "id": "text:nidoking-modern-noisy-name",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": ["regression", "modern", "identifier_first"],
+      "raw_text": "IDENTIFIER: 233/182 | NAME_EN: ortNidoKine",
+      "expected": {
+        "matched": true,
+        "display_name_contains": "Nidoking",
+        "set_code": "DRI"
+      }
+    },
+    {
+      "id": "text:mega-lucario-identifier-first",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": ["regression", "modern", "identifier_first"],
+      "raw_text": "IDENTIFIER: 179/132 | NAME_EN: Mega Lucario",
+      "expected": {
+        "matched": true,
+        "display_name_contains": "Mega Lucario",
+        "set_code": "MEG"
+      }
+    },
+    {
+      "id": "text:phantasmal-flames-name-ratio",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": ["regression", "set_alias", "name_number"],
+      "raw_text": "IDENTIFIER: 130/094 | NAME_EN: Mega Charizard X ex | Phantasmal Flames",
+      "expected": {
+        "matched": true,
+        "display_name_contains": "Mega Charizard X ex",
+        "set_code": "PFL"
+      }
+    },
+    {
+      "id": "text:placeholder-fails-safe",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": ["control", "fail_safe"],
+      "raw_text": "IDENTIFIER: ABC 123/456 | NAME_EN: Placeholder",
+      "expected": {
+        "matched": false,
+        "resolver_in": ["generic_set_code_mismatch_guard", "generic_catalog_no_match"]
+      }
+    },
+    {
+      "id": "text:gold-charizard-noisy-set-code",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": ["regression", "foil", "set_code_recovery"],
+      "raw_text": "IDENTIFIER: PFL 130/094 | NAME_EN: VF ae MESA CNaniZangya",
+      "expected": {
+        "matched": true,
+        "display_name_contains": "Mega Charizard X ex",
+        "set_code": "PFL",
+        "resolver_in": ["exact_identifier"]
+      }
+    }
+  ]
+}

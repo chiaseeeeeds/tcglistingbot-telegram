@@ -31,10 +31,11 @@
 - DONE: seller confirmation before posting
 - PARTIAL: OCR and identification
   - Pokémon EN catalog pipeline exists
-  - final language-detect → bottom-left-zone → identifier resolver flow not complete
+  - generic OCR + resolver path is materially better and now backed by a local evaluation harness
+  - live-photo coverage is still incomplete for foil, glare, old cards, and promo/alphanumeric identifiers
 - PARTIAL: card match confidence flow
   - best-effort suggestion exists
-  - final structured fallback UX still incomplete
+  - shortlist / fallback UX still needs more refinement for ambiguous cases
 - TODO: front + back photo support
 - TODO: unsupported media rejection UX
 - TODO: image quality checks before OCR
@@ -46,17 +47,27 @@
 - DONE: Pokemon-Card-CSV importer
 - DONE: set alias coverage reaches 172/172 file resolution
 - DONE: full clean bulk import completion and validation
+- DONE: initial OCR/resolver evaluation harness
 - PARTIAL: final OCR identifier resolver against imported `cards`
+  - numeric printed-number flows are now audited via synthetic and regression cases
+  - promo/alphanumeric identifiers like `BW95` and `TG28` still need dedicated support and evaluation coverage
 - PARTIAL: fallback prompt for manual `series code + serial code`
 - TODO: Japanese catalog source and importer
+- TODO: Japanese OCR/resolver evaluation coverage
 - TODO: One Piece catalog source and importer
+- TODO: broader real-photo evaluation corpus stored in-repo or in a managed eval bucket
 
 ## 5. Price Lookup
 - PARTIAL: bot-history fallback price references exist
-- TODO: multi-source price lookup
-- TODO: SGD normalization from external sources
+- PARTIAL: Pokémon live market references via Pokémon TCG API exist
+- PARTIAL: PriceCharting lookup path exists in code
+  - official token mode is supported
+  - scrape fallback is best-effort only
+  - current runtime has no `PRICECHARTING_API_TOKEN`, so PriceCharting is not reliably live in the seller flow yet
+- PARTIAL: SGD normalization from external sources
+- TODO: explicit provider-status reporting in seller/admin pricing output
 - TODO: external pricing resilience / partial failure policy
-- TODO: pricing display tied to resolved card identity
+- TODO: pricing display tied to resolved card identity across all supported games
 
 ## 6. Posting and Lifecycle
 - DONE: listing preview exists
@@ -115,7 +126,9 @@
 - TODO: idempotent duplicate Telegram update handling
 - TODO: structured template/message centralization
 - TODO: production webhook deployment
-- TODO: observability and failure dashboards
+- PARTIAL: observability and evaluation
+  - OCR/resolver regression harness now exists
+  - wider automated coverage, progress reporting, and recurring runs are still needed
 - TODO: import/data validation reports
 
 ## 13. Deferred / Later
