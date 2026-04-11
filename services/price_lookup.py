@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from db.cards import get_card_by_id
 from db.client import extract_many, get_client
 from services.pokemon_tcg_api import lookup_pokemon_live_prices
+from services.pricecharting import lookup_pricecharting_live_prices
 
 
 @dataclass(frozen=True)
@@ -104,6 +105,15 @@ def lookup_price_references(*, game: str, card_name: str, card_id: str | None = 
             references.extend(
                 PriceReference(source=item.source, amount_sgd=item.amount_sgd, note=item.note)
                 for item in live_refs
+            )
+            pricecharting_refs = lookup_pricecharting_live_prices(
+                card_name=str(card.get('card_name_en') or card.get('card_name_jp') or card_name),
+                card_number=str(card.get('card_number') or ''),
+                set_name=str(card.get('set_name') or ''),
+            )
+            references.extend(
+                PriceReference(source=item.source, amount_sgd=item.amount_sgd, note=item.note)
+                for item in pricecharting_refs
             )
 
     history_refs = _history_references(game=game, card_name=card_name, card_id=card_id)

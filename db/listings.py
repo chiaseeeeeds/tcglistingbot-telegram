@@ -20,6 +20,8 @@ def create_listing(
     posted_message_id: int,
     primary_image_path: str | None = None,
     tcgplayer_price_sgd: float | None = None,
+    pricecharting_price_sgd: float | None = None,
+    yuyutei_price_sgd: float | None = None,
 ) -> dict[str, Any]:
     """Insert a posted listing row and return the created record."""
 
@@ -35,6 +37,8 @@ def create_listing(
         'posted_message_id': posted_message_id,
         'primary_image_path': primary_image_path,
         'tcgplayer_price_sgd': round(tcgplayer_price_sgd, 2) if tcgplayer_price_sgd is not None else None,
+        'pricecharting_price_sgd': round(pricecharting_price_sgd, 2) if pricecharting_price_sgd is not None else None,
+        'yuyutei_price_sgd': round(yuyutei_price_sgd, 2) if yuyutei_price_sgd is not None else None,
         'listing_type': 'fixed',
         'status': 'active',
     }

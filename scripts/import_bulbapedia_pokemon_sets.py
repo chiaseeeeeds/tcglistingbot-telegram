@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -42,8 +43,13 @@ def normalize_whitespace(value: str) -> str:
 
 
 def parse_card_count(value: str) -> int | None:
-    digits = ''.join(character for character in value if character.isdigit())
-    return int(digits) if digits else None
+    normalized = normalize_whitespace(value)
+    if not normalized or normalized in {'—', '-'}:
+        return None
+    match = re.search(r'\b(\d{1,3}(?:,\d{3})?)\b', normalized)
+    if not match:
+        return None
+    return int(match.group(1).replace(',', ''))
 
 
 def parse_release_date(value: str) -> str | None:

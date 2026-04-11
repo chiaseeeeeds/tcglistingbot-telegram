@@ -11,7 +11,7 @@ Use this log after meaningful implementation tasks.
 - what went well:
 - what was weak:
 - follow-up:
-- confidence: low / medium / high
+- user_response: positive / mixed / frustrated / blocked
 
 ---
 
@@ -268,3 +268,141 @@ Use this log after meaningful implementation tasks.
 - follow-up: live-test a few actual Base/Jungle/Fossil/Base Set 2 photos and tune symbol windows or thresholds only if the decisive-rerank rule proves too conservative
 - confidence: medium
 
+## 2026-04-11 — OCR Latency Reduction Pass
+- date: 2026-04-11
+- task: reduce `/list` OCR latency without giving up the Crobat-style recovery path
+- goal: make photo OCR feel meaningfully faster while preserving the current name + printed-number matching quality
+- outcome: removed duplicate OCR-based candidate ranking, limited finalist scoring to the strongest crop candidates, added early exits when a crop already yields decisive identifier + name signals, and trimmed redundant Tesseract pass variants
+- validation: `python -m py_compile services/ocr.py`; three-run local timing on the saved Crobat photo produced about `9.82s`, `4.25s`, and `4.27s` with the same OCR text (`IDENTIFIER: 234/182 | NAME_EN: Loananall att oo BleamiRocket`); bot restarted successfully at `2026-04-11 15:08:13`
+- what went well: the largest waste was duplicate OCR work, so removing it improved latency immediately without changing the higher-level matching contract
+- what was weak: cold-start latency is still noticeable, and older-card photos with weak first-crop results may still need the fallback crop to keep accuracy high
+- follow-up: live-test the bot on a few real user photos and consider optional caching or a hosted OCR provider if cold-start latency still feels too slow
+- confidence: high
+
+## 2026-04-11 — Nidoking Merged-Name Matcher Recovery
+- date: 2026-04-11
+- task: recover modern Pokémon matches when OCR glues the card name into one noisy token
+- goal: make strings like `ortNidoKine` still resolve to `Nidoking` when the printed number is strong
+- outcome: added a targeted merged-name rescue path in `services/card_identifier.py` so long OCR tokens can still contribute a name signal; confirmed `IDENTIFIER: 233/182 | NAME_EN: ortNidoKine` now resolves to `Team Rocket's Nidoking ex Illustration Rare (Destined Rivals)` and restarted the live bot process with the updated code
+- validation: `python -m py_compile services/card_identifier.py`; direct matcher checks now resolve both `233/182` Nidoking and `234/182` Crobat correctly; bot restarted successfully at `2026-04-11 15:40:27`
+- what went well: the fix is narrow and uses the printed number to keep the added name fuzziness safe
+- what was weak: this still depends on OCR getting at least a roughly card-like long token; fully mangled names may still fail
+- follow-up: live-test the same Nidoking photo in Telegram and tune the merged-token threshold only if we see new false positives
+- confidence: high
+
+
+
+## 2026-04-12 — Resolver Path Transparency And Live Bot Reality Check
+- date: 2026-04-12
+- task: stop guessing about the Nidoking OCR failure and expose the real live resolver path
+- goal: make the exact Telegram reply explain which resolver ran, whether the matcher actually produced candidates, and whether the live bot is using current code
+- outcome: added resolver-path metadata to card identification results, fixed `/list` so the admin debug block is actually included in Telegram replies, revalidated the exact Nidoking/Crobat/Charizard OCR strings locally, and relaunched the bot in a persistent PTY after detached startup kept dying in this harness
+- validation: `python3 -m py_compile services/card_identifier.py handlers/listing.py`; direct regression checks now resolve `IDENTIFIER: 233/182 | NAME_EN: ortNidoKine` to `Team Rocket's Nidoking ex Illustration Rare (Destined Rivals)`, `234/182 + BleamiRocket` to Crobat, and `PAF 234/091 + Charizard ex` to Paldean Fates Charizard
+- what went well: this changes the debugging loop from speculation to evidence because the live Telegram response can now show the actual resolver path and candidate count
+- what was weak: the user experience up to this point was poor because earlier turns overclaimed fixes before the live reply changed, and detached local process management is still flaky in Orchids
+- follow-up: have the user send the same Nidoking photo once more and verify the reply now includes the debug block plus the resolved modern-identifier path before making any further OCR heuristics changes
+- user reaction: frustrated that repeated claims of a fix did not change the Telegram output; this entry reflects that outcome rather than model confidence
+
+
+## 2026-04-12 — Catalog Pagination Root Cause Fix
+- date: 2026-04-12
+- task: explain why Telegram still missed Nidoking even when the OCR string and local matcher looked correct
+- goal: find the real production-path cause instead of adding more OCR heuristics blindly
+- outcome: instrumented resolver-side diagnostics, discovered catalog pagination was nondeterministic because `db/cards.py` used `.range(...)` without a stable `.order(...)`, fixed the query to `.order('id')`, bumped the live build marker to `ocr-build-2026-04-12-pagination-fix-v4`, and restarted the bot cleanly in a single live PTY session
+- validation: repeated fresh-process probes now consistently resolve `IDENTIFIER: 233/182 | NAME_EN: ortNidoKine` to `Team Rocket's Nidoking ex Illustration Rare (Destined Rivals)` with `resolver=pokemon_modern_identifier_first`; lock holder is a single current bot process after restart
+- what went well: the added debug metadata turned a vague OCR complaint into a concrete data-access bug with a reproducible root cause
+- what was weak: the user lost time because the earlier investigation focused on OCR confidence before proving the catalog paging path was deterministic
+- follow-up: have the user resend the same photo and confirm the reply now shows build `ocr-build-2026-04-12-pagination-fix-v4` and resolves the card correctly before making any new OCR changes
+- user reaction: frustrated, rightly, because the same bad Telegram reply persisted; this root-cause fix is aimed directly at that mismatch
+
+
+## 2026-04-12 — OCR ROI And Ratio Selection Fix
+- date: 2026-04-12
+- task: improve OCR itself after a new Lucario photo proved the bot was still reading the wrong identifier from foil-heavy text
+- goal: make the OCR pipeline read real name/number text better without any per-card hardcoding
+- outcome: found that the Pokémon title ROI was too high and the identifier pass over-weighted a thresholded crop that hallucinated `797/732`; updated the OCR pipeline to use lower name windows, softer identifier preprocessing, more Tesseract pass variants, explicit-only set-code extraction, and ratio plausibility scoring so `179/132` wins over implausible noisy ratios
+- validation: local run on the attached image now returns `IDENTIFIER: 179/132 | NAME_EN: ... Mega Lucario` and the resolver matches `Mega Lucario ex Illustration Rare (Mega Evolution)`; live bot restarted on build `ocr-build-2026-04-12-ocr-window-fix-v5`
+- what went well: this was a real OCR improvement, not a matcher shortcut, and it should help other foil-heavy older Pokémon cards too
+- what was weak: card isolation still falls back to center crops on some otherwise clean photos, so there is still headroom in `services/card_detection.py`
+- follow-up: retest the Lucario photo live, then improve card detection so fewer photos depend on fallback center crops
+- user reaction: explicitly rejected any hardcoded image identification and asked for OCR quality to improve instead; this work follows that requirement directly
+
+
+## 2026-04-12 — Hardcoding Audit And Prompt Cleanup
+- date: 2026-04-12
+- task: evaluate whether the identification system contains hardcoded card matches and remove them if present
+- goal: ensure card resolution stays driven by OCR text plus catalog data rather than hidden per-card shortcuts
+- outcome: audited the runtime OCR and resolver codepaths and found no literal per-card title hardcodes in product logic; cleaned up the remaining user-facing example identifiers so prompts now use the generic placeholder `ABC 123/456` instead of a real card code
+- validation: repository search found no runtime product code referencing specific card titles like Nidoking, Crobat, Lucario, or Charizard for matching; `python3 -m py_compile handlers/listing.py services/card_identifier.py services/ocr.py db/cards.py` passed
+- what went well: this makes the system easier to reason about because specific card examples are no longer mixed into the live seller flow
+- what was weak: the resolver still contains domain heuristics for Pokémon OCR quality, which are generic but can still feel overfit when they are not clearly explained
+- follow-up: if desired, the next cleanup pass should separate generic OCR configuration from game-specific resolver policy into explicit config blocks so the behavior is more auditable
+- user reaction: concerned that successful matches were coming from hidden hardcoded identification; this audit directly addressed that concern
+
+
+## 2026-04-12 — Generic Overmatch Guard
+- date: 2026-04-12
+- task: tighten the resolver after the hardcoding audit exposed that fake placeholder OCR could still overmatch a random card
+- goal: prevent the generic matcher from looking like hidden hardcoding by refusing weak set-code-mismatch matches
+- outcome: added a guard in `services/card_identifier.py` so when OCR claims a set code but the best catalog hit is from another set, the bot now returns no match unless there is genuinely strong name evidence
+- validation: `IDENTIFIER: ABC 123/456 | NAME_EN: Placeholder` now returns `generic_set_code_mismatch_guard` instead of matching `Rosa's Encouragement`, while the validated Nidoking and Mega Lucario cases still resolve correctly; live bot restarted on build `ocr-build-2026-04-12-hardcoding-audit-v6`
+- what went well: this reduces hallucinated matches and makes the system's behavior better aligned with the user's no-hardcoding requirement
+- what was weak: the resolver still depends on heuristics rather than a formal confidence model, so there is still room to make the policy cleaner and more auditable
+- follow-up: if desired, the next step should be to centralize resolver policy thresholds in config so OCR extraction and catalog decisioning are easier to inspect separately
+- user reaction: wanted reassurance that wins were coming from OCR plus catalog evidence rather than hidden hardcoded card IDs; this guard directly reduces that failure mode
+
+
+## 2026-04-12 — Pricing Source Audit And Button Selection
+- date: 2026-04-12
+- task: explain why PriceCharting no longer appears and improve the seller pricing UX
+- goal: identify the actual source gap and replace manual price typing with quick source-selection buttons
+- outcome: confirmed that PriceCharting is not live in the current stack because `services/pricecharting.py` is still only a scaffold and the `cards` catalog has 0 populated `pricecharting_id` rows; added inline Telegram buttons so sellers can tap a returned price reference or choose custom pricing during `/list`; listing persistence now also has hooks for `pricecharting_price_sgd` and `yuyutei_price_sgd` when those sources are restored
+- validation: repository/runtime checks confirmed no live PriceCharting source path and 0 populated `pricecharting_id` rows; local smoke check verified callback data generation for the new price buttons and `python3 -m py_compile handlers/listing.py db/listings.py services/price_lookup.py` passed; live bot restarted on build `ocr-build-2026-04-12-price-buttons-v7`
+- what went well: the pricing UX is materially better now even before adding more sources because sellers can use source prices with one tap
+- what was weak: PriceCharting itself is still absent, so this is a UX improvement plus source audit, not a full source restoration
+- follow-up: if PriceCharting needs to come back, the next task is to decide whether to restore it from imported IDs/data or build a sanctioned live lookup path instead of leaving the scaffold unused
+- user reaction: noticed that sources had regressed and explicitly asked for button selectors for pricing; this task addressed both points directly
+
+## 2026-04-12 — Generic Set Alias Resolution And Live PriceCharting Path
+- date: 2026-04-12
+- task: remove another hidden resolver failure mode and restore a real PriceCharting integration path
+- goal: keep identification generic and catalog-driven while making pricing sources/buttons work in the actual Telegram flow
+- outcome: fixed a generic Pokémon set-name gap by matching separator-derived aliases from catalog metadata, so OCR like `Phantasmal Flames 130/94` now resolves to the correct `PFL` card without any per-card hardcoding; wired the missing inline price keyboard into `/list`; upgraded `services/pricecharting.py` from a scaffold into a real token-first + Scrapling-fallback lookup path; added `PRICECHARTING_API_TOKEN` to env examples; and restarted the bot after clearing a stale single-instance lock
+- validation: `python -m py_compile` passed for the updated resolver/pricing files; direct live probes now resolve `233/182 + ortNidoKine`, `179/132 + Mega Lucario`, and `130/94 + Phantasmal Flames` correctly while `ABC 123/456` still fails safe; live bot restarted successfully and logged `Bot ready as @TCGlistingbot` at 2026-04-12 01:52 local time
+- what went well: the fix addressed a real catalog-normalization bug instead of papering over one bad card, and the price buttons now actually reach the seller UI
+- what was weak: public PriceCharting scraping is still constrained by Cloudflare in this environment, so the sanctioned API token path is the only reliable live source today
+- follow-up: if PriceCharting is mission-critical, the next step is to add a real `PRICECHARTING_API_TOKEN` and validate one live lookup end-to-end in Telegram; separately, consider resolving the PTB `per_message` callback warning if the price buttons behave inconsistently in live chat
+- user reaction: explicitly rejected hardcoded identification and asked for a real pricing source plus button selectors; this task aligned the implementation with that expectation
+
+## 2026-04-12 — Full Set Alias Mapping Audit And Name+Number Priority
+- date: 2026-04-12
+- task: make Pokémon set mapping generic and reliable while shifting identification priority toward exact card name plus printed number
+- goal: ensure printed-card abbreviations like `PFL` and `ASC` are reached through correct generic set-name mapping, and reduce dependence on broad series matching in OCR resolution
+- outcome: upgraded the Pokémon CSV import mapping to use generic suffix-aware set aliases from catalog metadata instead of depending mainly on manual exceptions; verified `Phantasmal Flames -> PFL`, `Ascended Heroes -> ASC`, and umbrella/base sets like `Black & White -> BLW`; audited all 172 current Pokémon CSV files and reduced unmapped sets to 0; also increased generic resolver weight for strong `exact name + printed number` evidence so card identity wins earlier when OCR captures both pieces
+- validation: `python -m py_compile scripts/import_pokemon_card_csv.py services/card_identifier.py` passed; direct checks confirmed `Phantasmal Flames`, `Ascended Heroes`, `Mega Evolution`, `Black and White`, `Diamond and Pearl`, `Platinum`, `Sun and Moon`, `Sword and Shield`, and `Scarlet and Violet` all resolve to the expected set codes; full CSV audit reported `csv_files=172` and `unmapped=0`; bot restarted successfully and logged ready at 2026-04-12 02:01 local time
+- what went well: the fix is generic rather than a growing pile of one-off maps, and the validation covered the full imported EN source set list instead of only hand-picked examples
+- what was weak: this audit only covers the current English source pipeline; Japanese set imports and their aliases are still not present in the catalog yet
+- follow-up: when JP imports are added, reuse the same suffix-alias strategy and run the same full-source audit so JP set codes and aliases are equally deterministic
+- user reaction: explicitly wanted abbreviation-correct set mapping and a matcher that leans on `name + number` instead of vague series dependence; this work directly aligned the system with that requirement
+
+## 2026-04-12 — TCG Catalog Integrity Skill
+- date: 2026-04-12
+- task: package the anti-hardcoding OCR/catalog rules and source links into a reusable repo-local skill
+- goal: make future sessions follow the same no-hardcoding, generic alias mapping, and source-priority rules without re-explaining them each time
+- outcome: added `skills/tcg-catalog-integrity/SKILL.md` plus `skills/tcg-catalog-integrity/references/source_links.md`; the skill defines disallowed hardcoding patterns, approved generic resolver patterns, validation workflow, set-mapping rules, pricing source priority, and includes the requested external links such as CLI-Anything and Scrapling
+- validation: reviewed the generated skill files locally and confirmed they are concise, repo-relevant, and directly aligned with the user's stated constraints about OCR, set abbreviations, and non-hardcoded behavior
+- what went well: this captures the product-specific matching philosophy in one reusable place instead of scattering it across chat history
+- what was weak: repo-local skills are only useful when future agents read/use them, so this helps guidance but does not itself change runtime logic
+- follow-up: if desired, add a second skill specifically for JP Pokémon import workflow once that pipeline is built
+- user reaction: wanted the anti-hardcoding rules and source-selection guidance implemented as a skill; this does exactly that
+
+## 2026-04-12 — Noisy Set-Code Recovery And Unique Ratio Match
+- date: 2026-04-12
+- task: fix a bad live OCR result where a gold Pokémon card with visible `PFL 130/094` still surfaced `Aerodactyl (Team Up)` as the shortlist top hit
+- goal: make the resolver trust generic OCR evidence more intelligently without adding any per-card exception logic
+- outcome: reproduced the exact image locally, confirmed OCR debug artifacts already contained noisy `PFLEN ... 130/094` chunks, strengthened set-code extraction in `services/ocr.py` to recover known codes from noisy alphanumeric identifier text near the ratio, and added a generic `unique_print_ratio_match` resolver path so a unique `left-number + printed total` catalog hit resolves directly instead of drifting to same-number cards from unrelated sets
+- validation: local run on the attached image now returns `IDENTIFIER: PFL 130/094 | ...` and resolves to `Mega Charizard X ex (Phantasmal Flames)` with `resolver=exact_identifier`; `python -m py_compile handlers/listing.py services/ocr.py services/card_identifier.py` passed; live bot restarted successfully and logged ready at 2026-04-12 02:07 local time
+- what went well: the fix came from OCR/debug evidence already present in the system and improves an entire class of noisy foil-card identifier reads rather than hardcoding a single card
+- what was weak: the visible listing build marker had lagged behind the real OCR/service changes and needed to be bumped so live debugging remains trustworthy
+- follow-up: retest the same photo live and then stress-test more cards where the set code is partially visible but noisy, especially foil cards with tiny bottom-left abbreviations
+- user reaction: rightly called the previous result "really bad" because the printed ratio should not have ended at `Aerodactyl`; this task specifically addressed that generic failure mode

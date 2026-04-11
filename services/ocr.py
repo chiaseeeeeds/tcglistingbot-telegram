@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 _IDENTIFIER_PATTERN = re.compile(r'\b[A-Z]{2,5}\s*(?:EN|JP)?\s*\d{1,3}/\d{1,3}\b|\b\d{1,3}/\d{1,3}\b')
 _STRICT_IDENTIFIER_PATTERN = re.compile(r'^(?:[A-Z]{2,5}\s*(?:EN|JP)?\s*)?\d{1,3}/\d{1,3}$')
+_SET_CODE_RATIO_PATTERN = re.compile(r'\b([A-Z0-9]{2,5})\s*(?:EN|JP)?\s*(\d{1,3}/\d{1,3})\b')
 _RATIO_PATTERN = re.compile(r'\b(\d{1,3}/\d{1,3})\b')
 _COMPACT_RATIO_PATTERN = re.compile(r'(?<!\d)(\d{6})(?!\d)')
 _NOISY_COMPACT_RATIO_PATTERN = re.compile(r'(?<!\d)(\d{7})(?!\d)')
@@ -40,8 +41,9 @@ _POKEMON_IDENTIFIER_WINDOWS: list[tuple[float, float, float, float]] = [
     (0.00, 0.93, 0.20, 1.00),
 ]
 _POKEMON_NAME_WINDOWS: list[tuple[float, float, float, float]] = [
-    (0.16, 0.01, 0.58, 0.07),
-    (0.14, 0.00, 0.62, 0.08),
+    (0.10, 0.02, 0.72, 0.12),
+    (0.08, 0.03, 0.74, 0.13),
+    (0.12, 0.03, 0.64, 0.12),
     (0.14, 0.01, 0.72, 0.10),
 ]
 _GENERIC_IDENTIFIER_WINDOWS: list[tuple[float, float, float, float]] = [
@@ -91,18 +93,18 @@ def _known_set_codes(game: str | None) -> set[str]:
 
 def _prepare_identifier_roi(image: Image.Image) -> Image.Image:
     grayscale = ImageOps.grayscale(image)
-    contrast = ImageEnhance.Contrast(grayscale).enhance(3.5)
+    enlarged = grayscale.resize((max(grayscale.width * 6, 1), max(grayscale.height * 6, 1)))
+    contrast = ImageEnhance.Contrast(enlarged).enhance(2.1)
     sharpened = contrast.filter(ImageFilter.SHARPEN)
-    enlarged = sharpened.resize((max(sharpened.width * 5, 1), max(sharpened.height * 5, 1)))
-    return ImageOps.autocontrast(enlarged)
+    return ImageOps.autocontrast(sharpened)
 
 
 def _prepare_name_roi(image: Image.Image) -> Image.Image:
     grayscale = ImageOps.grayscale(image)
-    contrast = ImageEnhance.Contrast(grayscale).enhance(2.8)
+    enlarged = grayscale.resize((max(grayscale.width * 5, 1), max(grayscale.height * 5, 1)))
+    contrast = ImageEnhance.Contrast(enlarged).enhance(2.4)
     sharpened = contrast.filter(ImageFilter.SHARPEN)
-    enlarged = sharpened.resize((max(sharpened.width * 4, 1), max(sharpened.height * 4, 1)))
-    return ImageOps.autocontrast(enlarged)
+    return ImageOps.autocontrast(sharpened)
 
 
 def _crop_relative(image: Image.Image, window: tuple[float, float, float, float]) -> Image.Image:
@@ -128,18 +130,23 @@ def _normalize_text(text: str) -> str:
 
 
 def _ocr_identifier_passes_tesseract(image: Image.Image) -> list[str]:
-    primary_config = '--psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/ '
-    secondary_config = '--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/ '
+    line_config = '--psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/ '
+    block_config = '--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/ '
+    sparse_config = '--psm 11 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/ '
+    open_config = '--psm 6'
     primary_variants = [
         image,
-        image.point(lambda pixel: 255 if pixel > 152 else 0),
+        ImageOps.autocontrast(image),
+        ImageEnhance.Contrast(image).enhance(1.8),
+        image.point(lambda pixel: 255 if pixel > 168 else 0),
+        image.point(lambda pixel: 255 if pixel > 148 else 0),
+        ImageOps.invert(image),
     ]
-    fallback_variants = [ImageOps.invert(image)]
     outputs: list[str] = []
     strict_hits = 0
 
     for variant in primary_variants:
-        for config in (primary_config, secondary_config):
+        for config in (line_config, block_config, sparse_config, open_config):
             try:
                 text = pytesseract.image_to_string(variant, lang='eng', config=config)
             except pytesseract.TesseractError:
@@ -152,17 +159,8 @@ def _ocr_identifier_passes_tesseract(image: Image.Image) -> list[str]:
                 strict_hits += 1
                 if strict_hits >= 1:
                     return outputs
-            if _RATIO_PATTERN.search(normalized):
+            if _RATIO_PATTERN.search(normalized) or _COMPACT_RATIO_PATTERN.search(normalized.replace(' ', '')) or _NOISY_COMPACT_RATIO_PATTERN.search(normalized.replace(' ', '')):
                 return outputs
-
-    for variant in fallback_variants:
-        try:
-            text = pytesseract.image_to_string(variant, lang='eng', config=primary_config)
-        except pytesseract.TesseractError:
-            continue
-        normalized = _normalize_text(text).upper()
-        if normalized:
-            outputs.append(normalized)
     return outputs
 
 
@@ -235,24 +233,69 @@ def _candidate_set_codes(chunks: list[str], *, game: str | None) -> Counter[str]
     known_codes = _known_set_codes(game)
     for chunk in chunks:
         upper_chunk = chunk.upper()
-        has_ratio = bool(_RATIO_PATTERN.search(upper_chunk) or _COMPACT_RATIO_PATTERN.search(upper_chunk.replace(' ', '')))
         is_strict = bool(_STRICT_IDENTIFIER_PATTERN.match(upper_chunk.strip()))
-        for token in _SET_CODE_TOKEN_PATTERN.findall(upper_chunk):
+        explicit_matches = _SET_CODE_RATIO_PATTERN.findall(upper_chunk)
+        for token, _ in explicit_matches:
             if token in _SET_CODE_STOPWORDS:
                 continue
             if known_codes and token not in known_codes:
                 continue
             if token.isdigit():
                 continue
-            score = 1
-            if has_ratio:
-                score += 2
+            score = 4
             if is_strict:
                 score += 6
             if len(token) in {3, 4}:
                 score += 1
             scores[token] += score
+
+        if known_codes and (_RATIO_PATTERN.search(upper_chunk) or _COMPACT_RATIO_PATTERN.search(upper_chunk.replace(' ', ''))):
+            compact = re.sub(r'[^A-Z0-9]', '', upper_chunk)
+            for token in known_codes:
+                if token in _SET_CODE_STOPWORDS:
+                    continue
+                if token.isdigit() or len(token) < 2:
+                    continue
+                if token not in compact:
+                    continue
+                score = 3
+                if f'{token}EN' in compact or f'{token}JP' in compact:
+                    score += 4
+                if compact.endswith(token) or f'{token}EN' in compact[-8:] or f'{token}JP' in compact[-8:]:
+                    score += 2
+                if len(token) in {3, 4}:
+                    score += 1
+                scores[token] += score
     return scores
+
+
+def _ratio_plausibility(ratio: str) -> int:
+    if '/' not in ratio:
+        return 0
+    left_text, right_text = ratio.split('/', 1)
+    try:
+        left = int(left_text)
+        right = int(right_text)
+    except ValueError:
+        return -120
+    bonus = 0
+    if right <= 0:
+        return -120
+    if right > 400:
+        bonus -= 120
+    elif right <= 250:
+        bonus += 28
+    if left > 999:
+        bonus -= 120
+    elif left <= right + 120:
+        bonus += 26
+    elif left <= right + 200:
+        bonus += 4
+    else:
+        bonus -= 90
+    if left <= 400:
+        bonus += 10
+    return bonus
 
 
 def _best_ratio(chunks: list[str]) -> tuple[str, int]:
@@ -261,19 +304,23 @@ def _best_ratio(chunks: list[str]) -> tuple[str, int]:
         upper_chunk = chunk.upper()
         match = _RATIO_PATTERN.search(upper_chunk)
         if match:
-            scores[match.group(1)] += 140
+            ratio = match.group(1)
+            scores[ratio] += 140 + _ratio_plausibility(ratio)
             continue
         compact_match = _COMPACT_RATIO_PATTERN.search(upper_chunk.replace(' ', ''))
         if compact_match:
             digits = compact_match.group(1)
-            scores[f'{digits[:3]}/{digits[3:]}'] += 80
+            ratio = f'{digits[:3]}/{digits[3:]}'
+            scores[ratio] += 80 + _ratio_plausibility(ratio)
         noisy_matches = _NOISY_COMPACT_RATIO_PATTERN.findall(upper_chunk.replace(' ', ''))
         for digits in noisy_matches:
-            scores[f'{digits[:3]}/{digits[-3:]}'] += 55
+            ratio = f'{digits[:3]}/{digits[-3:]}'
+            scores[ratio] += 55 + _ratio_plausibility(ratio)
             for index in range(1, len(digits) - 1):
                 repaired = digits[:index] + digits[index + 1:]
                 if len(repaired) == 6:
-                    scores[f'{repaired[:3]}/{repaired[3:]}'] += 20
+                    repaired_ratio = f'{repaired[:3]}/{repaired[3:]}'
+                    scores[repaired_ratio] += 20 + _ratio_plausibility(repaired_ratio)
     if not scores:
         return '', 0
     ratio, score = scores.most_common(1)[0]
@@ -394,6 +441,12 @@ def _select_finalists(candidates: list[CardImageCandidate]) -> list[CardImageCan
     return finalists[:2]
 
 
+def _decisive_candidate(candidate: _CandidateOCR) -> bool:
+    has_identifier = 'IDENTIFIER:' in candidate.text
+    has_name = 'NAME_EN:' in candidate.text or 'NAME_JP:' in candidate.text
+    return has_identifier and has_name and candidate.score >= 180
+
+
 def _score_candidate(*, candidate: CardImageCandidate, game: str | None) -> _CandidateOCR:
     roi_images: list[Image.Image] = []
     identifier_chunks: list[str] = []
@@ -439,7 +492,12 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
     try:
         candidates = extract_card_candidates(path)
         finalists = _select_finalists(candidates)
-        scored_candidates = [_score_candidate(candidate=candidate, game=game) for candidate in finalists]
+        scored_candidates: list[_CandidateOCR] = []
+        for candidate in finalists:
+            scored = _score_candidate(candidate=candidate, game=game)
+            scored_candidates.append(scored)
+            if _decisive_candidate(scored):
+                break
         best_candidate = max(scored_candidates, key=lambda item: item.score)
         all_identifier_chunks = [chunk for candidate in scored_candidates for chunk in candidate.identifier_chunks]
         all_name_chunks = [chunk for candidate in scored_candidates for chunk in candidate.name_chunks]

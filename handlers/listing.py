@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from html import escape
 from pathlib import Path
 from tempfile import gettempdir
 from uuid import uuid4
 
-from telegram import ReplyKeyboardRemove, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     Application,
+    CallbackQueryHandler,
     CommandHandler,
     ContextTypes,
     ConversationHandler,
@@ -18,6 +20,7 @@ from telegram.ext import (
     filters,
 )
 
+from config import get_config
 from db.listings import create_listing
 from db.seller_configs import get_seller_config_by_seller_id
 from db.sellers import get_seller_by_telegram_id
@@ -30,6 +33,8 @@ from services.price_lookup import PriceReference, lookup_price_references
 from utils.formatters import format_fixed_price_listing
 
 logger = logging.getLogger(__name__)
+
+OCR_BUILD_MARKER = 'ocr-build-2026-04-12-identifier-code-recovery-v9'
 
 PHOTO, TITLE, PRICE, NOTES, CONFIRM = range(5)
 SUPPORTED_GAMES = {'pokemon', 'onepiece'}
@@ -84,6 +89,31 @@ def _listing_preview(*, game: str, title: str, price_sgd: float, notes: str, pri
     )
 
 
+
+
+def _price_ref_button_key(reference: PriceReference) -> str:
+    source = reference.source.lower()
+    if 'pricecharting' in source:
+        return 'pricecharting'
+    if 'yuyutei' in source:
+        return 'yuyutei'
+    if 'tcgplayer' in source:
+        return 'tcgplayer'
+    if 'cardmarket' in source:
+        return 'cardmarket'
+    if 'history' in source or 'median' in source:
+        return 'history'
+    return 'market'
+
+
+def _price_reference_keyboard(price_refs: list[PriceReference]) -> InlineKeyboardMarkup:
+    rows: list[list[InlineKeyboardButton]] = []
+    for index, reference in enumerate(price_refs[:4]):
+        label = f"Use {reference.source}: SGD {reference.amount_sgd:.2f}"
+        rows.append([InlineKeyboardButton(label[:64], callback_data=f'listing_price_ref:{index}')])
+    rows.append([InlineKeyboardButton('Enter custom price', callback_data='listing_price_custom')])
+    return InlineKeyboardMarkup(rows)
+
 def _format_price_reference_block(price_refs: list[PriceReference]) -> str:
     if not price_refs:
         return (
@@ -98,6 +128,40 @@ def _format_price_reference_block(price_refs: list[PriceReference]) -> str:
         )
     return '\n'.join(lines)
 
+
+
+
+def _admin_debug_line(*, update: Update | None, identification, candidate_options: list[dict]) -> str:
+    if update is None or update.effective_user is None:
+        return ''
+    admin_ids = set(get_config().bot_admin_telegram_ids)
+    if update.effective_user.id not in admin_ids:
+        return ''
+
+    top = str(candidate_options[0]['display_name']) if candidate_options else 'none'
+    metadata = identification.metadata or {}
+    resolver = str(metadata.get('resolver') or 'unknown')
+    service_build = str(metadata.get('service_build') or 'unknown')
+    detected_print_number = str(metadata.get('detected_print_number') or 'none')
+    detected_set_code = str(metadata.get('detected_set_code') or metadata.get('set_code') or 'none')
+    catalog_size = str(metadata.get('catalog_size') or 'unknown')
+    number_candidate_count = str(metadata.get('number_candidate_count') or 'unknown')
+    number_candidate_preview = str(metadata.get('number_candidate_preview') or 'unknown')
+    return (
+        '<b>Debug</b>\n'
+        f"resolver=<code>{escape(resolver[:60])}</code> "
+        f"svc=<code>{escape(service_build[:40])}</code>\n"
+        f"matched=<code>{identification.matched}</code> "
+        f"conf=<code>{identification.confidence:.2f}</code> "
+        f"catalog=<code>{escape(catalog_size[:12])}</code>\n"
+        f"detected=<code>{escape(detected_set_code[:16])}</code> "
+        f"print=<code>{escape(detected_print_number[:24])}</code> "
+        f"candidates=<code>{len(candidate_options)}</code>\n"
+        f"left_hits=<code>{escape(number_candidate_count[:12])}</code> "
+        f"sets=<code>{escape(number_candidate_preview[:40])}</code>\n"
+        f"display=<code>{escape(str(identification.display_name)[:80])}</code>\n"
+        f"top=<code>{escape(top[:80])}</code>\n\n"
+    )
 
 def _format_candidate_options(options: list[dict]) -> str:
     if not options:
@@ -234,7 +298,8 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
         warning_lines = [f'• Auto-detected game: {game} ({detected_game.reason}).']
         warning_lines.extend(f'• {warning}' for warning in ocr_result.warnings)
-        warning_block = '\n'.join(warning_lines) + '\n\n'
+        warning_block = '\n'.join(warning_lines) + f'\n• Build: {OCR_BUILD_MARKER}.\n\n'
+        admin_debug = _admin_debug_line(update=update, identification=identification, candidate_options=candidate_options)
 
         if identification.matched and identification.confidence >= 0.6:
             context.user_data['listing_detection_mode'] = 'matched'
@@ -243,12 +308,13 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             reasons = '\n'.join(f'• {reason}' for reason in identification.match_reasons) or '• OCR text roughly matched the local catalog.'
             await update.effective_message.reply_text(
                 warning_block
+                + admin_debug
                 + '<b>I found a likely card match</b>\n\n'
                 f'Title: <code>{identification.display_name}</code>\n'
                 f'Confidence: <code>{identification.confidence:.2f}</code>\n'
                 f'Reasons:\n{reasons}\n\n'
                 'Reply with <code>yes</code> to use this title, or send the corrected title manually.\n'
-                'If OCR got the card wrong, you can also reply with the printed identifier like <code>PAF 234/091</code>.',
+                'If OCR got the card wrong, you can also reply with the printed identifier like <code>ABC 123/456</code>.',
                 parse_mode='HTML',
             )
             return TITLE
@@ -260,6 +326,7 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             reasons = '\n'.join(f'• {reason}' for reason in identification.match_reasons) or '• OCR text roughly matched the local catalog.'
             message = (
                 warning_block
+                + admin_debug
                 + '<b>I found a possible card match, but I am not confident enough to auto-lock it in.</b>\n\n'
                 f'Title: <code>{identification.display_name}</code>\n'
                 f'Confidence: <code>{identification.confidence:.2f}</code>\n'
@@ -270,7 +337,7 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             message += (
                 'Reply with <code>yes</code> to use this title anyway, send <code>1</code>/<code>2</code>/<code>3</code> to choose from the shortlist, '
                 'or send the corrected title manually.\n'
-                'If you can see the printed identifier, sending it like <code>PAF 234/091</code> is safer.'
+                'If you can see the printed identifier, sending it like <code>ABC 123/456</code> is safer.'
             )
             await update.effective_message.reply_text(message, parse_mode='HTML')
             return TITLE
@@ -278,6 +345,7 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         context.user_data['listing_detection_mode'] = 'needs_identifier'
         message = (
             warning_block
+            + admin_debug
             + '<b>I could not confidently identify the card from OCR.</b>\n\n'
             f'OCR text: <code>{raw_text[:220] or "No usable text detected"}</code>\n\n'
         )
@@ -285,12 +353,12 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             message += _format_candidate_options(candidate_options) + '\n\n'
             message += (
                 'Reply with <code>1</code>, <code>2</code>, or <code>3</code> to choose one of these, '
-                'or send the printed identifier like <code>PAF 234/091</code>.\n'
+                'or send the printed identifier like <code>ABC 123/456</code>.\n'
                 'If you prefer, you can still enter the listing title manually.'
             )
         else:
             message += (
-                'Reply with the printed identifier like <code>PAF 234/091</code>.\n'
+                'Reply with the printed identifier like <code>ABC 123/456</code>.\n'
                 'If you prefer, you can still enter the listing title manually.'
             )
         await update.effective_message.reply_text(message, parse_mode='HTML')
@@ -373,7 +441,7 @@ async def capture_title(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             else:
                 await update.effective_message.reply_text(
                     'I still could not match that identifier. Reply with another code like '
-                    '<code>PAF 234/091</code> or send the title manually.',
+                    '<code>ABC 123/456</code> or send the title manually.',
                     parse_mode='HTML',
                 )
                 return TITLE
@@ -392,9 +460,63 @@ async def capture_title(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         _format_price_reference_block(price_refs)
         + '\n\nEnter your final price in SGD. Example: <code>25</code> or <code>25.50</code>.',
         parse_mode='HTML',
+        reply_markup=_price_reference_keyboard(price_refs) if price_refs else None,
     )
     return PRICE
 
+
+
+
+async def capture_price_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle inline price selection buttons."""
+
+    query = update.callback_query
+    if query is None:
+        return PRICE
+    await query.answer()
+
+    data = query.data or ''
+    price_refs = list(context.user_data.get('listing_price_refs') or [])
+
+    if data == 'listing_price_custom':
+        await query.message.reply_text(
+            'Enter your final custom price in SGD. Example: <code>25</code> or <code>25.50</code>.',
+            parse_mode='HTML',
+        )
+        return PRICE
+
+    if not data.startswith('listing_price_ref:'):
+        return PRICE
+
+    try:
+        index = int(data.split(':', 1)[1])
+    except ValueError:
+        await query.message.reply_text('That price option is invalid. Please choose again or type a custom price.', parse_mode='HTML')
+        return PRICE
+
+    if index < 0 or index >= len(price_refs):
+        await query.message.reply_text('That price option is no longer available. Please choose again or type a custom price.', parse_mode='HTML')
+        return PRICE
+
+    selected_ref = price_refs[index]
+    context.user_data['listing_price_sgd'] = float(selected_ref.amount_sgd)
+    context.user_data['listing_selected_price_source'] = _price_ref_button_key(selected_ref)
+
+    try:
+        await query.edit_message_reply_markup(reply_markup=None)
+    except Exception:
+        pass
+
+    await query.message.reply_text(
+        (
+            '<b>Price selected.</b>\n\n'
+            f'Source: <code>{selected_ref.source}</code>\n'
+            f'Price: <code>SGD {selected_ref.amount_sgd:.2f}</code>\n\n'
+            'Enter any notes or condition details, or reply with <code>skip</code>.'
+        ),
+        parse_mode='HTML',
+    )
+    return NOTES
 
 async def capture_price(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Capture the listing price and continue to optional notes."""
@@ -412,6 +534,7 @@ async def capture_price(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         return PRICE
 
     context.user_data['listing_price_sgd'] = price_sgd
+    context.user_data['listing_selected_price_source'] = 'custom'
     await update.effective_message.reply_text(
         'Enter any notes or condition details, or reply with <code>skip</code>.',
         parse_mode='HTML',
@@ -500,7 +623,9 @@ async def confirm_listing(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         posted_channel_id=sent_message.chat.id,
         posted_message_id=sent_message.message_id,
         primary_image_path=context.user_data.get('listing_storage_path'),
-        tcgplayer_price_sgd=next((reference.amount_sgd for reference in price_refs if reference.source.startswith('TCGplayer')), None),
+        tcgplayer_price_sgd=next((reference.amount_sgd for reference in price_refs if 'tcgplayer' in reference.source.lower()), None),
+        pricecharting_price_sgd=next((reference.amount_sgd for reference in price_refs if 'pricecharting' in reference.source.lower()), None),
+        yuyutei_price_sgd=next((reference.amount_sgd for reference in price_refs if 'yuyutei' in reference.source.lower()), None),
     )
     logger.info('Posted listing %s to channel %s.', listing['id'], sent_message.chat.id)
     await update.effective_message.reply_text(
@@ -534,7 +659,10 @@ def register_listing_handlers(application: Application) -> None:
         states={
             PHOTO: [MessageHandler(filters.ChatType.PRIVATE & filters.PHOTO, capture_photo)],
             TITLE: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_title)],
-            PRICE: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_price)],
+            PRICE: [
+                CallbackQueryHandler(capture_price_callback, pattern=r'^listing_price_(?:ref:\d+|custom)$'),
+                MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_price),
+            ],
             NOTES: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_notes)],
             CONFIRM: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, confirm_listing)],
         },

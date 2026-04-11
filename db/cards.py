@@ -22,6 +22,7 @@ def _list_cards_for_game_cached(game: str) -> tuple[dict[str, Any], ...]:
             .select('*')
             .eq('game', game)
             .eq('is_active', True)
+            .order('id')
             .range(start, end)
             .execute()
         )

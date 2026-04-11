@@ -11,3 +11,5 @@ deep-translator==1.11.4
 google-cloud-vision==3.10.1
 opencv-python-headless==4.11.0.86
 psycopg[binary]==3.2.6
+
+scrapling==0.2.99

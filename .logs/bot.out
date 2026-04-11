@@ -1,4 +1,12 @@
-2026-04-11 14:31:04,521 INFO __main__ Starting bot process.
-2026-04-11 14:31:05,829 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
-2026-04-11 14:31:05,926 INFO apscheduler.scheduler Scheduler started
-2026-04-11 14:31:05,926 INFO telegram.ext.Application Application started
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py:653: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+2026-04-12 02:07:46,806 INFO __main__ Starting bot process.
+2026-04-12 02:07:47,537 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-04-12 02:07:47,606 INFO apscheduler.scheduler Scheduler started
+2026-04-12 02:07:47,606 INFO telegram.ext.Application Application started
+2026-04-12 02:08:18,114 ERROR __main__ Unhandled bot exception. update=None error=Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+NoneType: None
+2026-04-12 02:08:52,664 ERROR __main__ Unhandled bot exception. update=None error=Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+NoneType: None
+2026-04-12 02:09:27,631 ERROR __main__ Unhandled bot exception. update=None error=Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+NoneType: None

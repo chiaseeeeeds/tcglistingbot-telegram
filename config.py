@@ -29,6 +29,7 @@ class Config:
     comments_via_discussion_group: bool
     tcgplayer_public_key: str
     tcgplayer_private_key: str
+    pricecharting_api_token: str
     environment: str
     log_level: str
     default_timezone: str
@@ -137,6 +138,7 @@ def get_config() -> Config:
         ),
         tcgplayer_public_key=optional("TCGPLAYER_PUBLIC_KEY"),
         tcgplayer_private_key=optional("TCGPLAYER_PRIVATE_KEY"),
+        pricecharting_api_token=optional("PRICECHARTING_API_TOKEN"),
         environment=require("ENVIRONMENT", default="development"),
         log_level=require("LOG_LEVEL", default="INFO"),
         default_timezone=require("DEFAULT_TIMEZONE", default="Asia/Singapore"),

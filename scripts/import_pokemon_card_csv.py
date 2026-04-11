@@ -29,6 +29,7 @@ from config import get_config
 GITHUB_ZIP_URL = 'https://github.com/tradingcarddex/Pokemon-Card-CSV/archive/refs/heads/main.zip'
 SOURCE_NAME = 'pokemon-card-csv'
 CARD_NUMBER_RE = re.compile(r'^(?P<left>[A-Za-z0-9]+)(?:/(?P<right>[A-Za-z0-9]+))?$')
+SET_NAME_SPLIT_RE = re.compile(r'\s*[—–:/|]+\s*')
 VARIANT_HINTS = ['Reverse Holo', 'Holo', 'Promo', 'Full Art', 'Illustration Rare', 'Special Illustration Rare']
 MANUAL_SET_NAME_OVERRIDES = {
     'Wizards Black Star Promos': 'Wizards Black Star Promos',
@@ -108,6 +109,19 @@ def slug_to_set_name(file_name: str) -> str:
     stem = stem.replace('-', ' ')
     stem = normalize_whitespace(stem)
     return MANUAL_SET_NAME_OVERRIDES.get(stem, stem)
+
+
+def set_name_aliases(set_name: str) -> set[str]:
+    aliases: set[str] = set()
+    canonical_full = canonicalize_set_name(set_name)
+    if canonical_full:
+        aliases.add(canonical_full)
+    parts = [part for part in SET_NAME_SPLIT_RE.split(set_name) if normalize_whitespace(part)]
+    if len(parts) > 1:
+        canonical_suffix = canonicalize_set_name(parts[-1])
+        if canonical_suffix:
+            aliases.add(canonical_suffix)
+    return aliases
 
 
 def download_repo_archive() -> list[dict[str, str]]:
@@ -387,10 +401,19 @@ def fetch_set_mappings(connection: psycopg.Connection) -> dict[str, dict[str, An
             "select set_name, set_code, series_name from pokemon_sets where language = 'en'"
         )
         rows = cursor.fetchall()
-    return {
-        canonicalize_set_name(set_name): {'set_code': set_code, 'series_name': series_name, 'set_name': set_name}
-        for set_name, set_code, series_name in rows
-    }
+    mappings: dict[str, dict[str, Any]] = {}
+    ambiguous_aliases: set[str] = set()
+    for set_name, set_code, series_name in rows:
+        mapping = {'set_code': set_code, 'series_name': series_name, 'set_name': set_name}
+        for alias in set_name_aliases(set_name):
+            existing = mappings.get(alias)
+            if existing is not None and existing['set_code'] != set_code:
+                ambiguous_aliases.add(alias)
+                continue
+            mappings[alias] = mapping
+    for alias in ambiguous_aliases:
+        mappings.pop(alias, None)
+    return mappings
 
 
 def fetch_existing_cards(connection: psycopg.Connection) -> dict[tuple[str, str, str], str]:

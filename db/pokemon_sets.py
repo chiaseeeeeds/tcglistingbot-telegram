@@ -43,3 +43,14 @@ def list_pokemon_sets_with_symbols() -> list[dict[str, Any]]:
         .execute()
     )
     return extract_many(response)
+
+
+def list_pokemon_sets() -> list[dict[str, Any]]:
+    response = (
+        get_client()
+        .table('pokemon_sets')
+        .select('*')
+        .eq('language', 'en')
+        .execute()
+    )
+    return extract_many(response)
