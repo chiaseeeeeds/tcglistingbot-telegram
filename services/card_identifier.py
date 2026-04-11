@@ -123,6 +123,7 @@ def _candidate_option(*, score: float, card: dict[str, Any], reasons: list[str])
         'display_name': _display_name_for_card(card),
         'confidence': round(min(score, 0.99), 2),
         'set_code': str(card.get('set_code') or ''),
+        'set_name': str(card.get('set_name') or ''),
         'card_number': str(card.get('card_number') or ''),
         'reasons': reasons[:3],
     }

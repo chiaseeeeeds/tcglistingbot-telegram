@@ -256,3 +256,15 @@ Use this log after meaningful implementation tasks.
 - what was weak: this is still a local-machine workaround, so sleep, restarts, or Orchids session changes can still interrupt service compared with Railway/webhook hosting
 - follow-up: move the bot to a real always-on host with process supervision and webhook delivery
 - confidence: high
+
+## 2026-04-11 — Safe Old-Card Set Symbol Reranking
+- date: 2026-04-11
+- task: add Pokémon set-symbol metadata and use it safely for old-card shortlist ranking
+- goal: improve Base/Jungle/Fossil-era disambiguation without introducing more confident wrong matches
+- outcome: imported Bulbapedia set symbol/logo URLs into `pokemon_sets`, added a symbol matcher that searches the classic right-side symbol area, limited reranking to ambiguous old-style Pokémon cards, and only applies reordering when symbol evidence is decisive; the local bot was also relaunched cleanly in detached polling mode
+- validation: `python -m py_compile main.py config.py handlers/*.py db/*.py services/*.py jobs/*.py utils/*.py scripts/*.py`; smoke tests confirmed modern `234/182` Crobat matching still works and weak symbol evidence no longer reorders the old `4/102 Charizard` shortlist incorrectly; bot log shows startup at `2026-04-11 14:31:05`
+- what went well: the matcher is now much safer because weak icon similarity is treated as a hint instead of overriding name+number ranking
+- what was weak: real old-card photos are still needed to prove the chosen symbol windows generalize across classic layouts and e-reader/ex-era variants
+- follow-up: live-test a few actual Base/Jungle/Fossil/Base Set 2 photos and tune symbol windows or thresholds only if the decisive-rerank rule proves too conservative
+- confidence: medium
+

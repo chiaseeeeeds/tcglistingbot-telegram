@@ -128,19 +128,18 @@ def _normalize_text(text: str) -> str:
 
 
 def _ocr_identifier_passes_tesseract(image: Image.Image) -> list[str]:
-    configs = [
-        '--psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/ ',
-        '--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/ ',
-    ]
-    variants = [
+    primary_config = '--psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/ '
+    secondary_config = '--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/ '
+    primary_variants = [
         image,
         image.point(lambda pixel: 255 if pixel > 152 else 0),
-        ImageOps.invert(image),
     ]
+    fallback_variants = [ImageOps.invert(image)]
     outputs: list[str] = []
     strict_hits = 0
-    for variant in variants:
-        for config in configs:
+
+    for variant in primary_variants:
+        for config in (primary_config, secondary_config):
             try:
                 text = pytesseract.image_to_string(variant, lang='eng', config=config)
             except pytesseract.TesseractError:
@@ -151,8 +150,19 @@ def _ocr_identifier_passes_tesseract(image: Image.Image) -> list[str]:
             outputs.append(normalized)
             if _STRICT_IDENTIFIER_PATTERN.match(normalized):
                 strict_hits += 1
-            if strict_hits >= 2:
+                if strict_hits >= 1:
+                    return outputs
+            if _RATIO_PATTERN.search(normalized):
                 return outputs
+
+    for variant in fallback_variants:
+        try:
+            text = pytesseract.image_to_string(variant, lang='eng', config=primary_config)
+        except pytesseract.TesseractError:
+            continue
+        normalized = _normalize_text(text).upper()
+        if normalized:
+            outputs.append(normalized)
     return outputs
 
 
@@ -171,10 +181,11 @@ def _ocr_name_passes_tesseract(image: Image.Image) -> list[str]:
         except pytesseract.TesseractError:
             continue
         normalized = _normalize_text(text)
-        if normalized:
-            outputs.append(f'NAME_EN: {normalized}')
-    if any(_useful_english_name(chunk) for chunk in outputs):
-        return outputs
+        if not normalized:
+            continue
+        outputs.append(f'NAME_EN: {normalized}')
+        if _useful_english_name(normalized):
+            return outputs
     try:
         text = pytesseract.image_to_string(image, lang='jpn+jpn_vert', config='--psm 7')
     except pytesseract.TesseractError:
@@ -349,45 +360,64 @@ def _write_debug_artifacts(*, source_path: Path, candidate: _CandidateOCR) -> No
     )
 
 
-def _quick_rank_candidate(*, candidate: CardImageCandidate, game: str | None) -> int:
-    score = int(candidate.confidence * 20)
-    windows = _name_windows_for_game(game)[:2]
-    if not windows:
-        return score
-    for window in windows:
-        roi = _prepare_name_roi(_crop_relative(candidate.image, window))
-        try:
-            text = pytesseract.image_to_string(roi, lang='eng', config='--psm 7')
-        except pytesseract.TesseractError:
-            continue
-        normalized = _normalize_text(text)
-        if not normalized:
-            continue
-        tokens = re.findall(r'[A-Za-z]{3,}', normalized)
-        score += len(tokens) * 8
-        if 'HP' in normalized.upper():
-            score += 10
-        if 'EX' in normalized.upper():
-            score += 10
-    if candidate.source.startswith('detected_'):
-        score += 8
-    return score
+
+def _candidate_priority(candidate: CardImageCandidate) -> tuple[int, float]:
+    detected_bonus = 1 if candidate.source.startswith('detected_') else 0
+    source_bonus_map = {
+        'center_medium': 5,
+        'center_large': 4,
+        'center_left': 3,
+        'center_right': 2,
+        'center_up': 1,
+    }
+    return (detected_bonus, candidate.confidence + source_bonus_map.get(candidate.source, 0) / 100)
+
+
+def _select_finalists(candidates: list[CardImageCandidate]) -> list[CardImageCandidate]:
+    unique_by_source: dict[str, CardImageCandidate] = {}
+    for candidate in candidates:
+        unique_by_source.setdefault(candidate.source, candidate)
+    ranked = sorted(unique_by_source.values(), key=_candidate_priority, reverse=True)
+    finalists: list[CardImageCandidate] = []
+    detected = next((candidate for candidate in ranked if candidate.source.startswith('detected_')), None)
+    if detected is not None:
+        finalists.append(detected)
+    for preferred_source in ['center_medium', 'center_large']:
+        candidate = next((item for item in ranked if item.source == preferred_source), None)
+        if candidate is not None and candidate not in finalists:
+            finalists.append(candidate)
+    for candidate in ranked:
+        if candidate not in finalists:
+            finalists.append(candidate)
+        if len(finalists) >= 2:
+            break
+    return finalists[:2]
 
 
 def _score_candidate(*, candidate: CardImageCandidate, game: str | None) -> _CandidateOCR:
     roi_images: list[Image.Image] = []
     identifier_chunks: list[str] = []
+    best_identifier = ''
+    identifier_score = 0
     for window in _identifier_windows_for_game(game):
         roi = _prepare_identifier_roi(_crop_relative(candidate.image, window))
         roi_images.append(roi)
         identifier_chunks.extend(_ocr_identifier_passes(roi))
+        best_identifier, identifier_score = _select_best_identifier(identifier_chunks, game=game)
+        if best_identifier and identifier_score >= 120:
+            break
+
     name_chunks: list[str] = []
+    best_name = ''
+    name_score = 0
     for window in _name_windows_for_game(game):
         roi = _prepare_name_roi(_crop_relative(candidate.image, window))
         roi_images.append(roi)
         name_chunks.extend(_ocr_name_passes(roi))
-    best_identifier, identifier_score = _select_best_identifier(identifier_chunks, game=game)
-    best_name, name_score = _select_best_name(name_chunks)
+        best_name, name_score = _select_best_name(name_chunks)
+        if best_name and name_score >= 42:
+            break
+
     text = _dedupe_text_chunks([f'IDENTIFIER: {best_identifier}' if best_identifier else '', best_name])
     score = int(identifier_score * 3 + name_score + candidate.confidence * 20)
     if candidate.source.startswith('detected_'):
@@ -408,11 +438,7 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
         raise FileNotFoundError(f'OCR image not found: {path}')
     try:
         candidates = extract_card_candidates(path)
-        ranked_candidates = sorted(candidates, key=lambda c: _quick_rank_candidate(candidate=c, game=game), reverse=True)
-        finalists = ranked_candidates[:3]
-        detected_finalists = [candidate for candidate in ranked_candidates if candidate.source.startswith('detected_')]
-        if detected_finalists and detected_finalists[0] not in finalists:
-            finalists = finalists[:2] + [detected_finalists[0]]
+        finalists = _select_finalists(candidates)
         scored_candidates = [_score_candidate(candidate=candidate, game=game) for candidate in finalists]
         best_candidate = max(scored_candidates, key=lambda item: item.score)
         all_identifier_chunks = [chunk for candidate in scored_candidates for chunk in candidate.identifier_chunks]

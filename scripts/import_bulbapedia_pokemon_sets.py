@@ -7,6 +7,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urljoin
 
 import httpx
 import psycopg
@@ -88,6 +89,19 @@ def get_cell_text(cells: list[Tag], header_map: dict[str, int], header_name: str
     return normalize_whitespace(cells[index].get_text(' ', strip=True))
 
 
+def get_cell_image_url(cells: list[Tag], header_map: dict[str, int], header_name: str) -> str | None:
+    index = header_map.get(header_name)
+    if index is None or index >= len(cells):
+        return None
+    image = cells[index].find('img')
+    if image is None:
+        return None
+    source = image.get('src') or image.get('data-src') or ''
+    if not source:
+        return None
+    return urljoin(SOURCE_URL, source)
+
+
 def fetch_rows() -> list[dict[str, Any]]:
     client = httpx.Client(timeout=30, headers={'User-Agent': 'Mozilla/5.0'})
     html = client.get(SOURCE_URL).text
@@ -124,6 +138,8 @@ def fetch_rows() -> list[dict[str, Any]]:
                         get_cell_text(cells, header_map, 'Release date')
                         or get_cell_text(cells, header_map, 'Release period')
                     ),
+                    'symbol_image_url': get_cell_image_url(cells, header_map, 'Symbol'),
+                    'logo_image_url': get_cell_image_url(cells, header_map, 'Logo of Expansion'),
                     'source_url': SOURCE_URL,
                 }
             )
@@ -141,6 +157,8 @@ def upsert_rows(rows: list[dict[str, Any]]) -> int:
             expansion_type,
             card_count,
             release_date,
+            symbol_image_url,
+            logo_image_url,
             source_url,
             source_name
         )
@@ -153,6 +171,8 @@ def upsert_rows(rows: list[dict[str, Any]]) -> int:
             %(expansion_type)s,
             %(card_count)s,
             %(release_date)s,
+            %(symbol_image_url)s,
+            %(logo_image_url)s,
             %(source_url)s,
             %(source_name)s
         )
@@ -164,6 +184,8 @@ def upsert_rows(rows: list[dict[str, Any]]) -> int:
             expansion_type = excluded.expansion_type,
             card_count = excluded.card_count,
             release_date = excluded.release_date,
+            symbol_image_url = excluded.symbol_image_url,
+            logo_image_url = excluded.logo_image_url,
             source_url = excluded.source_url,
             source_name = excluded.source_name,
             updated_at = now()

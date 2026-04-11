@@ -27,6 +27,9 @@
 - OCR identifier recovery now votes across noisy compact number blobs like `2344182` and uses stronger lower-left identifier probes
 - medium-confidence modern Pokémon hits like `Team Rocket's Crobat ex` and `Team Rocket's Nidoking ex` now resolve from printed number + weak name fragments instead of failing or hallucinating the wrong base-set card
 - old low-number cards now use a shortlist-style name + printed number fallback, so ambiguous cards like Base/Base Set 2 era reprints can be chosen from top candidates instead of being auto-matched incorrectly
+- Pokémon set metadata now includes Bulbapedia symbol/logo image URLs, and old-card shortlist reranking can use those symbols as a conservative tie-breaker
+- symbol matching now looks in the classic right-side set-symbol area and only reorders shortlist candidates when the symbol evidence is decisively stronger than the alternatives
+- local polling bot startup is now detached again and was relaunched successfully on 2026-04-11 14:31 local time
 - basic discussion-thread claim handling is now wired for bot-posted listings, backed by the atomic claim RPC
 - local catalog matching works against seeded cards first
 - listing posting still requires seller confirmation before posting
@@ -52,16 +55,17 @@
 - raw PriceCharting rows still need a resolver before they can reliably populate `cards`
 - Pokémon EN import is complete, but the bulk loader still benefits from resumable per-file execution in unstable network environments
 - multi-candidate OCR and full-catalog matching now work better on tested real Pokémon photos, but latency is still high and live-photo tuning is still needed for glare, partial crops, and non-Pokémon layouts
+- older Pokémon cards still need real-photo validation for set-symbol disambiguation beyond the currently conservative shortlist reranker
 - card identification is still local-catalog and low-volume friendly
 - claim monitoring, queue advancement, and SOLD lifecycle are still todo
 - seller/buyer reputation and dedicated price history are still todo
 
 ### Near-Term Priorities
 1. live-test the updated OCR heuristics on more real Pokémon photos, especially glare and older cards
-2. verify linked discussion-thread `Claim` handling against real Telegram reply/update shapes
-3. add a real One Piece external pricing path or provider-backed fallback
-4. support front + back photo intake
-5. improve old-card disambiguation further with set-symbol or layout cues after shortlist fallback
+2. verify the conservative set-symbol reranker on real Base/Jungle/Fossil/Base Set 2 photos before trusting it to reorder often
+3. verify linked discussion-thread `Claim` handling against real Telegram reply/update shapes
+4. add a real One Piece external pricing path or provider-backed fallback
+5. support front + back photo intake
 
 ### Working Rules For Future Tasks
 - after any meaningful task, update this file with new current state and next risks

@@ -24,6 +24,7 @@ from db.sellers import get_seller_by_telegram_id
 from services.card_identifier import identify_card_from_text, parse_manual_identifier
 from services.game_detection import detect_game_from_image
 from services.image_storage import upload_listing_photo
+from services.set_symbol_matcher import rerank_candidate_options_by_symbol
 from services.ocr import OCRNotConfiguredError, extract_text_from_image
 from services.price_lookup import PriceReference, lookup_price_references
 from utils.formatters import format_fixed_price_listing
@@ -103,9 +104,10 @@ def _format_candidate_options(options: list[dict]) -> str:
         return ''
     lines = ['<b>Likely matches</b>']
     for index, option in enumerate(options[:3], start=1):
-        lines.append(
-            f"{index}. <code>{option['display_name']}</code> — conf <code>{float(option['confidence']):.2f}</code>"
-        )
+        line = f"{index}. <code>{option['display_name']}</code> — conf <code>{float(option['confidence']):.2f}</code>"
+        if option.get('symbol_score'):
+            line += f" — symbol <code>{float(option['symbol_score']):.2f}</code>"
+        lines.append(line)
     lines.append('\nReply with <code>1</code>, <code>2</code>, or <code>3</code> to use one of these titles.')
     return '\n'.join(lines)
 
@@ -212,6 +214,22 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         raw_text = str(ocr_result.text or '')
         identification = await asyncio.to_thread(identify_card_from_text, raw_text=raw_text, game=game)
         candidate_options = list(identification.candidate_options or [])
+        detected_print_number = str(identification.metadata.get('detected_print_number') or '')
+        detected_set_code = str(identification.metadata.get('detected_set_code') or '')
+        detected_left_number = detected_print_number.split('/')[0].lstrip('0') if detected_print_number else ''
+        older_style_symbol_mode = (
+            game == 'pokemon'
+            and len(candidate_options) > 1
+            and not detected_set_code
+            and detected_left_number.isdigit()
+            and int(detected_left_number) <= 120
+        )
+        if older_style_symbol_mode:
+            candidate_options = await asyncio.to_thread(
+                rerank_candidate_options_by_symbol,
+                image_path=str(local_path),
+                candidate_options=candidate_options,
+            )
         context.user_data['listing_candidate_options'] = candidate_options
 
         warning_lines = [f'• Auto-detected game: {game} ({detected_game.reason}).']
