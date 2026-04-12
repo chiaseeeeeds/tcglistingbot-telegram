@@ -34,7 +34,7 @@ from utils.formatters import format_fixed_price_listing
 
 logger = logging.getLogger(__name__)
 
-OCR_BUILD_MARKER = 'ocr-build-2026-04-12-legacy-ratio-tight-v11'
+OCR_BUILD_MARKER = 'ocr-build-2026-04-12-structured-signals-v13'
 
 PHOTO, TITLE, PRICE, NOTES, CONFIRM = range(5)
 SUPPORTED_GAMES = {'pokemon', 'onepiece'}
@@ -275,6 +275,7 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
         ocr_result = await asyncio.to_thread(extract_text_from_image, str(local_path), game=game)
         context.user_data['listing_ocr_text'] = ocr_result.text
+        context.user_data['listing_ocr_structured'] = ocr_result.structured.as_dict()
         raw_text = str(ocr_result.text or '')
         identification = await asyncio.to_thread(identify_card_from_text, raw_text=raw_text, game=game)
         candidate_options = list(identification.candidate_options or [])

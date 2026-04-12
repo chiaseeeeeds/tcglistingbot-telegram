@@ -45,6 +45,7 @@ Complete one clean listing path for Pokémon EN from photo to confirmed post.
 - bot resolves the card or falls back cleanly
 - seller confirms and the bot posts successfully
 - evaluation harness covers key OCR failure classes with generic/synthetic audits, not repo-shipped per-card manifests
+- identification architecture should converge toward structured OCR signals, generic candidate generation, and one evidence scorer
 
 ## Phase 2 — Claim and Payment Core
 ### Objective
@@ -124,15 +125,17 @@ Add the remaining catalog and game scope once the EN Pokémon path is production
 - EN + JP Pokémon and One Piece all work through the same bot-first pipeline
 
 ## Immediate Next Sequence
-1. expand the OCR/resolver synthetic audit harness beyond numeric printed-ratio cases
-2. add promo/alphanumeric identifier coverage (for cases like `BW95`, `TG28`)
-3. improve real-photo coverage for foil and glare cases after the tighter old-card bottom-right ratio OCR fix
-4. make pricing provider availability explicit in the seller flow
-5. make PriceCharting actually live with a sanctioned token path or honest provider-status fallback
-6. implement linked-discussion claim handling
-7. implement payment deadlines + queue advancement
-8. implement SOLD + transaction log
-9. deploy to webhook-friendly hosting
+1. continue Phase A: expand the new structured OCR signal object so the matcher can consume it directly instead of the legacy merged text
+2. split identification into generic candidate generation and one unified evidence scorer
+3. expand synthetic audits to parser/scorer invariants, including false set-code parse guards
+4. build real-photo evaluation buckets by failure class so the user is not the primary QA loop
+5. add promo/alphanumeric identifier coverage (for cases like `BW95`, `TG28`)
+6. improve foil and glare robustness within the new structured OCR pipeline
+7. make pricing provider availability explicit in the seller flow
+8. implement linked-discussion claim handling
+9. implement payment deadlines + queue advancement
+10. implement SOLD + transaction log
+11. deploy to webhook-friendly hosting
 
 ## What Not To Do Yet
 - do not build the web dashboard yet

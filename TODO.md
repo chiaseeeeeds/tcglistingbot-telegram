@@ -32,7 +32,9 @@
 - DONE: seller confirmation before posting
 - PARTIAL: OCR and identification
   - Pokémon EN catalog pipeline exists
-  - generic OCR + resolver path is materially better and now includes tighter bottom-right old-card ratio OCR plus nearby-ratio name rescue
+  - current OCR identification works but still leans too much on branchy resolver heuristics
+  - architecture reset is now planned in `OCR_ARCHITECTURE_RESET.md` to move toward structured OCR signals, generic candidate generation, and one evidence scorer
+  - Phase A has started: OCR now emits a first structured signal object alongside the legacy merged OCR text
   - live-photo coverage is still incomplete for foil, glare, and promo/alphanumeric identifiers
 - PARTIAL: card match confidence flow
   - best-effort suggestion exists
@@ -51,6 +53,8 @@
 - DONE: initial OCR/resolver evaluation harness
 - PARTIAL: final OCR identifier resolver against imported `cards`
   - numeric printed-number flows are now audited via synthetic catalog coverage without shipping named per-card OCR manifests in-repo
+  - current resolver should be refactored into a cleaner candidate-generation + scoring architecture instead of accumulating rescue branches
+  - keep guarding against digit-only false set-code parses on plain ratios like `186/203`
   - promo/alphanumeric identifiers like `BW95` and `TG28` still need dedicated support and evaluation coverage
 - PARTIAL: fallback prompt for manual `series code + serial code`
 - TODO: Japanese catalog source and importer

@@ -19,7 +19,7 @@ _COMPACT_RATIO_RE = re.compile(r'(?<!\d)(\d{6})(?!\d)')
 _SET_NAME_SPLIT_RE = re.compile(r'\s*[—–:/|]+\s*')
 _NAME_STOPWORDS = {'name', 'identifier', 'pokemon', 'trainer', 'energy', 'stage', 'basic', 'ability'}
 _SET_NAME_STOPWORDS = {'series', 'set', 'expansion', 'scarlet', 'violet', 'sun', 'moon', 'sword', 'shield', 'black', 'white'}
-CARD_IDENTIFIER_BUILD_MARKER = 'card-identify-2026-04-12-legacy-ratio-tight-v11'
+CARD_IDENTIFIER_BUILD_MARKER = 'card-identify-2026-04-12-structured-signals-v13'
 
 
 @dataclass(frozen=True)
@@ -149,8 +149,11 @@ def _extract_identifiers(raw_text: str, *, game: str | None = None) -> dict[str,
     upper_text = raw_text.upper()
     set_match = _SET_BLOCK_RE.search(upper_text)
     if set_match:
-        metadata['detected_set_code'] = set_match.group(1)
-        metadata['detected_print_number'] = set_match.group(2).replace(' ', '')
+        candidate_set_code = set_match.group(1).strip().upper()
+        candidate_print_number = set_match.group(2).replace(' ', '')
+        if not candidate_set_code.isdigit():
+            metadata['detected_set_code'] = candidate_set_code
+            metadata['detected_print_number'] = candidate_print_number
 
     ratio_match = _CARD_RATIO_RE.search(raw_text)
     if ratio_match and 'detected_print_number' not in metadata:

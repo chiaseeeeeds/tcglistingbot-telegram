@@ -449,3 +449,31 @@ Use this log after meaningful implementation tasks.
 - what was weak: the local startup flow allowed a stale manual poller to survive across work sessions, so restarting from the repo alone was not enough to guarantee that Telegram was hitting the newest code
 - follow-up: keep using a full `pkill -f 'main.py'` cleanup before restarting during live debugging, and consider tightening the single-instance guard so stale external pollers are surfaced more aggressively
 - user reaction: frustrated because the pasted reply clearly proved the old build was still answering, which was correct; the fix needed to address the running process state, not just the source files
+- date: 2026-04-12
+- goal: recover the bot after the user reported it was still down even after a restart
+- outcome: confirmed the earlier background-launched process was no longer running, then started the bot directly in-process and verified it stayed alive; refreshed `.logs/bot.pid` to the real live process so the runtime state matched reality again
+- validation: direct foreground start reached `Bot ready as @TCGlistingbot` at `2026-04-12 21:21:33` local time and remained running; current live pid was refreshed to `96425` and `ps` confirmed the process stayed alive beyond startup
+- what was weak: the pid file had drifted from the real process state, which made the restart status look healthier than it really was
+- follow-up: if this recurs, replace the ad hoc restart flow with a small checked launcher script that verifies the process remains alive for a short grace period before reporting success
+- user reaction: reported the bot was still down, which was accurate; the previous restart confirmation was not sufficient because it relied on startup logs instead of sustained liveness
+- date: 2026-04-12
+- goal: fix the generic Medicham shortlist miss where OCR correctly read `186/203` but the resolver suggested unrelated non-Evolving-Skies Medicham cards
+- outcome: found a generic parser bug in `services/card_identifier.py` where `_SET_BLOCK_RE` could misread the leading digits of a plain ratio like `186/203` as a fake set code (`18`) and then downgrade the real ratio to `6/203`; digit-only set-code captures are now ignored so plain numeric ratios remain intact and can flow into unique printed-ratio resolution
+- validation: local run on `/var/folders/x9/ffgkn9zj5f96zsngx6n5pqm00000gn/T/orchids-local-attachments/9dbd0ab9-11e4-45f8-987f-10386bffd976-1HWkA0/1-photo_2026-04-12-21.36.48-1776019015406.jpeg` now returns `IDENTIFIER: 186/203 | NAME_EN: Medicham sa` and resolves to `Medicham V (Evolving Skies)` with `resolver=unique_print_ratio_match`; `python -m py_compile services/card_identifier.py` passed
+- what was weak: OCR still drops the trailing `V` from the card name text, but the printed ratio is now preserved correctly so the generic ratio resolver can still identify the right card
+- follow-up: add a synthetic evaluation case class for digit-only false set-code captures so regressions like `186/203 -> 18 + 6/203` are caught automatically
+- user reaction: correctly pointed out that the shortlist was obviously wrong because Evolving Skies was missing despite the printed number pointing there; the fix had to target the generic ratio parser, not ranking cosmetics
+- date: 2026-04-12
+- goal: convert the user's architecture feedback into a concrete repo plan instead of continuing ad hoc OCR/resolver patching
+- outcome: wrote `OCR_ARCHITECTURE_RESET.md`, which defines the intended end-state: structured OCR signal extraction, generic catalog candidate generation, one unified evidence scorer, honest abstention, and evaluation by failure class instead of named examples; updated `TODO.md`, `ROADMAP.md`, and `MEMORY.md` so future work is directed by that architecture reset rather than by accumulating rescue heuristics
+- validation: reviewed the reset plan locally to ensure it stays aligned with the user's stated constraints: no per-card hardcoding, no example-shaped runtime behavior, broader evaluation, and production trust over fragile single-image wins
+- what was weak: this is a planning/reset artifact, not yet the code refactor itself
+- follow-up: implement Phase A from `OCR_ARCHITECTURE_RESET.md` next by defining the structured OCR signal schema and migrating current OCR outputs into it
+- user reaction: made clear that the real end goal is a robust generalized OCR + catalog engine, not a resolver that keeps getting shaped by reported misses; this reset captures that explicitly
+- date: 2026-04-12
+- goal: start Phase A of the OCR architecture reset by introducing structured OCR signals without breaking the current bot flow
+- outcome: added `services/ocr_signals.py` with `OCRSignal` and `OCRStructuredResult`; updated `services/ocr.py` so the OCR pipeline now emits a structured signal object alongside the legacy merged OCR text; wired `handlers/listing.py` to persist the structured OCR payload in conversation state while keeping the seller-facing behavior unchanged
+- validation: `python -m py_compile services/ocr_signals.py services/ocr.py handlers/listing.py` passed; direct structured-output probes on saved debug crops showed `pokemon_legacy_bottom_right` with `printed_ratio=5/101` for the Electrode sample and `pokemon_modern_identifier_zone` with `set_code_text=PFL` plus `printed_ratio=130/094` for the modern Charizard sample
+- what was weak: the matcher still consumes the legacy merged OCR text today, so this is an interface-layer start rather than the full candidate-generation/scoring refactor
+- follow-up: implement the next Phase A slice by teaching the identification layer to consume structured OCR signals directly instead of reparsing the merged OCR string
+- user reaction: asked to start the architecture reset immediately; this begins the shift away from text-only OCR handling and toward the generalized pipeline they want

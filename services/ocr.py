@@ -17,6 +17,7 @@ from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 from config import get_config
 from db.cards import list_cards_for_game
 from services.card_detection import CardImageCandidate, extract_card_candidates
+from services.ocr_signals import OCRSignal, OCRStructuredResult, render_legacy_ocr_text
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,7 @@ class OCRResult:
     text: str
     provider: str
     warnings: list[str]
+    structured: OCRStructuredResult
 
 
 @dataclass(frozen=True)
@@ -84,6 +86,8 @@ class _CandidateOCR:
     name_chunks: list[str]
     card_image: Image.Image
     roi_images: list[Image.Image]
+    roi_labels: list[str]
+    identifier_layout_family: str
 
 
 def get_ocr_provider_name() -> str:
@@ -137,6 +141,75 @@ def _name_windows_for_game(game: str | None) -> list[tuple[float, float, float, 
 
 def _normalize_text(text: str) -> str:
     return ' '.join(text.split())
+
+
+def _signal_confidence(score: int, *, cap: int) -> float:
+    if cap <= 0:
+        return 0.0
+    return round(min(max(score, 0) / cap, 0.99), 2)
+
+
+def _split_identifier_text(identifier: str) -> tuple[str, str]:
+    normalized = identifier.strip().upper()
+    set_match = _SET_CODE_RATIO_PATTERN.search(normalized)
+    if set_match:
+        return set_match.group(1), set_match.group(2)
+    ratio_match = _RATIO_PATTERN.search(normalized)
+    if ratio_match:
+        return '', ratio_match.group(1)
+    return '', ''
+
+
+def _extract_variant_tokens(name_text: str) -> list[str]:
+    variant_terms = ['VMAX', 'VSTAR', 'GX', 'EX', 'V']
+    upper_name = name_text.upper()
+    return [term.lower() for term in variant_terms if re.search(rf'\b{re.escape(term)}\b', upper_name)]
+
+
+def _build_structured_result(
+    *,
+    game: str | None,
+    candidate: _CandidateOCR,
+    best_identifier: str,
+    identifier_score: int,
+    best_name: str,
+    name_score: int,
+    all_identifier_chunks: list[str],
+    all_name_chunks: list[str],
+) -> OCRStructuredResult:
+    layout_family = candidate.identifier_layout_family or ('pokemon_card_generic' if game == 'pokemon' else 'generic_card')
+    signals: list[OCRSignal] = []
+    identifier_conf = _signal_confidence(identifier_score, cap=220)
+    name_conf = _signal_confidence(name_score, cap=80)
+
+    if best_identifier:
+        signals.append(OCRSignal(kind='identifier', value=best_identifier, confidence=identifier_conf, source=candidate.source, region='identifier'))
+        set_code_text, printed_ratio = _split_identifier_text(best_identifier)
+        if set_code_text:
+            signals.append(OCRSignal(kind='set_code_text', value=set_code_text, confidence=identifier_conf, source=candidate.source, region='identifier'))
+        if printed_ratio:
+            signals.append(OCRSignal(kind='printed_ratio', value=printed_ratio, confidence=identifier_conf, source=candidate.source, region='identifier'))
+
+    if best_name:
+        prefix, _, body = best_name.partition(':')
+        kind = 'name_jp' if prefix.strip().upper() == 'NAME_JP' else 'name_en'
+        body_text = body.strip() if body else best_name.strip()
+        signals.append(OCRSignal(kind=kind, value=body_text, confidence=name_conf, source=candidate.source, region='name'))
+        for token in _extract_variant_tokens(body_text):
+            signals.append(OCRSignal(kind='variant_token', value=token, confidence=name_conf, source=candidate.source, region='name'))
+
+    raw_regions = [
+        {'source': candidate.source, 'label': label}
+        for label in candidate.roi_labels
+    ]
+    raw_chunks = {'identifier': list(all_identifier_chunks), 'name': list(all_name_chunks)}
+    return OCRStructuredResult(
+        layout_family=layout_family,
+        selected_source=candidate.source,
+        signals=signals,
+        raw_regions=raw_regions,
+        raw_chunks=raw_chunks,
+    )
 
 
 def _ocr_identifier_passes_tesseract(image: Image.Image) -> list[str]:
@@ -461,7 +534,9 @@ def _write_debug_artifacts(*, source_path: Path, candidate: _CandidateOCR) -> No
     debug_root.mkdir(parents=True, exist_ok=True)
     candidate.card_image.save(debug_root / 'card.png')
     for index, roi in enumerate(candidate.roi_images, start=1):
-        roi.save(debug_root / f'roi_{index}.png')
+        label = candidate.roi_labels[index - 1] if index - 1 < len(candidate.roi_labels) else f'roi_{index}'
+        safe_label = re.sub(r'[^a-zA-Z0-9_\-]+', '_', label)
+        roi.save(debug_root / f'roi_{index}_{safe_label}.png')
     (debug_root / 'ocr_outputs.txt').write_text('\n'.join(candidate.identifier_chunks + candidate.name_chunks))
     (debug_root / 'summary.txt').write_text(
         f'source={candidate.source}\nconfidence={candidate.confidence}\nscore={candidate.score}\ntext={candidate.text}\n'
@@ -510,35 +585,58 @@ def _decisive_candidate(candidate: _CandidateOCR) -> bool:
 
 def _score_candidate(*, candidate: CardImageCandidate, game: str | None) -> _CandidateOCR:
     roi_images: list[Image.Image] = []
+    roi_labels: list[str] = []
     identifier_chunks: list[str] = []
     best_identifier = ''
     identifier_score = 0
-    for window in _identifier_windows_for_game(game):
+    identifier_layout_family = 'generic_identifier_zone'
+    best_region_identifier_score = 0
+    for index, window in enumerate(_identifier_windows_for_game(game), start=1):
         roi = _prepare_identifier_roi(_crop_relative(candidate.image, window))
         roi_images.append(roi)
-        identifier_chunks.extend(_ocr_identifier_passes(roi))
+        roi_labels.append(f'identifier_window_{index}')
+        region_chunks = _ocr_identifier_passes(roi)
+        identifier_chunks.extend(region_chunks)
+        region_best_identifier, region_identifier_score = _select_best_identifier(region_chunks, game=game)
+        if region_best_identifier and region_identifier_score > best_region_identifier_score:
+            best_region_identifier_score = region_identifier_score
+            identifier_layout_family = 'pokemon_modern_identifier_zone' if game == 'pokemon' else 'generic_identifier_zone'
         best_identifier, identifier_score = _select_best_identifier(identifier_chunks, game=game)
         if best_identifier and identifier_score >= 120:
             break
 
     if game == 'pokemon' and (not best_identifier or identifier_score < 120):
-        for legacy_window in _POKEMON_LEGACY_RATIO_WINDOWS:
+        for index, legacy_window in enumerate(_POKEMON_LEGACY_RATIO_WINDOWS, start=1):
             legacy_ratio_roi = _crop_relative(candidate.image, legacy_window)
             roi_images.append(legacy_ratio_roi)
-            identifier_chunks.extend(_ocr_legacy_ratio_pass(legacy_ratio_roi))
+            roi_labels.append(f'legacy_ratio_window_{index}')
+            legacy_chunks = _ocr_legacy_ratio_pass(legacy_ratio_roi)
+            identifier_chunks.extend(legacy_chunks)
+            legacy_best_identifier, legacy_identifier_score = _select_best_identifier(legacy_chunks, game=game)
+            if legacy_best_identifier and legacy_identifier_score > best_region_identifier_score:
+                best_region_identifier_score = legacy_identifier_score
+                identifier_layout_family = 'pokemon_legacy_bottom_right'
         best_identifier, identifier_score = _select_best_identifier(identifier_chunks, game=game)
 
     name_chunks: list[str] = []
     best_name = ''
     name_score = 0
-    for window in _name_windows_for_game(game):
+    for index, window in enumerate(_name_windows_for_game(game), start=1):
         roi = _prepare_name_roi(_crop_relative(candidate.image, window))
         roi_images.append(roi)
+        roi_labels.append(f'name_window_{index}')
         name_chunks.extend(_ocr_name_passes(roi))
         best_name, name_score = _select_best_name(name_chunks)
         if best_name and name_score >= 42:
             break
 
+    signals = OCRStructuredResult(
+        layout_family=identifier_layout_family if game == 'pokemon' else 'generic_card',
+        selected_source=candidate.source,
+        signals=[],
+        raw_regions=[],
+        raw_chunks={},
+    )
     text = _dedupe_text_chunks([f'IDENTIFIER: {best_identifier}' if best_identifier else '', best_name])
     score = int(identifier_score * 3 + name_score + candidate.confidence * 20)
     if candidate.source.startswith('detected_'):
@@ -547,7 +645,7 @@ def _score_candidate(*, candidate: CardImageCandidate, game: str | None) -> _Can
         score += 40
     elif best_identifier:
         score += 25
-    return _CandidateOCR(candidate.source, candidate.confidence, text, score, identifier_chunks, name_chunks, candidate.image, roi_images)
+    return _CandidateOCR(candidate.source, candidate.confidence, text, score, identifier_chunks, name_chunks, candidate.image, roi_images, roi_labels, identifier_layout_family)
 
 
 def extract_text_from_image(image_path: str | Path, *, game: str | None = None) -> OCRResult:
@@ -569,18 +667,29 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
         best_candidate = max(scored_candidates, key=lambda item: item.score)
         all_identifier_chunks = [chunk for candidate in scored_candidates for chunk in candidate.identifier_chunks]
         all_name_chunks = [chunk for candidate in scored_candidates for chunk in candidate.name_chunks]
-        best_identifier, _ = _select_best_identifier(all_identifier_chunks, game=game)
-        best_name, _ = _select_best_name(all_name_chunks)
-        aggregated_text = _dedupe_text_chunks([f'IDENTIFIER: {best_identifier}' if best_identifier else '', best_name])
+        best_identifier, identifier_score = _select_best_identifier(all_identifier_chunks, game=game)
+        best_name, name_score = _select_best_name(all_name_chunks)
+        structured_result = _build_structured_result(
+            game=game,
+            candidate=best_candidate,
+            best_identifier=best_identifier,
+            identifier_score=identifier_score,
+            best_name=best_name,
+            name_score=name_score,
+            all_identifier_chunks=all_identifier_chunks,
+            all_name_chunks=all_name_chunks,
+        )
+        aggregated_text = render_legacy_ocr_text(structured_result)
         for candidate in scored_candidates:
             _write_debug_artifacts(source_path=path, candidate=candidate)
         logger.info(
-            'OCR selected candidate %s for %s with score=%s text=%s aggregated=%s',
+            'OCR selected candidate %s for %s with score=%s text=%s aggregated=%s layout=%s',
             best_candidate.source,
             path.name,
             best_candidate.score,
             best_candidate.text,
             aggregated_text,
+            structured_result.layout_family,
         )
     except pytesseract.TesseractNotFoundError as exc:
         raise OCRNotConfiguredError('Tesseract is not installed on the runtime host.') from exc
@@ -597,4 +706,4 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
         warnings.append('OCR returned very little text. A clearer photo may help.')
     if 'IDENTIFIER:' not in aggregated_text:
         warnings.append('Printed identifier was not detected clearly. Manual code input may still help.')
-    return OCRResult(text=aggregated_text, provider=provider, warnings=warnings)
+    return OCRResult(text=aggregated_text, provider=provider, warnings=warnings, structured=structured_result)
