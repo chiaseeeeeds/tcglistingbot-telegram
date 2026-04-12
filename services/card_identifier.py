@@ -9,7 +9,7 @@ from functools import lru_cache
 from typing import Any
 
 from db.cards import list_cards_by_identifier, list_cards_for_game
-from db.pokemon_sets import get_pokemon_set_by_code, list_pokemon_sets
+from db.pokemon_sets import list_pokemon_sets
 
 _TOKEN_RE = re.compile(r'[A-Za-z0-9]+')
 _CARD_RATIO_RE = re.compile(r'\b(\d{1,3})\s*/\s*(\d{1,3})\b')
@@ -19,7 +19,7 @@ _COMPACT_RATIO_RE = re.compile(r'(?<!\d)(\d{6})(?!\d)')
 _SET_NAME_SPLIT_RE = re.compile(r'\s*[—–:/|]+\s*')
 _NAME_STOPWORDS = {'name', 'identifier', 'pokemon', 'trainer', 'energy', 'stage', 'basic', 'ability'}
 _SET_NAME_STOPWORDS = {'series', 'set', 'expansion', 'scarlet', 'violet', 'sun', 'moon', 'sword', 'shield', 'black', 'white'}
-CARD_IDENTIFIER_BUILD_MARKER = 'card-identify-2026-04-12-name-number-priority-v3'
+CARD_IDENTIFIER_BUILD_MARKER = 'card-identify-2026-04-12-legacy-ratio-tight-v11'
 
 
 @dataclass(frozen=True)
@@ -89,6 +89,18 @@ def _pokemon_set_match_entries() -> tuple[dict[str, Any], ...]:
                 }
             )
     return tuple(entries)
+
+
+@lru_cache(maxsize=1)
+def _pokemon_set_card_counts() -> dict[str, str]:
+    counts: dict[str, str] = {}
+    for set_record in list_pokemon_sets():
+        set_code = str(set_record.get('set_code') or '').strip().upper()
+        card_count = str(set_record.get('card_count') or '').strip()
+        if not set_code or not card_count:
+            continue
+        counts[set_code] = card_count
+    return counts
 
 
 def _detect_pokemon_set_from_text(raw_text: str) -> dict[str, str]:
@@ -239,10 +251,7 @@ def _detected_print_total(detected_print_number: str) -> str:
 def _set_total_matches(*, set_code: str, detected_total: str) -> bool:
     if not set_code or not detected_total:
         return False
-    set_record = get_pokemon_set_by_code(set_code=set_code)
-    if set_record is None:
-        return False
-    raw_count = str(set_record.get('card_count') or '').strip()
+    raw_count = _pokemon_set_card_counts().get(set_code.strip().upper(), '')
     if not raw_count:
         return False
     normalized_total = detected_total.lstrip('0') or '0'
@@ -281,6 +290,72 @@ def _top_candidate_options(contender_scores: list[tuple[float, dict[str, Any], l
             continue
         seen.add(card_id)
         options.append(_candidate_option(score=score, card=card, reasons=reasons))
+        if len(options) >= limit:
+            break
+    return options
+
+
+def _name_only_shortlist(*, raw_text: str, catalog: list[dict[str, Any]], limit: int = 3) -> list[dict[str, Any]]:
+    raw_lower = raw_text.lower()
+    raw_tokens = _tokenize(raw_text)
+    raw_word_tokens = re.findall(r'[a-z]{4,}', raw_lower)
+    contender_scores: list[tuple[float, dict[str, Any], list[str]]] = []
+    for card in catalog:
+        card_name_en = str(card.get('card_name_en') or '')
+        card_name_jp = str(card.get('card_name_jp') or '')
+        target_tokens = _tokenize(card_name_en) | _tokenize(card_name_jp)
+        if not target_tokens:
+            continue
+        exact_overlap, fuzzy_overlap = _fuzzy_name_overlap(raw_tokens, target_tokens)
+        merged_overlap = _merged_name_overlap(raw_tokens, target_tokens) - exact_overlap - fuzzy_overlap
+        exact_name_hit = bool(
+            (card_name_en and len(card_name_en.strip()) >= 3 and card_name_en.lower() in raw_lower)
+            or (card_name_jp and len(card_name_jp.strip()) >= 2 and card_name_jp.lower() in raw_lower)
+        )
+        if not (exact_overlap or fuzzy_overlap or merged_overlap or exact_name_hit):
+            continue
+        score = 0.0
+        reasons: list[str] = []
+        if exact_overlap:
+            score += min(len(exact_overlap) * 0.18, 0.30)
+            reasons.append(f"Name token overlap: {', '.join(sorted(exact_overlap))}")
+        if fuzzy_overlap:
+            score += min(len(fuzzy_overlap) * 0.20, 0.28)
+            reasons.append(f"OCR-similar name tokens: {', '.join(sorted(fuzzy_overlap))}")
+        if merged_overlap and not fuzzy_overlap:
+            score += min(len(merged_overlap) * 0.08, 0.12)
+            reasons.append(f"Merged OCR name tokens resembled: {', '.join(sorted(merged_overlap))}")
+        best_ratio = 0.0
+        best_pair = ''
+        for raw_token in raw_word_tokens:
+            for target_token in target_tokens:
+                ratio = SequenceMatcher(None, raw_token, target_token).ratio()
+                if ratio > best_ratio:
+                    best_ratio = ratio
+                    best_pair = target_token
+        if best_ratio >= 0.92:
+            score += 0.30
+            reasons.append(f'Primary OCR token strongly resembled: {best_pair}')
+        elif best_ratio >= 0.84:
+            score += 0.16
+            reasons.append(f'Primary OCR token resembled: {best_pair}')
+        if exact_name_hit:
+            score += 0.25
+            reasons.append('Exact card name text appeared in OCR.')
+        contender_scores.append((score, card, reasons))
+    options: list[dict[str, Any]] = []
+    seen_names: set[str] = set()
+    ranked = sorted(contender_scores, key=lambda item: item[0], reverse=True)
+    for score, card, reasons in ranked:
+        if score < 0.12:
+            continue
+        option = _candidate_option(score=score, card=card, reasons=reasons)
+        display_name = str(option.get('display_name') or '')
+        display_key = display_name.split('(')[0].strip().lower()
+        if display_key in seen_names:
+            continue
+        seen_names.add(display_key)
+        options.append(option)
         if len(options) >= limit:
             break
     return options
@@ -429,6 +504,117 @@ def _unique_print_ratio_match(*, raw_text: str, game: str, detected: dict[str, s
 
 
 
+
+def _maybe_nearby_ratio_name_match(*, raw_text: str, game: str, detected: dict[str, str], catalog: list[dict[str, Any]], debug_metadata: dict[str, str]) -> CardIdentificationResult | None:
+    if game != 'pokemon':
+        return None
+    detected_print_number = detected.get('detected_print_number', '')
+    if not detected_print_number or '/' not in detected_print_number or detected.get('detected_set_code'):
+        return None
+    detected_left_number = detected_print_number.split('/', 1)[0].lstrip('0') or '0'
+    detected_print_total = _detected_print_total(detected_print_number)
+    if not detected_left_number.isdigit() or not detected_print_total:
+        return None
+    raw_lower = raw_text.lower()
+    raw_tokens = _tokenize(raw_text)
+    raw_word_tokens = re.findall(r'[a-z]{4,}', raw_lower)
+    contender_scores: list[tuple[float, dict[str, Any], list[str]]] = []
+    for card in catalog:
+        card_number = str(card.get('card_number') or '').strip()
+        if not card_number.isdigit():
+            continue
+        if not _set_total_matches(set_code=str(card.get('set_code') or ''), detected_total=detected_print_total):
+            continue
+        distance = abs(int(card_number) - int(detected_left_number))
+        if distance > 2:
+            continue
+        card_name_en = str(card.get('card_name_en') or '')
+        card_name_jp = str(card.get('card_name_jp') or '')
+        variant = str(card.get('variant') or '')
+        target_tokens = _tokenize(card_name_en) | _tokenize(card_name_jp) | _tokenize(variant)
+        exact_overlap, fuzzy_overlap = _fuzzy_name_overlap(raw_tokens, target_tokens)
+        merged_overlap = _merged_name_overlap(raw_tokens, target_tokens) - exact_overlap - fuzzy_overlap
+        exact_name_hit = bool(
+            (card_name_en and len(card_name_en.strip()) >= 3 and card_name_en.lower() in raw_lower)
+            or (card_name_jp and len(card_name_jp.strip()) >= 2 and card_name_jp.lower() in raw_lower)
+        )
+        if not (exact_overlap or fuzzy_overlap or merged_overlap or exact_name_hit):
+            continue
+        score = 0.14
+        reasons: list[str] = [f'Printed total matched set count: {detected_print_total}']
+        if exact_overlap:
+            score += min(len(exact_overlap) * 0.18, 0.30)
+            reasons.append(f"Name token overlap: {', '.join(sorted(exact_overlap))}")
+        if fuzzy_overlap:
+            score += min(len(fuzzy_overlap) * 0.18, 0.26)
+            reasons.append(f"OCR-similar name tokens: {', '.join(sorted(fuzzy_overlap))}")
+        if merged_overlap:
+            score += min(len(merged_overlap) * 0.12, 0.18)
+            reasons.append(f"Merged OCR name tokens resembled: {', '.join(sorted(merged_overlap))}")
+        best_ratio = 0.0
+        best_pair = ''
+        for raw_token in raw_word_tokens:
+            for target_token in target_tokens:
+                ratio = SequenceMatcher(None, raw_token, target_token).ratio()
+                if ratio > best_ratio:
+                    best_ratio = ratio
+                    best_pair = target_token
+        if best_ratio >= 0.92:
+            score += 0.18
+            reasons.append(f'Primary OCR token strongly resembled: {best_pair}')
+        elif best_ratio >= 0.84:
+            score += 0.10
+            reasons.append(f'Primary OCR token resembled: {best_pair}')
+        if exact_name_hit:
+            score += 0.22
+            reasons.append('Exact card name text appeared in OCR.')
+        if distance == 0:
+            score += 0.12
+            reasons.append(f'Printed number matched identifier block: {detected_print_number}')
+        elif distance == 1:
+            score += 0.05
+            reasons.append('Printed number was off by one, but name and set total were stronger.')
+        else:
+            score += 0.02
+            reasons.append('Printed number was close, and the name evidence was stronger than the ratio OCR.')
+        contender_scores.append((score, card, reasons))
+    if not contender_scores:
+        return None
+    contender_scores.sort(key=lambda item: item[0], reverse=True)
+    best_score, best_card, best_reasons = contender_scores[0]
+    second_score = contender_scores[1][0] if len(contender_scores) > 1 else 0.0
+    candidate_options = _top_candidate_options(contender_scores, limit=6)
+    if best_score >= 0.40 and (best_score - second_score >= 0.06 or len(contender_scores) == 1):
+        return CardIdentificationResult(
+            matched=True,
+            confidence=round(min(0.66 + best_score, 0.95), 2),
+            display_name=_display_name_for_card(best_card),
+            card_id=str(best_card.get('id') or ''),
+            raw_text=raw_text,
+            match_reasons=best_reasons,
+            metadata={
+                'game': str(best_card.get('game') or game),
+                'set_code': str(best_card.get('set_code') or ''),
+                'card_number': str(best_card.get('card_number') or ''),
+                'resolver': 'nearby_ratio_name_match',
+                **debug_metadata,
+                **detected,
+            },
+            candidate_options=candidate_options,
+        )
+    return CardIdentificationResult(
+        matched=False,
+        confidence=round(min(best_score, 0.99), 2),
+        display_name='Unknown card',
+        card_id=None,
+        raw_text=raw_text,
+        match_reasons=[
+            'I found likely old-card matches using name plus a nearby printed ratio, but I need a bit more confidence before auto-matching.',
+            'Choose one of the shortlist options, or send the printed identifier manually if OCR got it wrong.',
+        ],
+        metadata={'game': game, 'resolver': 'nearby_ratio_name_shortlist', **debug_metadata, **detected},
+        candidate_options=candidate_options,
+    )
 
 def _maybe_modern_ratio_match(*, raw_text: str, game: str, detected: dict[str, str], catalog: list[dict[str, Any]], debug_metadata: dict[str, str]) -> CardIdentificationResult | None:
     if game != 'pokemon':
@@ -629,6 +815,10 @@ def identify_card_from_text(*, raw_text: str, game: str) -> CardIdentificationRe
     if unique_ratio_result is not None:
         return unique_ratio_result
 
+    nearby_ratio_result = _maybe_nearby_ratio_name_match(raw_text=raw_text, game=game, detected=detected, catalog=catalog, debug_metadata=debug_metadata)
+    if nearby_ratio_result is not None:
+        return nearby_ratio_result
+
     modern_ratio_result = _maybe_modern_ratio_match(raw_text=raw_text, game=game, detected=detected, catalog=catalog, debug_metadata=debug_metadata)
     if modern_ratio_result is not None:
         return modern_ratio_result
@@ -733,13 +923,15 @@ def identify_card_from_text(*, raw_text: str, game: str) -> CardIdentificationRe
     candidate_options = _top_candidate_options(contender_scores)
 
     if best_card is None or best_score < 0.25:
+        if not candidate_options and not detected_print_number:
+            candidate_options = _name_only_shortlist(raw_text=raw_text, catalog=catalog)
         reasons = ['OCR text did not confidently match the local catalog.']
         if detected_print_number:
             reasons.append(f'Detected printed identifier: {detected_print_number}')
         if detected_set_code:
             reasons.append(f'Detected set code: {detected_set_code.upper()}')
         if candidate_options:
-            reasons.append('I found a few possible name + number candidates you can choose from below.')
+            reasons.append('I found likely name-based candidates you can choose from below.')
         return CardIdentificationResult(
             matched=False,
             confidence=best_score,

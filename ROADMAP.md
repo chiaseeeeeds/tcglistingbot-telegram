@@ -20,6 +20,7 @@ Keep the bot responsive and operable during active development.
 - stable setup flow
 - stable manual posting flow
 - truthful debug output and build markers
+- one active bot poller per token during local/live debugging
 
 ### Exit Criteria
 - `/start`, `/setup`, `/list`, `/help`, `/ping` are consistently responsive
@@ -43,7 +44,7 @@ Complete one clean listing path for Pokémon EN from photo to confirmed post.
 - bot detects likely language and reads identifier zone
 - bot resolves the card or falls back cleanly
 - seller confirms and the bot posts successfully
-- evaluation harness covers key regression classes, not just ad hoc examples
+- evaluation harness covers key OCR failure classes with generic/synthetic audits, not repo-shipped per-card manifests
 
 ## Phase 2 — Claim and Payment Core
 ### Objective
@@ -123,9 +124,9 @@ Add the remaining catalog and game scope once the EN Pokémon path is production
 - EN + JP Pokémon and One Piece all work through the same bot-first pipeline
 
 ## Immediate Next Sequence
-1. expand the OCR/resolver evaluation harness beyond seeded regressions
+1. expand the OCR/resolver synthetic audit harness beyond numeric printed-ratio cases
 2. add promo/alphanumeric identifier coverage (for cases like `BW95`, `TG28`)
-3. improve real-photo coverage for foil/glare/old-card cases
+3. improve real-photo coverage for foil and glare cases after the tighter old-card bottom-right ratio OCR fix
 4. make pricing provider availability explicit in the seller flow
 5. make PriceCharting actually live with a sanctioned token path or honest provider-status fallback
 6. implement linked-discussion claim handling

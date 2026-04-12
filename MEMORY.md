@@ -114,3 +114,11 @@
 - the current synthetic audit intentionally focuses on numeric printed-number cases; promo/alphanumeric identifier formats like `BW95` or `TG28` still need their own dedicated evaluation mode and resolver support
 - live bot restarted successfully at 2026-04-12 02:20 local time after the identifier parser update
 - `AGENTS.md` now explicitly requires updating `TODO.md` and `ROADMAP.md` alongside `MEMORY.md` and `TASK_EVALUATIONS.md` after meaningful implementation tasks whenever scope, priorities, or sequencing change
+- the old-card Electrode failure exposed two generic issues rather than any missing card-specific rule: nearby-ratio matching was doing uncached set-count lookups in the hot loop, and the nearby-ratio scorer filtered on matching set totals without actually giving that evidence score weight
+- `services/card_identifier.py` now caches Pokémon set card counts, so old-card ratio rescue no longer performs one DB lookup per candidate row
+- the nearby-ratio resolver now generically scores three signals together for old cards: matching printed total, OCR-similar name evidence, and a nearby left-side ratio; on the attached Electrode image OCR still reads `3/101`, but the resolver now correctly returns `Electrode Holo (Hidden Legends)` via `nearby_ratio_name_match` without any per-card mapping
+- the repo no longer ships `eval_cases/ocr_resolver_cases.json`; OCR evaluation is now synthetic-first by default so repo tests do not look like runtime card hardcodes
+- `services/ocr.py` now uses tighter generic bottom-right legacy ratio windows for old Pokémon cards instead of one loose crop; the legacy pass also recovers clean 4-digit compact reads like `5101` into `5/101` when the last three digits are a plausible printed total
+- on the saved Electrode debug card crop, OCR now reads `IDENTIFIER: 5/101 | NAME_EN: lectrode oe fFd` directly, so the old-card flow is less dependent on nearby-ratio resolver rescue
+- the reason the user still saw `ocr-build-2026-04-12-price-buttons-v7` after later OCR work was not a bad patch but a stale long-running poller process from early April 12, 2026 still consuming the same Telegram bot token; killing all `main.py` processes and restarting a single fresh poller restored the live bot to the current build
+

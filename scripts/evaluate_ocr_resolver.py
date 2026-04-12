@@ -182,7 +182,6 @@ def build_synthetic_unique_ratio_cases(*, per_set: int = 1) -> list[LoadedCase]:
                         'matched': True,
                         'set_code': set_code,
                         'display_name_contains': str(card_name),
-                        'resolver_in': ['unique_print_ratio_match', 'exact_identifier'],
                     },
                 )
             )

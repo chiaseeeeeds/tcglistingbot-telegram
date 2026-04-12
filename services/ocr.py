@@ -26,6 +26,7 @@ _SET_CODE_RATIO_PATTERN = re.compile(r'\b([A-Z0-9]{2,5})\s*(?:EN|JP)?\s*(\d{1,3}
 _RATIO_PATTERN = re.compile(r'\b(\d{1,3}/\d{1,3})\b')
 _COMPACT_RATIO_PATTERN = re.compile(r'(?<!\d)(\d{6})(?!\d)')
 _NOISY_COMPACT_RATIO_PATTERN = re.compile(r'(?<!\d)(\d{7})(?!\d)')
+_LEGACY_SHORT_COMPACT_RATIO_PATTERN = re.compile(r'(?<!\d)(\d{4})(?!\d)')
 _SET_CODE_TOKEN_PATTERN = re.compile(r'[A-Z0-9]{2,5}')
 _SET_CODE_STOPWORDS = {
     'NAME', 'EN', 'JP', 'HP', 'EX', 'GX', 'VMAX', 'VSTAR', 'TAG', 'TEAM', 'ROCKET', 'ROCKETS',
@@ -39,6 +40,10 @@ _POKEMON_IDENTIFIER_WINDOWS: list[tuple[float, float, float, float]] = [
     (0.03, 0.90, 0.26, 0.99),
     (0.02, 0.91, 0.23, 0.985),
     (0.00, 0.93, 0.20, 1.00),
+    (0.66, 0.92, 0.99, 0.995),
+    (0.58, 0.90, 0.99, 1.00),
+    (0.48, 0.92, 0.99, 1.00),
+    (0.35, 0.90, 0.99, 0.995),
 ]
 _POKEMON_NAME_WINDOWS: list[tuple[float, float, float, float]] = [
     (0.10, 0.02, 0.72, 0.12),
@@ -49,6 +54,11 @@ _POKEMON_NAME_WINDOWS: list[tuple[float, float, float, float]] = [
 _GENERIC_IDENTIFIER_WINDOWS: list[tuple[float, float, float, float]] = [
     (0.00, 0.84, 0.35, 0.99),
     (0.01, 0.88, 0.28, 0.985),
+]
+_POKEMON_LEGACY_RATIO_WINDOWS: list[tuple[float, float, float, float]] = [
+    (0.77, 0.945, 0.89, 0.995),
+    (0.74, 0.94, 0.90, 1.00),
+    (0.78, 0.945, 0.90, 0.995),
 ]
 _DEBUG_DIR = Path(gettempdir()) / 'tcg-listing-bot-ocr-debug'
 
@@ -210,6 +220,57 @@ def _google_vision_text(image: Image.Image) -> str:
     if not annotations:
         return ''
     return _normalize_text(annotations[0].description)
+
+
+def _normalize_legacy_ratio_text(text: str) -> list[str]:
+    normalized = _normalize_text(text).upper()
+    if not normalized:
+        return []
+    candidates: list[str] = [normalized]
+    compact = re.sub(r'[^0-9/]', '', normalized)
+    if compact and compact != normalized:
+        candidates.append(compact)
+    recovered: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        if _RATIO_PATTERN.search(candidate):
+            recovered.append(candidate)
+            continue
+        short_match = _LEGACY_SHORT_COMPACT_RATIO_PATTERN.search(candidate)
+        if short_match:
+            digits = short_match.group(1)
+            left = int(digits[:1])
+            right = int(digits[1:])
+            if 1 <= left <= right + 120 and 10 <= right <= 400:
+                recovered.append(f'{digits[:1]}/{digits[1:]}')
+    return recovered
+
+
+def _ocr_legacy_ratio_pass(image: Image.Image) -> list[str]:
+    outputs: list[str] = []
+    base = ImageOps.autocontrast(ImageOps.grayscale(image))
+    for scale in (6, 8):
+        upscaled = base.resize((max(1, base.width * scale), max(1, base.height * scale)))
+        variants = [
+            ImageOps.autocontrast(upscaled),
+            ImageEnhance.Contrast(upscaled).enhance(2.0).filter(ImageFilter.SHARPEN),
+            upscaled.point(lambda p: 255 if p > 170 else 0),
+        ]
+        for variant in variants:
+            for config in [
+                '--psm 7 -c tessedit_char_whitelist=0123456789/',
+                '--psm 6 -c tessedit_char_whitelist=0123456789/',
+                '--psm 8 -c tessedit_char_whitelist=0123456789/',
+            ]:
+                try:
+                    text = pytesseract.image_to_string(variant, lang='eng', config=config)
+                except pytesseract.TesseractError:
+                    continue
+                outputs.extend(_normalize_legacy_ratio_text(text))
+    return outputs
 
 
 def _ocr_identifier_passes(image: Image.Image) -> list[str]:
@@ -459,6 +520,13 @@ def _score_candidate(*, candidate: CardImageCandidate, game: str | None) -> _Can
         best_identifier, identifier_score = _select_best_identifier(identifier_chunks, game=game)
         if best_identifier and identifier_score >= 120:
             break
+
+    if game == 'pokemon' and (not best_identifier or identifier_score < 120):
+        for legacy_window in _POKEMON_LEGACY_RATIO_WINDOWS:
+            legacy_ratio_roi = _crop_relative(candidate.image, legacy_window)
+            roi_images.append(legacy_ratio_roi)
+            identifier_chunks.extend(_ocr_legacy_ratio_pass(legacy_ratio_roi))
+        best_identifier, identifier_score = _select_best_identifier(identifier_chunks, game=game)
 
     name_chunks: list[str] = []
     best_name = ''

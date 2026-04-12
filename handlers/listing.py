@@ -34,7 +34,7 @@ from utils.formatters import format_fixed_price_listing
 
 logger = logging.getLogger(__name__)
 
-OCR_BUILD_MARKER = 'ocr-build-2026-04-12-identifier-code-recovery-v9'
+OCR_BUILD_MARKER = 'ocr-build-2026-04-12-legacy-ratio-tight-v11'
 
 PHOTO, TITLE, PRICE, NOTES, CONFIRM = range(5)
 SUPPORTED_GAMES = {'pokemon', 'onepiece'}
@@ -285,8 +285,10 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             game == 'pokemon'
             and len(candidate_options) > 1
             and not detected_set_code
-            and detected_left_number.isdigit()
-            and int(detected_left_number) <= 120
+            and (
+                (detected_left_number.isdigit() and int(detected_left_number) <= 120)
+                or not detected_print_number
+            )
         )
         if older_style_symbol_mode:
             candidate_options = await asyncio.to_thread(

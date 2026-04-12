@@ -9,7 +9,8 @@
 ## 1. Foundation
 - DONE: config loading and environment validation
 - DONE: Supabase connectivity and migrations
-- DONE: single-bot-process guard for polling stability
+- PARTIAL: single-bot-process guard for polling stability
+  - in-repo lock exists, but stale external/manual pollers can still survive across sessions unless all `main.py` processes are cleaned up before restart
 - PARTIAL: always-on runtime / deployment
   - still running in local/live session for testing
   - webhook production deployment still TODO
@@ -31,8 +32,8 @@
 - DONE: seller confirmation before posting
 - PARTIAL: OCR and identification
   - Pokémon EN catalog pipeline exists
-  - generic OCR + resolver path is materially better and now backed by a local evaluation harness
-  - live-photo coverage is still incomplete for foil, glare, old cards, and promo/alphanumeric identifiers
+  - generic OCR + resolver path is materially better and now includes tighter bottom-right old-card ratio OCR plus nearby-ratio name rescue
+  - live-photo coverage is still incomplete for foil, glare, and promo/alphanumeric identifiers
 - PARTIAL: card match confidence flow
   - best-effort suggestion exists
   - shortlist / fallback UX still needs more refinement for ambiguous cases
@@ -49,7 +50,7 @@
 - DONE: full clean bulk import completion and validation
 - DONE: initial OCR/resolver evaluation harness
 - PARTIAL: final OCR identifier resolver against imported `cards`
-  - numeric printed-number flows are now audited via synthetic and regression cases
+  - numeric printed-number flows are now audited via synthetic catalog coverage without shipping named per-card OCR manifests in-repo
   - promo/alphanumeric identifiers like `BW95` and `TG28` still need dedicated support and evaluation coverage
 - PARTIAL: fallback prompt for manual `series code + serial code`
 - TODO: Japanese catalog source and importer
@@ -127,7 +128,7 @@
 - TODO: structured template/message centralization
 - TODO: production webhook deployment
 - PARTIAL: observability and evaluation
-  - OCR/resolver regression harness now exists
+  - OCR/resolver synthetic audit harness now exists
   - wider automated coverage, progress reporting, and recurring runs are still needed
 - TODO: import/data validation reports
 

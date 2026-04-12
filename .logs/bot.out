@@ -1,26 +1,6 @@
-/Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py:653: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py:655: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
   conversation = ConversationHandler(
-2026-04-12 02:20:35,618 INFO __main__ Starting bot process.
-2026-04-12 02:20:36,197 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
-2026-04-12 02:20:36,266 INFO apscheduler.scheduler Scheduler started
-2026-04-12 02:20:36,266 INFO telegram.ext.Application Application started
-2026-04-12 02:20:56,368 ERROR __main__ Unhandled bot exception. update=None error=Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
-NoneType: None
-2026-04-12 02:21:30,837 ERROR __main__ Unhandled bot exception. update=None error=Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
-NoneType: None
-2026-04-12 02:22:05,225 ERROR __main__ Unhandled bot exception. update=None error=Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
-NoneType: None
-2026-04-12 02:22:39,731 ERROR __main__ Unhandled bot exception. update=None error=Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
-NoneType: None
-2026-04-12 02:23:14,223 ERROR __main__ Unhandled bot exception. update=None error=Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
-NoneType: None
-2026-04-12 02:23:48,676 ERROR __main__ Unhandled bot exception. update=None error=Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
-NoneType: None
-2026-04-12 02:24:23,009 ERROR __main__ Unhandled bot exception. update=None error=Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
-NoneType: None
-2026-04-12 02:24:57,302 ERROR __main__ Unhandled bot exception. update=None error=Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
-NoneType: None
-2026-04-12 02:25:31,749 ERROR __main__ Unhandled bot exception. update=None error=Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
-NoneType: None
-2026-04-12 02:26:06,223 ERROR __main__ Unhandled bot exception. update=None error=Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
-NoneType: None
+2026-04-12 19:07:08,639 INFO __main__ Starting bot process.
+2026-04-12 19:07:09,202 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-04-12 19:07:09,261 INFO apscheduler.scheduler Scheduler started
+2026-04-12 19:07:09,261 INFO telegram.ext.Application Application started
