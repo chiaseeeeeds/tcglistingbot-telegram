@@ -184,6 +184,26 @@ async def fetch_detail(client: httpx.AsyncClient, card: dict[str, Any]) -> dict[
 
 
 
+
+def dedupe_card_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    deduped: dict[tuple[str, str, str, str], dict[str, Any]] = {}
+    for row in rows:
+        key = (
+            str(row.get('game') or ''),
+            str(row.get('set_code') or ''),
+            str(row.get('card_number') or ''),
+            str(row.get('variant') or ''),
+        )
+        existing = deduped.get(key)
+        if existing is None:
+            deduped[key] = row
+            continue
+        existing_name = str(existing.get('card_name_jp') or existing.get('card_name_en') or '')
+        candidate_name = str(row.get('card_name_jp') or row.get('card_name_en') or '')
+        if len(candidate_name) > len(existing_name):
+            deduped[key] = row
+    return list(deduped.values())
+
 def upsert_pokemon_sets(connection: psycopg.Connection, rows: list[dict[str, Any]]) -> None:
     if not rows:
         return
@@ -311,75 +331,77 @@ async def run_import(*, start_page: int, end_page: int | None, concurrency: int,
         if end_page is None or end_page > max_page:
             end_page = max_page
 
-        with psycopg.connect(get_database_url(), autocommit=False) as connection:
-            while page <= end_page:
-                payload = first_page if page == start_page else await fetch_page(client, page)
-                card_list = list(payload.get('cardList') or [])
-                page_sets: dict[tuple[str, str], dict[str, Any]] = {}
-                semaphore = asyncio.Semaphore(concurrency)
-                skipped_cards = 0
+        while page <= end_page:
+            payload = first_page if page == start_page else await fetch_page(client, page)
+            card_list = list(payload.get('cardList') or [])
+            page_sets: dict[tuple[str, str], dict[str, Any]] = {}
+            semaphore = asyncio.Semaphore(concurrency)
+            skipped_cards = 0
 
-                async def _wrapped(card: dict[str, Any]) -> dict[str, Any] | None:
-                    async with semaphore:
-                        try:
-                            return await fetch_detail(client, card)
-                        except (CardDetailParseError, CardDetailFetchError) as exc:
-                            print(
-                                json.dumps(
-                                    {
-                                        'event': 'pokemon_jp_card_skipped',
-                                        'page': page,
-                                        'card_id': str(card.get('cardID') or ''),
-                                        'card_name': str(card.get('cardNameAltText') or card.get('cardNameViewText') or ''),
-                                        'reason': str(exc),
-                                    },
-                                    ensure_ascii=False,
-                                ),
-                                flush=True,
-                            )
-                            return None
+            async def _wrapped(card: dict[str, Any]) -> dict[str, Any] | None:
+                async with semaphore:
+                    try:
+                        return await fetch_detail(client, card)
+                    except (CardDetailParseError, CardDetailFetchError) as exc:
+                        print(
+                            json.dumps(
+                                {
+                                    'event': 'pokemon_jp_card_skipped',
+                                    'page': page,
+                                    'card_id': str(card.get('cardID') or ''),
+                                    'card_name': str(card.get('cardNameAltText') or card.get('cardNameViewText') or ''),
+                                    'reason': str(exc),
+                                },
+                                ensure_ascii=False,
+                            ),
+                            flush=True,
+                        )
+                        return None
 
-                detail_rows = [row for row in await asyncio.gather(*[_wrapped(card) for card in card_list]) if row is not None]
-                skipped_cards = len(card_list) - len(detail_rows)
-                for row in detail_rows:
-                    page_sets[(row['set_code'], row['set_name'])] = {
-                        'language': 'jp',
-                        'set_code': row['set_code'],
-                        'set_name': row['set_name'],
-                        'source_url': row['source_url'],
-                        'source_name': 'pokemon-card-official-jp',
-                    }
+            detail_rows = [row for row in await asyncio.gather(*[_wrapped(card) for card in card_list]) if row is not None]
+            deduped_rows = dedupe_card_rows(detail_rows)
+            skipped_cards = len(card_list) - len(detail_rows) + (len(detail_rows) - len(deduped_rows))
+            detail_rows = deduped_rows
+            for row in detail_rows:
+                page_sets[(row['set_code'], row['set_name'])] = {
+                    'language': 'jp',
+                    'set_code': row['set_code'],
+                    'set_name': row['set_name'],
+                    'source_url': row['source_url'],
+                    'source_name': 'pokemon-card-official-jp',
+                }
 
+            with psycopg.connect(get_database_url(), autocommit=False) as connection:
                 upsert_pokemon_sets(connection, list(page_sets.values()))
                 upsert_cards(connection, detail_rows)
                 connection.commit()
 
-                imported_pages += 1
-                imported_cards += len(detail_rows)
-                checkpoint_payload = {
-                    'last_completed_page': page,
-                    'end_page': end_page,
-                    'imported_pages': imported_pages,
-                    'imported_cards': imported_cards,
-                    'skipped_cards': skipped_cards,
-                }
-                if checkpoint_file is not None:
-                    checkpoint_file.write_text(json.dumps(checkpoint_payload, ensure_ascii=False, indent=2))
-                print(
-                    json.dumps(
-                        {
-                            'event': 'pokemon_jp_page_imported',
-                            'page': page,
-                            'cards': len(detail_rows),
-                            'skipped_cards': skipped_cards,
-                            'end_page': end_page,
-                        },
-                        ensure_ascii=False,
-                    ),
-                    flush=True,
-                )
-                await asyncio.sleep(0.5 + random.uniform(0.0, 0.4))
-                page += 1
+            imported_pages += 1
+            imported_cards += len(detail_rows)
+            checkpoint_payload = {
+                'last_completed_page': page,
+                'end_page': end_page,
+                'imported_pages': imported_pages,
+                'imported_cards': imported_cards,
+                'skipped_cards': skipped_cards,
+            }
+            if checkpoint_file is not None:
+                checkpoint_file.write_text(json.dumps(checkpoint_payload, ensure_ascii=False, indent=2))
+            print(
+                json.dumps(
+                    {
+                        'event': 'pokemon_jp_page_imported',
+                        'page': page,
+                        'cards': len(detail_rows),
+                        'skipped_cards': skipped_cards,
+                        'end_page': end_page,
+                    },
+                    ensure_ascii=False,
+                ),
+                flush=True,
+            )
+            await asyncio.sleep(0.5 + random.uniform(0.0, 0.4))
+            page += 1
 
     return {'pages': imported_pages, 'cards': imported_cards, 'end_page': end_page}
 

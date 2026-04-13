@@ -54,9 +54,10 @@
 - PARTIAL: Japanese Pokémon catalog support
   - official importer now exists in `scripts/import_pokemon_jp_official.py`
   - importer no longer crashes on numberless official energy pages; those rows are skipped with structured logs instead
-  - live import progress has been pushed through page 35 and raised `jp_named_total` to 1,358
+  - live import progress has now been pushed through page 110 and raised `jp_named_total` to 4,230
   - full catalog import + live Telegram QA still required
-  - current live blocker after page 67 is upstream 403 rate-limiting from the official result API, not parser correctness
+  - the official site does rate-limit bursty crawl behavior, but the importer now uses browser-style headers plus slower paced retries and has advanced through page 92 successfully
+  - full catalog completion still needs continued runtime plus live Telegram QA
 
 ## 4. Catalog and Recognition
 - DONE: Bulbapedia Pokémon EN set importer

@@ -315,3 +315,6 @@ Minimal Phase 1 GA is reached when Milestones 1 through 6 are complete for the P
 
 - 2026-04-13 execution follow-up: the JP importer had a real crash on numberless official energy detail pages; that failure mode is now fixed by skipping unidentifiable rows and continuing the crawl, so the remaining blocker is runtime completion rather than importer brittleness.
 - 2026-04-13 pricing hardening: PriceCharting scrape fallback is now opt-in so listing creation is not dragged down by repeated Cloudflare-blocked requests when no API token is configured.
+- 2026-04-13 deeper execution note: the JP official API issue was request-shape throttling more than a hard page cap; switching to slower browser-like pacing plus longer backoff reopened progress and moved the crawl through page 85.
+- 2026-04-13 importer durability note: after fixing upstream throttle sensitivity, the JP crawl also needed per-page DB reconnects to avoid long-idle Postgres timeout failures during slow runs; with both fixes, progress has moved through page 92.
+- 2026-04-13 importer continuation note: page-level source deduplication was required once the crawl reached duplicate-identity JP payloads around page 95; after that fix, progress continued through page 110.
