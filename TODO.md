@@ -48,8 +48,15 @@
 - DONE: front + back photo support
 - TODO: unsupported media rejection UX
 - DONE: image quality checks before OCR
-- TODO: One Piece listing creation path
-- TODO: Japanese Pokémon catalog support
+- PARTIAL: One Piece listing creation path
+  - official importer now exists in `scripts/import_onepiece_official.py`
+  - full catalog import + live Telegram QA still required
+- PARTIAL: Japanese Pokémon catalog support
+  - official importer now exists in `scripts/import_pokemon_jp_official.py`
+  - importer no longer crashes on numberless official energy pages; those rows are skipped with structured logs instead
+  - live import progress has been pushed through page 35 and raised `jp_named_total` to 1,358
+  - full catalog import + live Telegram QA still required
+  - current live blocker after page 67 is upstream 403 rate-limiting from the official result API, not parser correctness
 
 ## 4. Catalog and Recognition
 - DONE: Bulbapedia Pokémon EN set importer
@@ -66,9 +73,9 @@
   - keep guarding against digit-only false set-code parses on plain ratios like `186/203`
   - promo/alphanumeric identifiers like `BW95` and `TG28` still need dedicated support and evaluation coverage
 - PARTIAL: fallback prompt for manual `series code + serial code`
-- TODO: Japanese catalog source and importer
+- DONE: Japanese catalog source and importer
 - TODO: Japanese OCR/resolver evaluation coverage
-- TODO: One Piece catalog source and importer
+- DONE: One Piece catalog source and importer
 - TODO: broader real-photo evaluation corpus stored in-repo or in a managed eval bucket
 - PARTIAL: snapshot-backed offline resolver evaluation now exists via `scripts/export_catalog_snapshot.py` + `scripts/evaluate_ocr_resolver.py --catalog-snapshot ...`, but the repo still needs a routine refresh policy for the snapshot baseline
 - DONE: one-command offline snapshot audit exists via `make ocr-eval-snapshot` / `scripts/run_snapshot_eval.py` for routine regression checks
@@ -78,7 +85,7 @@
 - PARTIAL: Pokémon live market references via Pokémon TCG API exist
 - PARTIAL: PriceCharting lookup path exists in code
   - official token mode is supported
-  - scrape fallback is best-effort only
+  - scrape fallback is now disabled by default unless `PRICECHARTING_SCRAPE_FALLBACK_ENABLED=true` to avoid blocking `/list` on Cloudflare-protected scrape attempts
   - current runtime has no `PRICECHARTING_API_TOKEN`, so PriceCharting is not reliably live in the seller flow yet
 - PARTIAL: SGD normalization from external sources
 - TODO: explicit provider-status reporting in seller/admin pricing output

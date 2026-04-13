@@ -131,7 +131,7 @@ def _auction_preview(
         for reference in price_refs:
             price_lines.append(f"- {reference.source}: SGD {reference.amount_sgd:.2f} ({reference.note})")
     else:
-        price_lines.append('- No live price references available yet.')
+        price_lines.append('- No usable live market references were returned right now.')
 
     config = get_config()
     try:

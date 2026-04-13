@@ -165,7 +165,7 @@ def _format_price_reference_block(price_refs: list[PriceReference]) -> str:
     if not price_refs:
         return (
             '<b>Price references</b>\n'
-            'No live website references are connected yet, so no automatic market pull was available.\n'
+            'No usable live market references were returned for this card right now.\n'
             'You can still set your own price below.'
         )
     lines = ['<b>Price references</b>']

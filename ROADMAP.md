@@ -310,3 +310,8 @@ Minimal Phase 1 GA is reached when Milestones 1 through 6 are complete for the P
 - sequencing guidance: keep minimal GA sign-off anchored to the fixed-price seller loop, but auction work is no longer a scaffold-only track and can now be hardened in parallel
 
 - 2026-04-13 update: `/setup` now captures claim keywords and default postage, `utils/photo_quality.py` is wired into listing/auction front-image selection before OCR, and `/admin` now exposes a live readiness snapshot including catalog coverage gaps.
+
+- 2026-04-13 catalog unblock: the repo now has an official One Piece bilingual importer and a resumable official Japanese Pokémon importer, so the remaining launch work is data execution + live QA rather than unknown catalog-source design.
+
+- 2026-04-13 execution follow-up: the JP importer had a real crash on numberless official energy detail pages; that failure mode is now fixed by skipping unidentifiable rows and continuing the crawl, so the remaining blocker is runtime completion rather than importer brittleness.
+- 2026-04-13 pricing hardening: PriceCharting scrape fallback is now opt-in so listing creation is not dragged down by repeated Cloudflare-blocked requests when no API token is configured.

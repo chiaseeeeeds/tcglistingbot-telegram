@@ -167,3 +167,17 @@
 - April 13, 2026 completion pass: `/setup` now captures seller claim keywords and default postage, so claim parsing is no longer hardcoded to the schema default for configured sellers
 - April 13, 2026 completion pass: `utils/photo_quality.py` now scores resolution / sharpness / glare / exposure before OCR, and listing + auction flows surface those quality warnings when choosing the front image
 - April 13, 2026 completion pass: `/admin` now reports live runtime + database readiness, including the hard blocker that the current catalog only contains 2 One Piece rows and 2 Japanese-name rows, so strict PRD launch scope is still data-blocked
+
+- April 13, 2026 catalog pass: added `scripts/import_onepiece_official.py`, which scrapes the official One Piece EN + JP cardlist pages and merges bilingual rows by printed card code
+- April 13, 2026 catalog pass: added `scripts/import_pokemon_jp_official.py`, a resumable importer that reads the official Japanese Pokémon result API plus card detail pages to populate JP card rows with real printed set codes like `M4`
+- live catalog truth as of this session: One Piece and Japanese support are no longer blocked by missing importer code, but they are still blocked by actually running those long imports to completion and then QAing the real Telegram flows against the expanded catalog
+
+- April 13, 2026 execution snapshot: full One Piece import completed successfully and raised `cards(game='onepiece')` to 3794 rows
+- April 13, 2026 execution snapshot: the resumable Japanese Pokémon import is actively running through the official result API + detail-page path; live progress has reached page 22/586 and raised `card_name_jp` coverage to the 700+ row range during this session
+- `scripts/phase1_catalog_audit.py` now provides a quick live readiness count for Pokémon, One Piece, Japanese-name coverage, and seller setup state so launch progress can be checked without manual SQL
+
+- April 13, 2026 runtime hardening: `services/pricecharting.py` no longer burns listing latency on scrape fallback when no API token is configured; PriceCharting scraping is now opt-in via `PRICECHARTING_SCRAPE_FALLBACK_ENABLED=true`, so live Pokémon pricing stays fast and usually returns Pokémon TCG API references in a few seconds instead of hanging on repeated 403s
+- April 13, 2026 importer hardening: `scripts/import_pokemon_jp_official.py` now skips official JP detail pages that expose a real set code but no collector number (for example numberless basic energy deck pages) instead of crashing the whole crawl
+- April 13, 2026 catalog execution update: after hardening the JP importer, pages 25 through 35 imported successfully, raising `pokemon_total` to 21,273 and `jp_named_total` to 1,358; the checkpoint now sits at page 35 with the last batch recording only one skipped numberless energy row
+- April 13, 2026 local runtime note: detached local polling remains flaky in this shell environment even when startup logs show a clean boot, so process liveness still needs manual verification rather than trusting `.logs/bot.pid` alone
+- April 13, 2026 importer follow-up: the JP official detail-page 403s and numberless card pages no longer crash the crawl, but the official result API itself started hard-returning 403 at page 68 during this session even after retries, browser-like headers, and lower concurrency; the crawl is now blocked by upstream rate-limiting rather than parser correctness

@@ -214,7 +214,8 @@ def _scrape_product_price(url: str) -> PriceChartingPrice | None:
 
 
 def lookup_pricecharting_live_prices(*, card_name: str, card_number: str | None, set_name: str | None) -> list[PriceChartingPrice]:
-    token = get_config().pricecharting_api_token.strip()
+    config = get_config()
+    token = config.pricecharting_api_token.strip()
     queries = _build_queries(card_name=card_name, card_number=card_number, set_name=set_name)
 
     if token:
@@ -240,6 +241,11 @@ def lookup_pricecharting_live_prices(*, card_name: str, card_number: str | None,
             ref = _extract_api_price(product)
             if ref is not None:
                 return [ref]
+
+    if not config.pricecharting_scrape_fallback_enabled:
+        if not token:
+            logger.info('Skipping PriceCharting scrape fallback because no API token is configured and scrape fallback is disabled.')
+        return []
 
     for query in queries:
         results = _scrape_search_results(query)
