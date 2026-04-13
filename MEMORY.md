@@ -32,6 +32,14 @@
 - local polling bot startup is now detached again and was relaunched successfully on 2026-04-11 15:08 local time
 - OCR latency is materially lower after removing duplicate crop-ranking OCR, short-circuiting decisive candidates, and trimming redundant Tesseract passes; the tested Crobat image now runs in about 10s cold and about 4-5s warm locally
 - basic discussion-thread claim handling is now wired for bot-posted listings, backed by the atomic claim RPC
+- claim handler now reads seller-configured claim keywords from `seller_configs.claim_keywords` instead of relying only on a hardcoded keyword set
+- setup now persists `primary_channel_id` in seller config, which gives the claim flow cleaner channel metadata for later hardening work
+- blacklisted buyers are now blocked in the live claim handler before the atomic claim RPC runs, with seller notification and safer public messaging
+- `claim_listing_atomic(...)` now queues later claims deterministically behind the current winner and returns the buyer's existing open claim if the same buyer claims again
+- the live claim handler now recognizes queued outcomes, avoids duplicate open claims per buyer/listing in normal flow, and sends different buyer/seller messaging for confirmed versus queued claims
+- payment deadline expiry is now implemented via `jobs/payment_deadlines.py`, backed by the new `advance_claim_queue(...)` RPC and APScheduler startup wiring in `main.py`
+- seller-paid completion now exists via `/sold`: `complete_transaction_atomic(...)` marks the winning claim paid, creates a transaction row, marks the listing sold, updates seller `total_sales_sgd`, and `handlers/transactions.py` edits the posted listing message(s) to a SOLD state
+- setup now verifies not only the posting channel but also bot access to the linked discussion chat when discussion-based comments are enabled
 - local catalog matching works against seeded cards first
 - listing posting still requires seller confirmation before posting
 - PriceCharting staging import path exists for bulk external catalog ingestion
@@ -49,6 +57,7 @@
 - discussion-thread claim handling now resolves more reply/message shapes, but still needs live discussion-group verification
 - Railway/webhook deployment is still pending for always-on hosting
 - local Orchids startup now uses `nohup` + `.logs/bot.pid`, which is more stable than the old foreground startup but still not equivalent to proper hosting/supervision
+- local restart check on April 13, 2026 hit a Telegram `getUpdates` conflict after startup, which means another polling instance is still using this bot token somewhere outside the current shell session
 
 ### Known Gaps
 - photo flow currently works best with one clear front image
@@ -58,16 +67,16 @@
 - multi-candidate OCR and full-catalog matching now work better on tested real Pokémon photos, but latency is still high and live-photo tuning is still needed for glare, partial crops, and non-Pokémon layouts
 - older Pokémon cards still need real-photo validation for set-symbol disambiguation beyond the currently conservative shortlist reranker
 - card identification is still local-catalog and low-volume friendly
-- claim monitoring is partially scaffolded, but linked-discussion validation, later-claim queueing, and blacklist enforcement are still unfinished
+- claim monitoring is partially scaffolded and now includes live blacklist enforcement plus queued-claim handling, but linked-discussion validation is still unfinished
 - payment deadline handling, seller-paid completion, SOLD edits, and transaction closure are still unfinished
 - seller/buyer reputation and dedicated price history are still todo
 
 ### Near-Term Priorities
-1. validate and harden linked discussion-thread `Claim` handling against real Telegram reply/update shapes
-2. extend claim state so later claims queue deterministically behind the winner
-3. implement payment deadline expiry, queue advancement, and listing reactivation
-4. implement seller-paid -> SOLD -> transaction closure
-5. replace seller-tool placeholders with active listings, sold history, blacklist, and vacation mode
+1. live-test the linked discussion-thread `Claim` handler plus `/sold` completion flow against real Telegram traffic once the polling conflict is removed
+2. replace seller-tool placeholders with active listings, sold history, blacklist, and vacation mode
+3. add duplicate-update protection around claim comments and payment/SOLD side effects
+4. move to one real always-on runtime path so the polling conflict stops blocking live verification
+5. tighten transaction history and seller-facing sold views on top of the now-working transaction records
 
 ### Working Rules For Future Tasks
 - after any meaningful task, update this file with new current state and next risks

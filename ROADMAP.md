@@ -39,9 +39,9 @@ These are explicitly not blockers for minimal GA and should be treated as post-G
 - multi-image listing intake with front/back classification now exists
 
 ### What still blocks GA
-- claim reply monitoring and atomic first-claim scaffolding exist, but linked-discussion behavior is not yet verified end-to-end and later-claim queue semantics are still incomplete
-- no payment deadline / queue advancement worker yet
-- no seller mark-paid -> SOLD -> transaction loop yet
+- claim reply monitoring, seller-configured keyword matching, blacklist enforcement, and queued-claim semantics are now wired, but linked-discussion behavior is not yet verified end-to-end
+- payment deadline expiry, seller-paid completion, SOLD edits, and transaction closure are now wired, but seller operations and idempotent live hardening are still missing
+- seller mark-paid -> SOLD -> transaction loop now exists through the minimal `/sold` command path
 - seller operational tools are still placeholder-level
 - no production deployment / webhook path yet
 - no idempotent Telegram update handling yet
@@ -160,15 +160,11 @@ Make the minimum GA scope safe to run live.
 5. richer seller ops and cross-post tooling
 
 ## Immediate Next Sequence
-1. implement linked-discussion claim handling end-to-end
-2. implement atomic claim lock + queued later claims
-3. implement payment deadlines + queue advancement
-4. implement seller mark-paid -> SOLD edit -> transaction log
-5. add active/sold listing views and blacklist/vacation minimum tools
-6. harden multi-image listing intake with seller front/back override and less chatty album UX
-7. make pricing provider availability explicit in the seller flow
-8. finish webhook deployment and duplicate-update/idempotency protection
-9. continue OCR architecture cleanup only where it directly improves live listing accuracy or reduces manual correction rate
+1. add active/sold listing views and blacklist/vacation minimum tools
+2. harden multi-image listing intake with seller front/back override and less chatty album UX
+3. make pricing provider availability explicit in the seller flow
+4. finish webhook deployment and duplicate-update/idempotency protection
+5. continue OCR architecture cleanup only where it directly improves live listing accuracy or reduces manual correction rate
 
 ## Phase 2 Execution Plan For Minimal GA
 

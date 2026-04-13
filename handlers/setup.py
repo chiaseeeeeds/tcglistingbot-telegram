@@ -64,12 +64,31 @@ async def setup_entry(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         )
         return ConversationHandler.END
 
-    if get_config().comments_via_discussion_group and getattr(channel, 'linked_chat_id', None) is None:
-        await update.effective_message.reply_text(
-            'This channel does not expose a linked discussion chat to the bot yet. Please confirm comments are enabled and try again.',
-            parse_mode='HTML',
-        )
-        return ConversationHandler.END
+    if get_config().comments_via_discussion_group:
+        linked_chat_id = getattr(channel, 'linked_chat_id', None)
+        if linked_chat_id is None:
+            await update.effective_message.reply_text(
+                'This channel does not expose a linked discussion chat to the bot yet. Please confirm comments are enabled and try again.',
+                parse_mode='HTML',
+            )
+            return ConversationHandler.END
+        try:
+            linked_chat = await context.bot.get_chat(linked_chat_id)
+            linked_member = await context.bot.get_chat_member(linked_chat.id, bot_user.id)
+        except Exception as exc:
+            logger.exception('Failed to verify linked discussion access during setup: %s', exc)
+            await update.effective_message.reply_text(
+                'I found the linked discussion chat, but I could not verify bot access there. Please add the bot to the discussion group and try again.',
+                parse_mode='HTML',
+            )
+            return ConversationHandler.END
+
+        if getattr(linked_member, 'status', '') in {'left', 'kicked'}:
+            await update.effective_message.reply_text(
+                'The bot is not present in the linked discussion group yet. Please add it there and try /setup again.',
+                parse_mode='HTML',
+            )
+            return ConversationHandler.END
 
     user = update.effective_user
     seller = await asyncio.to_thread(
@@ -82,6 +101,7 @@ async def setup_entry(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         ensure_seller_config,
         seller_id=seller['id'],
         primary_channel_name=primary_channel_name,
+        primary_channel_id=channel.id,
     )
 
     context.user_data['setup_seller_id'] = seller['id']
@@ -169,6 +189,7 @@ async def confirm_setup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         primary_channel_name=context.user_data['setup_primary_channel_name'],
         payment_methods=['PayNow'],
         paynow_identifier=context.user_data['setup_paynow_identifier'],
+        primary_channel_id=context.user_data['setup_primary_channel_id'],
         setup_complete=True,
     )
     logger.info('Seller %s completed setup.', context.user_data['setup_seller_id'])

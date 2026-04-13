@@ -99,16 +99,17 @@
 - PARTIAL: linked-discussion comment monitoring
   - `handlers/claims.py` already watches group/supergroup text replies and tries multiple reply-origin shapes
   - real linked-discussion verification against production Telegram update shapes is still required
-- TODO: seller-configured claim keywords
-- PARTIAL: atomic first-claim lock end-to-end
-  - `claim_listing_atomic(...)` exists, but it still only models the first confirmed claim and does not yet cover later queued claims
-- TODO: queued later claims
+- PARTIAL: seller-configured claim keywords
+  - claim handler now respects `seller_configs.claim_keywords` with sane defaults
+  - seller-facing config UI for editing keywords is still missing
+- DONE: atomic first-claim lock end-to-end
+- DONE: queued later claims
 - PARTIAL: buyer DM with payment instructions
   - DM attempts already exist, but they are best-effort and not yet tied to broader claim/payment state transitions
 - PARTIAL: seller notifications on claim state changes
   - first-claim seller DM exists, but later queue, expiry, paid, and SOLD transitions are not yet covered
-- TODO: seller blacklist enforcement during claims
-- TODO: missed-payment queue advancement
+- DONE: seller blacklist enforcement during claims
+- DONE: missed-payment queue advancement
 
 ## 8. Auctions
 - TODO: auction listing type selection
@@ -122,9 +123,9 @@
 ## 9. Transactions and SOLD Lifecycle
 - PARTIAL: transaction domain scaffolding exists
   - `db/transactions.py` and `handlers/transactions.py` are present but not implemented beyond scaffolding
-- TODO: seller marks payment received
-- TODO: transaction persistence flow
-- TODO: SOLD edits on channel messages
+- DONE: seller marks payment received
+- DONE: transaction persistence flow
+- DONE: SOLD edits on channel messages
 - TODO: cross-post SOLD synchronization
 - TODO: verified sale count updates
 - TODO: dispute support / notes

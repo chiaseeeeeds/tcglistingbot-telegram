@@ -8,6 +8,10 @@ from typing import Any
 from db.client import extract_many, extract_single, get_client
 from db.rpc import call_rpc
 
+OPEN_CLAIM_STATUSES: tuple[str, ...] = ('queued', 'confirmed', 'payment_pending')
+WINNING_CLAIM_STATUSES: tuple[str, ...] = ('confirmed', 'payment_pending')
+
+
 
 def get_claims_for_listing(listing_id: str) -> list[dict[str, Any]]:
     response = (
@@ -16,6 +20,67 @@ def get_claims_for_listing(listing_id: str) -> list[dict[str, Any]]:
         .select('*')
         .eq('listing_id', listing_id)
         .order('queue_position', desc=False)
+        .execute()
+    )
+    return extract_many(response)
+
+
+
+def get_claim_by_id(claim_id: str) -> dict[str, Any] | None:
+    """Return a claim by primary key."""
+
+    response = get_client().table('claims').select('*').eq('id', claim_id).limit(1).execute()
+    return extract_single(response)
+
+
+
+def get_open_claim_for_buyer(*, listing_id: str, buyer_telegram_id: int) -> dict[str, Any] | None:
+    """Return the buyer's current open claim for a listing, if one exists."""
+
+    response = (
+        get_client()
+        .table('claims')
+        .select('*')
+        .eq('listing_id', listing_id)
+        .eq('buyer_telegram_id', buyer_telegram_id)
+        .in_('status', list(OPEN_CLAIM_STATUSES))
+        .order('queue_position', desc=False)
+        .limit(1)
+        .execute()
+    )
+    return extract_single(response)
+
+
+
+def get_current_winning_claim(*, listing_id: str) -> dict[str, Any] | None:
+    """Return the current winning claim for a listing, if one exists."""
+
+    response = (
+        get_client()
+        .table('claims')
+        .select('*')
+        .eq('listing_id', listing_id)
+        .in_('status', list(WINNING_CLAIM_STATUSES))
+        .order('queue_position', desc=False)
+        .limit(1)
+        .execute()
+    )
+    return extract_single(response)
+
+
+
+def get_due_payment_claims(*, now_utc: datetime | None = None, limit: int = 25) -> list[dict[str, Any]]:
+    """Return claims whose payment deadlines have expired and still need worker action."""
+
+    due_time = (now_utc or datetime.now(timezone.utc)).isoformat()
+    response = (
+        get_client()
+        .table('claims')
+        .select('*')
+        .in_('status', list(WINNING_CLAIM_STATUSES))
+        .lte('payment_deadline', due_time)
+        .order('payment_deadline', desc=False)
+        .limit(limit)
         .execute()
     )
     return extract_many(response)
@@ -45,3 +110,21 @@ async def claim_listing_atomic(
     if isinstance(data, dict):
         return data
     raise RuntimeError('Atomic claim RPC returned no claim payload.')
+
+
+async def advance_claim_queue(*, claim_id: str, payment_deadline_hours: int) -> dict[str, Any]:
+    """Expire the current winning claim and promote the next queued claim when available."""
+
+    next_payment_deadline = datetime.now(timezone.utc) + timedelta(hours=payment_deadline_hours)
+    data = await call_rpc(
+        'advance_claim_queue',
+        {
+            'p_claim_id': claim_id,
+            'p_next_payment_deadline': next_payment_deadline.isoformat(),
+        },
+    )
+    if isinstance(data, list):
+        return data[0]
+    if isinstance(data, dict):
+        return data
+    raise RuntimeError('Advance claim queue RPC returned no payload.')

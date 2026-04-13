@@ -51,6 +51,13 @@ def create_listing(
     return listing
 
 
+def get_listing_by_id(listing_id: str) -> dict[str, Any] | None:
+    """Return a listing by primary key."""
+
+    response = get_client().table('listings').select('*').eq('id', listing_id).limit(1).execute()
+    return extract_single(response)
+
+
 def get_active_listings_for_seller(seller_id: str) -> list[dict[str, Any]]:
     """Return active listings for a seller ordered by newest first."""
 
@@ -60,6 +67,21 @@ def get_active_listings_for_seller(seller_id: str) -> list[dict[str, Any]]:
         .select('*')
         .eq('seller_id', seller_id)
         .eq('status', 'active')
+        .order('created_at', desc=True)
+        .execute()
+    )
+    return extract_many(response)
+
+
+def get_claim_pending_listings_for_seller(seller_id: str) -> list[dict[str, Any]]:
+    """Return claim-pending listings for a seller ordered by newest first."""
+
+    response = (
+        get_client()
+        .table('listings')
+        .select('*')
+        .eq('seller_id', seller_id)
+        .eq('status', 'claim_pending')
         .order('created_at', desc=True)
         .execute()
     )

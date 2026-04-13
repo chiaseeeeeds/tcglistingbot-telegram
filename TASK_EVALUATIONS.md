@@ -548,3 +548,43 @@ Use this log after meaningful implementation tasks.
 - what was weak: this pass clarifies the execution order, but the repo still has not implemented the worker, transaction, or seller-op milestones themselves
 - follow-up: start Milestone 1 by validating live linked-discussion claim resolution and then lock down the claim-state contract before touching payment or SOLD lifecycle logic
 - user reaction: asked to continue from the evaluation and turn it into a concrete roadmap to finish minimal Phase 1 GA
+
+- date: 2026-04-13
+- goal: begin Milestone 1 implementation by hardening the live claim path before touching queue/payment logic
+- outcome: replaced the hardcoded claim-keyword check with seller-config-backed keyword matching in `handlers/claims.py`, added blacklist lookup helpers in `db/blacklist.py`, blocked blacklisted buyers before the atomic claim RPC, improved claim-state messaging/logging, and updated setup persistence so `primary_channel_id` is stored in seller config
+- validation: `.venv/bin/python -m py_compile handlers/claims.py handlers/setup.py db/blacklist.py db/seller_configs.py` passed; `.venv/bin/python` helper probes confirmed seller keyword normalization and claim-text matching behavior
+- what was weak: this pass does not yet verify real linked-discussion update shapes live, and it intentionally does not implement queued later claims or payment expiry
+- follow-up: live-test the linked discussion flow, then expand the claim RPC/state model so second and later claims can queue safely instead of failing closed
+- user reaction: asked to start Phase 1, so this first cut focuses on the highest-value live claim hardening work without overreaching into later milestones
+
+- date: 2026-04-13
+- goal: continue Phase 1 claim work by moving queued-claim semantics into the database contract instead of faking queue behavior in the handler
+- outcome: added queue-aware claim helpers in `db/claims.py`, updated `handlers/claims.py` to support confirmed vs queued outcomes and duplicate-buyer short-circuiting, strengthened `handlers/setup.py` to verify linked discussion access, added `migrations/005_claim_queue_semantics.sql`, and applied the new `claim_listing_atomic(...)` function to the current Supabase DB via the pooler connection
+- validation: `.venv/bin/python -m py_compile handlers/claims.py handlers/setup.py db/claims.py` passed; a live rolled-back Postgres integration probe verified first claim -> `confirmed`, second claim -> `queued`, duplicate second buyer -> same queued record, and listing status -> `claim_pending`
+- what was weak: this still does not prove end-to-end Telegram update shapes from the real linked discussion thread, and queue advancement after missed payment is still not implemented
+- follow-up: run a real Telegram claim test with two buyers in the linked discussion, then implement `advance_claim_queue` / payment-deadline worker semantics
+- user reaction: asked to continue, so this pass completed the next necessary queue-state contract work instead of drifting into unrelated features
+
+- date: 2026-04-13
+- goal: verify the bot runtime after the Phase 1 claim/queue changes instead of leaving the repo in a code-only state
+- outcome: attempted a clean local restart, cleared a stale `.logs/bot.lock`, and confirmed the app can still boot to `Bot ready as @TCGlistingbot`; Telegram then returned a `Conflict: terminated by other getUpdates request`, which shows another polling instance is active on the same token outside this session
+- validation: local log reached startup at `2026-04-13 11:17:00` and then emitted the Telegram conflict error immediately after `Application started`
+- what was weak: the local process cannot stay active until the other polling instance is stopped or the bot is moved to webhook mode
+- follow-up: stop the other polling process or switch to a single webhook deployment before relying on this local poller for live testing
+- user reaction: asked to continue implementation, so runtime verification was done as a follow-up check after the code/database changes landed
+
+- date: 2026-04-13
+- goal: implement missed-payment expiry and queue advancement as the next minimum-GA milestone after queued claims were landed
+- outcome: added `advance_claim_queue(...)` support in `migrations/006_advance_claim_queue.sql` and `db/claims.py`, implemented the APScheduler-backed worker in `jobs/payment_deadlines.py`, wired scheduler startup/shutdown in `main.py`, and added listing lookup support in `db/listings.py` so expiry handling can notify the seller and newly promoted buyer
+- validation: `.venv/bin/python -m py_compile main.py db/claims.py db/listings.py jobs/payment_deadlines.py jobs/scheduler.py` passed; a live rolled-back Postgres integration probe verified `advance_claim_queue(...)` returns `promoted` when a queued buyer exists and `reactivated` when no queued buyer remains
+- what was weak: the worker has not yet been verified against real Telegram discussion-thread traffic because another polling instance is still conflicting on the bot token, and buyer strike issuance is still deferred
+- follow-up: implement seller-paid -> SOLD -> transaction closure, then add duplicate-update protection around claim/payment side effects
+- user reaction: asked to continue with the next step, so this pass focused on the payment-expiry/queue-advance milestone rather than jumping ahead to seller dashboards or transactions
+
+- date: 2026-04-13
+- goal: implement the next minimum-GA milestone by letting a seller mark a winning claim as paid and close the sale end-to-end
+- outcome: added `complete_transaction_atomic(...)` in `migrations/007_complete_transaction_atomic.sql` and `db/transactions.py`, added claim-pending listing lookup in `db/listings.py`, added listing-channel lookup in `db/listing_channels.py`, added SOLD message formatting in `utils/formatters.py`, and replaced the placeholder `/sold` handler with a working seller-paid completion path in `handlers/transactions.py` that edits the posted listing to SOLD and notifies the buyer when possible
+- validation: `.venv/bin/python -m py_compile handlers/transactions.py db/transactions.py db/listings.py db/listing_channels.py utils/formatters.py` passed; a live rolled-back Postgres integration probe verified `complete_transaction_atomic(...)` marks the claim `paid`, sets the listing `sold`, creates exactly one transaction row, increments seller `total_sales_sgd`, and returns `already_completed` on duplicate invocation
+- what was weak: the `/sold` UX is still command-driven rather than button-driven, and live Telegram verification is still blocked by the other polling instance on the same bot token
+- follow-up: build seller active/sold history views and then add duplicate-update protection around claim/payment completion side effects
+- user reaction: asked to continue with the next step, so this pass completed the seller-paid/SOLD/transaction milestone before moving on to seller dashboards or optional polish

@@ -20,6 +20,8 @@ from handlers.seller_tools import register_seller_tool_handlers
 from handlers.setup import register_setup_handlers
 from handlers.start import register_start_handlers
 from handlers.transactions import register_transaction_handlers
+from jobs.payment_deadlines import register_payment_deadline_jobs
+from jobs.scheduler import build_scheduler
 
 LOCK_HANDLE: IO[str] | None = None
 ALLOWED_UPDATES = [
@@ -78,7 +80,7 @@ def release_single_instance_lock() -> None:
 
 
 async def post_init(application: Application) -> None:
-    """Register visible Telegram commands and log startup identity."""
+    """Register visible Telegram commands, start background jobs, and log startup identity."""
 
     config = get_config()
     await application.bot.set_my_commands(
@@ -92,6 +94,11 @@ async def post_init(application: Application) -> None:
             BotCommand('ping', 'Quick bot health check'),
         ]
     )
+    scheduler = build_scheduler(config.default_timezone)
+    register_payment_deadline_jobs(application, scheduler)
+    scheduler.start()
+    application.bot_data['scheduler'] = scheduler
+
     me = await application.bot.get_me()
     logging.getLogger(__name__).info(
         'Bot ready as @%s (%s) in %s mode.',
@@ -99,6 +106,14 @@ async def post_init(application: Application) -> None:
         me.id,
         'webhook' if config.telegram_webhook_url else 'polling',
     )
+
+
+async def post_shutdown(application: Application) -> None:
+    """Stop background schedulers cleanly when the app shuts down."""
+
+    scheduler = application.bot_data.get('scheduler')
+    if scheduler is not None and scheduler.running:
+        scheduler.shutdown(wait=False)
 
 
 async def error_handler(update: object, context) -> None:
@@ -133,7 +148,13 @@ def build_application() -> Application:
     """Build the Telegram application and attach handlers."""
 
     config = get_config()
-    application = ApplicationBuilder().token(config.telegram_bot_token).post_init(post_init).build()
+    application = (
+        ApplicationBuilder()
+        .token(config.telegram_bot_token)
+        .post_init(post_init)
+        .post_shutdown(post_shutdown)
+        .build()
+    )
     register_handlers(application)
     return application
 
