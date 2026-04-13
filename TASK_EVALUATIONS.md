@@ -533,3 +533,18 @@ Use this log after meaningful implementation tasks.
 - what was weak: this is guidance in repo memory, not an enforced runtime rule
 - follow-up: apply this consistently in future feature-planning turns and surface evaluation reasoning before implementation proposals
 - user reaction: explicitly asked that this be remembered in a relevant project document
+- date: 2026-04-13
+- goal: evaluate the full project against the original product docs and produce a sharper roadmap to reach a truthful minimal Phase 1 GA
+- outcome: rewrote `ROADMAP.md` around a minimum-GA definition that prioritizes fixed-price seller ops completion over further scope expansion; added supporting priority notes to `TODO.md` and `MEMORY.md`
+- validation: documentation-only planning change based on current repo state, TODOs, memory, and source product docs; no code path changed
+- what was weak: this is still a planning recommendation and does not by itself reduce the remaining implementation gap
+- follow-up: execute the new top sequence in order — claims, payment/queue, SOLD/transactions, seller ops, then launch hardening
+- user reaction: asked for an evaluation and a roadmap to finish the project to minimally Phase 1 GA
+
+- date: 2026-04-13
+- goal: convert the high-level minimum-GA roadmap into a concrete execution plan grounded in the actual claim/payment code and schema baseline
+- outcome: updated `ROADMAP.md` with six execution milestones, milestone dependencies, and acceptance criteria; updated `TODO.md` to reflect which claim/transaction/seller-op areas are already scaffolded versus still missing; and updated `MEMORY.md` so future sessions start from the new execution sequence instead of drifting back to lower-priority OCR work
+- validation: documentation-only planning pass cross-checked against `handlers/claims.py`, `db/claims.py`, `jobs/payment_deadlines.py`, `handlers/transactions.py`, `db/transactions.py`, `handlers/seller_tools.py`, `migrations/001_initial_schema.sql`, and `migrations/004_atomic_rpc.sql`; no runtime code changed
+- what was weak: this pass clarifies the execution order, but the repo still has not implemented the worker, transaction, or seller-op milestones themselves
+- follow-up: start Milestone 1 by validating live linked-discussion claim resolution and then lock down the claim-state contract before touching payment or SOLD lifecycle logic
+- user reaction: asked to continue from the evaluation and turn it into a concrete roadmap to finish minimal Phase 1 GA

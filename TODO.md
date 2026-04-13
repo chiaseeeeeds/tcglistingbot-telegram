@@ -1,5 +1,9 @@
 # TODO.md — PRD Gap Checklist
 
+## Minimal Phase 1 GA Priority
+- For minimum GA, treat fixed-price listing -> claim -> payment -> SOLD -> seller ops as the shipping path.
+- Auctions, Japanese Pokémon, and One Piece are important, but they are post-GA fast-follow unless the user explicitly reprioritizes them.
+
 ## Status Legend
 - DONE = implemented and working at a meaningful level
 - PARTIAL = started, but not yet aligned with PRD/GA intent
@@ -42,7 +46,7 @@
 - PARTIAL: card match confidence flow
   - best-effort suggestion exists
   - shortlist / fallback UX still needs more refinement for ambiguous cases
-- TODO: front + back photo support
+- DONE: front + back photo support
 - TODO: unsupported media rejection UX
 - TODO: image quality checks before OCR
 - TODO: One Piece listing creation path
@@ -92,12 +96,18 @@
 - TODO: scheduled listing support
 
 ## 7. Claims
-- TODO: linked-discussion comment monitoring
+- PARTIAL: linked-discussion comment monitoring
+  - `handlers/claims.py` already watches group/supergroup text replies and tries multiple reply-origin shapes
+  - real linked-discussion verification against production Telegram update shapes is still required
 - TODO: seller-configured claim keywords
-- TODO: atomic first-claim lock end-to-end
+- PARTIAL: atomic first-claim lock end-to-end
+  - `claim_listing_atomic(...)` exists, but it still only models the first confirmed claim and does not yet cover later queued claims
 - TODO: queued later claims
-- TODO: buyer DM with payment instructions
-- TODO: seller notifications on claim state changes
+- PARTIAL: buyer DM with payment instructions
+  - DM attempts already exist, but they are best-effort and not yet tied to broader claim/payment state transitions
+- PARTIAL: seller notifications on claim state changes
+  - first-claim seller DM exists, but later queue, expiry, paid, and SOLD transitions are not yet covered
+- TODO: seller blacklist enforcement during claims
 - TODO: missed-payment queue advancement
 
 ## 8. Auctions
@@ -110,6 +120,8 @@
 - TODO: auction winner flow reusing payment path
 
 ## 9. Transactions and SOLD Lifecycle
+- PARTIAL: transaction domain scaffolding exists
+  - `db/transactions.py` and `handlers/transactions.py` are present but not implemented beyond scaffolding
 - TODO: seller marks payment received
 - TODO: transaction persistence flow
 - TODO: SOLD edits on channel messages
@@ -118,6 +130,8 @@
 - TODO: dispute support / notes
 
 ## 10. Seller Operations
+- PARTIAL: seller-tools handler scaffold exists
+  - `handlers/seller_tools.py` is still placeholder-level
 - TODO: active listings view
 - TODO: sold listings view
 - TODO: transaction history view
@@ -143,6 +157,30 @@
   - OCR/resolver synthetic audit harness now exists
   - wider automated coverage, progress reporting, and recurring runs are still needed
 - TODO: import/data validation reports
+
+## Minimal GA Execution Milestones
+- M1: claim flow validation and hardening
+  - verify linked-discussion resolution
+  - add seller-configurable keywords
+  - enforce blacklist checks
+- M2: queue semantics and claim state integrity
+  - later claims queue chronologically
+  - winner state stays atomic
+- M3: payment deadline worker
+  - expire unpaid claims
+  - advance queue or reactivate listing
+- M4: mark paid, SOLD edits, and transaction closure
+  - seller marks paid
+  - transaction row created
+  - listing post marked SOLD
+- M5: minimal seller operations
+  - active listings
+  - sold/transaction history
+  - blacklist + vacation mode
+- M6: launch hardening
+  - webhook deployment
+  - duplicate-update protection
+  - recurring eval and monitoring
 
 ## 13. Deferred / Later
 - TODO LATER: One Piece full support

@@ -1,6 +1,6 @@
 /Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py:789: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
   conversation = ConversationHandler(
-2026-04-13 00:11:52,203 INFO __main__ Starting bot process.
-2026-04-13 00:11:53,102 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
-2026-04-13 00:11:53,193 INFO apscheduler.scheduler Scheduler started
-2026-04-13 00:11:53,193 INFO telegram.ext.Application Application started
+2026-04-13 11:02:21,208 INFO __main__ Starting bot process.
+2026-04-13 11:02:21,897 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-04-13 11:02:21,956 INFO apscheduler.scheduler Scheduler started
+2026-04-13 11:02:21,957 INFO telegram.ext.Application Application started

@@ -1,14 +1,50 @@
 # ROADMAP.md — TCG Listing Bot
 
 ## Goal
-Ship a usable Telegram-native seller bot that can create listings reliably, post them to the seller's channel, and manage claim/payment lifecycle inside Telegram.
+Ship a usable Telegram-native seller bot that can create listings reliably, post them to the seller's channel, and manage the fixed-price claim/payment/SOLD lifecycle inside Telegram.
 
 ## Roadmap Principles
 - finish the Pokémon EN path end-to-end first
-- do not expand scope before the core claim/payment loop works
+- do not expand scope before the fixed-price claim/payment loop works
 - always prefer reliable manual fallback over fragile automation
 - complete bot-first operations before adding admin/dashboard surfaces
 - add evaluation coverage whenever OCR/catalog behavior changes so users are not doing manual QA for us
+- when new feature requests appear, evaluate scope/architecture/tradeoffs first before proposing execution
+
+## Minimal Phase 1 GA Definition
+For the purpose of getting to a truthful minimum GA, this repo should treat these as the must-ship scope:
+- seller onboarding and setup work reliably
+- seller can create a listing from photos, confirm it, and post it
+- posted fixed-price listings can be claimed from Telegram comments/replies
+- first valid claim is locked atomically and later claims queue correctly
+- seller can mark payment received
+- missed payment advances the queue or reactivates the listing
+- SOLD edits and transaction records work end-to-end
+- core seller operations exist for active listings, sold history, and blacklist/vacation controls
+- deployment, observability, and idempotency are good enough for live usage
+
+These are explicitly not blockers for minimal GA and should be treated as post-GA fast-follow unless the user reprioritizes them:
+- auctions
+- Japanese Pokémon
+- One Piece
+- advanced pricing/trust features beyond usable references
+- dashboard/web surfaces
+
+## Current Reality Check
+### What is strong now
+- seller onboarding/setup exists
+- listing creation exists and is the strongest path in the product
+- OCR/matching architecture is moving in the right direction
+- snapshot-backed offline OCR evaluation exists
+- multi-image listing intake with front/back classification now exists
+
+### What still blocks GA
+- claim reply monitoring and atomic first-claim scaffolding exist, but linked-discussion behavior is not yet verified end-to-end and later-claim queue semantics are still incomplete
+- no payment deadline / queue advancement worker yet
+- no seller mark-paid -> SOLD -> transaction loop yet
+- seller operational tools are still placeholder-level
+- no production deployment / webhook path yet
+- no idempotent Telegram update handling yet
 
 ## Phase 0 — Stability Baseline
 ### Objective
@@ -27,120 +63,247 @@ Keep the bot responsive and operable during active development.
 - seller can still complete the current manual fallback path
 - the live build/debug output reflects the actual running logic
 
-## Phase 1 — Pokémon EN Listing Core
+## Phase 1 — Listing Core Hardening
 ### Objective
-Complete one clean listing path for Pokémon EN from photo to confirmed post.
+Finish one dependable fixed-price listing creation path for Pokémon EN.
 
 ### Includes
-- complete Pokémon EN catalog import
-- generic language-detect → identifier-zone OCR → resolver flow
-- manual fallback for `series code + serial code`
-- best-effort price references before seller final price
-- preview and post with stored message refs
-- regression/evaluation coverage for common OCR failure classes
+- multi-image intake with front/back selection and seller override when uncertain
+- photo quality checks before OCR
+- robust Pokémon EN OCR/resolver path with manual fallback
+- price reference presentation with truthful provider visibility
+- preview + explicit seller confirmation
+- post to Telegram with stored message refs and image paths
+- snapshot-backed OCR regression workflow
+- idempotent handling for duplicate listing-flow updates where practical
 
 ### Exit Criteria
-- seller uploads a Pokémon EN front photo
-- bot detects likely language and reads identifier zone
-- bot resolves the card or falls back cleanly
-- seller confirms and the bot posts successfully
-- evaluation harness covers key OCR failure classes with generic/synthetic audits, not repo-shipped per-card manifests
-- identification architecture should converge toward structured OCR signals, generic candidate generation, and one evidence scorer
+- seller can send front/back photos, confirm title/price, and post successfully
+- OCR no-match and low-confidence flows fall back cleanly
+- listing post stores the front/back image references needed later
+- OCR regressions are checked by routine offline audits, not only ad hoc user examples
 
-## Phase 2 — Claim and Payment Core
+## Phase 2 — Claim Core
 ### Objective
-Make posted listings operationally useful in the real channel.
+Make fixed-price bot-posted listings operational in the live channel.
 
 ### Includes
-- linked-discussion comment monitoring
-- claim keyword parsing
-- atomic first-claim winner
-- claim queue for later buyers
-- buyer payment DM when possible
-- missed-payment deadline and queue advancement
+- linked-discussion validation in setup
+- comment/reply monitoring for bot-posted listings
+- seller-configurable claim keyword parsing with sensible defaults
+- atomic first-claim lock
+- queued later claims in chronological order
+- seller notifications on claim state changes
+- buyer DM when allowed and possible
 
 ### Exit Criteria
-- a valid claim comment on a bot-posted listing is handled end-to-end
-- missed payment advances the queue correctly
+- a valid claim comment on a bot-posted listing is handled correctly end-to-end
+- later valid claims queue correctly without race bugs
+- seller can see claim state transitions without manual detective work
 
-## Phase 3 — Transaction and Seller Ops
+## Phase 3 — Payment, SOLD, and Transactions
 ### Objective
-Close the post-sale loop and give sellers practical operational tools.
+Close the operational sale loop inside Telegram.
 
 ### Includes
 - seller marks payment received
-- transaction persistence
-- SOLD edits
-- active / sold listing views
+- payment deadline worker for unpaid claims
+- queue advancement or listing reactivation on missed payment
+- SOLD edits on channel posts
+- transaction persistence and seller-visible sold history
+- verified message/listing linkage for auditability
+
+### Exit Criteria
+- seller can complete a real sale end-to-end inside Telegram
+- unpaid winners are expired and queue advancement behaves correctly
+- SOLD status and transaction history update reliably
+
+## Phase 4 — Minimal Seller Ops
+### Objective
+Give sellers the minimum operational controls needed for daily usage.
+
+### Includes
+- active listings view
+- sold listings / transaction history view
 - blacklist management
 - vacation mode
-- transaction history
+- basic evidence trail / notes sufficient for support and dispute review
 
 ### Exit Criteria
-- a seller can complete a sale and see history updates inside Telegram
+- sellers can manage active and completed listings from the bot
 - bad buyers can be blocked operationally
+- temporary seller unavailability can be controlled without manual admin intervention
 
-## Phase 4 — Pricing and Trust Hardening
+## Phase 5 — Launch Hardening
 ### Objective
-Improve pricing usefulness and trust signals without blocking core flows.
+Make the minimum GA scope safe to run live.
 
 ### Includes
-- live external pricing sources
-- SGD normalization and caching
-- provider-status visibility when a source is unavailable
-- verified sale counters
-- strikes / reputation scaffolding
-- evidence export
+- webhook-friendly deployment path
+- idempotent Telegram update handling
+- recurring OCR evaluation runs
+- import/data validation reports
+- structured logging and incident-friendly debugging
+- resilience around optional pricing/source failures
 
 ### Exit Criteria
-- listings show meaningful price references
-- unavailable providers are visible and do not fail silently
-- trust data is stored and seller-visible where appropriate
+- one production deployment path is documented and repeatable
+- duplicate updates do not create duplicate side effects on critical flows
+- operators can detect and debug failures without guessing
 
-## Phase 5 — Auctions
-### Objective
-Add auction flows after fixed-price claim handling is proven stable.
-
-### Includes
-- auction listing type
-- bid parsing
-- increment rules
-- anti-snipe logic
-- auction close / winner flow
-
-### Exit Criteria
-- at least one supported auction path works reliably end-to-end
-
-## Phase 6 — Expansion Scope
-### Objective
-Add the remaining catalog and game scope once the EN Pokémon path is production-sound.
-
-### Includes
-- Japanese Pokémon catalog + resolver
-- Japanese OCR + evaluation coverage
-- One Piece set-zone mapping and catalog
-- One Piece listing path
-
-### Exit Criteria
-- EN + JP Pokémon and One Piece all work through the same bot-first pipeline
+## Post-GA Fast Follow
+### After minimal Phase 1 GA
+1. auctions
+2. advanced pricing/trust hardening
+3. Japanese Pokémon
+4. One Piece
+5. richer seller ops and cross-post tooling
 
 ## Immediate Next Sequence
-1. continue the candidate-generation / scoring split until exact, modern, nearby, and generic branches all use the shared evidence model instead of custom inline score math
-2. formalize snapshot refresh cadence and add class-based eval manifests on top of the new offline snapshot-backed audit path; the basic one-command wrapper now exists via `make ocr-eval-snapshot`
-3. harden the new multi-image listing intake with better front/back confidence checks and optional seller override when classification is uncertain
-4. continue Phase A: expand structured OCR consumption beyond text-context heuristics so the matcher fully stops depending on merged text as its primary interface
-5. build real-photo evaluation buckets by failure class so the user is not the primary QA loop
-6. add promo/alphanumeric identifier coverage (for cases like `BW95`, `TG28`)
-6. improve foil and glare robustness within the new structured OCR pipeline
+1. implement linked-discussion claim handling end-to-end
+2. implement atomic claim lock + queued later claims
+3. implement payment deadlines + queue advancement
+4. implement seller mark-paid -> SOLD edit -> transaction log
+5. add active/sold listing views and blacklist/vacation minimum tools
+6. harden multi-image listing intake with seller front/back override and less chatty album UX
 7. make pricing provider availability explicit in the seller flow
-8. implement linked-discussion claim handling
-9. implement payment deadlines + queue advancement
-10. implement SOLD + transaction log
-11. deploy to webhook-friendly hosting
+8. finish webhook deployment and duplicate-update/idempotency protection
+9. continue OCR architecture cleanup only where it directly improves live listing accuracy or reduces manual correction rate
+
+## Phase 2 Execution Plan For Minimal GA
+
+### Milestone 1 — Claim Flow Validation and Hardening
+**Goal**
+- validate the existing linked-discussion reply resolution against real Telegram update shapes
+- replace hardcoded claim keywords with seller-configurable keywords plus sensible defaults
+- enforce seller blacklist checks before claim acceptance
+- make claim-state replies and logs explicit about why a claim was accepted, queued, or rejected
+
+**Depends on**
+- current posted-message linkage in `db/listings.py`
+- current `handlers/claims.py` reply-resolution scaffold
+- current `claim_listing_atomic(...)` RPC contract
+
+**Can run in parallel with**
+- launch-hardening prep work that does not change claim behavior
+- seller-op read-side queries that do not mutate claim state
+
+**Acceptance criteria**
+- a valid `Claim` reply in the linked discussion resolves back to the correct bot-posted listing
+- blacklisted buyers are rejected safely and truthfully
+- seller-configured keywords work without code edits
+- logs show enough context to debug failed claim resolution without guessing
+
+### Milestone 2 — Queue Semantics and Claim State Integrity
+**Goal**
+- extend the claim path so later valid claims queue chronologically after the first confirmed claim
+- make claim statuses, queue positions, and listing status transitions explicit and queryable
+- verify race behavior so two near-simultaneous claims do not both become the winner
+
+**Depends on**
+- Milestone 1 claim-resolution validation
+- review and likely expansion of `migrations/004_atomic_rpc.sql` semantics
+
+**Can run in parallel with**
+- seller-op read views for active claims
+- deployment prep that is orthogonal to claim mutation logic
+
+**Acceptance criteria**
+- first valid claim becomes the active payment-pending winner
+- later valid claims are stored in deterministic queue order
+- duplicate or concurrent winner states cannot occur for one listing
+- seller can inspect the current winner plus queue state from the bot or DB-backed admin/debug output
+
+### Milestone 3 — Payment Deadline Worker and Queue Advancement
+**Goal**
+- implement the unpaid-claim expiry worker in `jobs/payment_deadlines.py`
+- advance the queue to the next eligible claimant or reactivate the listing when the queue is exhausted
+- issue strike / blacklist side effects only where the PRD flow actually calls for them
+
+**Depends on**
+- Milestone 2 claim-state and queue semantics
+- clear claim statuses and deadline fields in the `claims` table
+
+**Can run in parallel with**
+- seller-paid completion UI wiring, as long as both use the same claim-state contract
+
+**Acceptance criteria**
+- an unpaid winner expires automatically after the configured deadline
+- the next queued claimant is promoted correctly when present
+- the listing returns to an active claimable state when no queue remains
+- state transitions are idempotent and safe if the worker retries
+
+### Milestone 4 — Mark Paid, SOLD Edits, and Transaction Closure
+**Goal**
+- implement the seller-side payment confirmation flow
+- persist transactions in `transactions`
+- edit the original bot-posted listing message(s) to SOLD / completed state
+- preserve an auditable linkage between listing, winning claim, and final transaction
+
+**Depends on**
+- Milestone 2 queue state contract
+- Milestone 3 worker semantics, so manual paid completion and expiry cannot conflict
+- real implementation of `db/transactions.py` and `handlers/transactions.py`
+
+**Can run in parallel with**
+- seller sold-history read views
+
+**Acceptance criteria**
+- seller can mark the current winning claim as paid from the bot
+- one transaction row is created for the completed sale
+- the channel listing is visibly marked SOLD
+- completed listings no longer accept claims
+
+### Milestone 5 — Minimal Seller Operations
+**Goal**
+- replace placeholder seller tools with the minimum daily-ops surface
+- ship active listings, sold history / transactions, blacklist management, and vacation mode
+- expose enough read-side information that sellers do not need manual DB checks for routine work
+
+**Depends on**
+- Milestones 1 through 4 for truthful operational data
+- real queries behind `handlers/seller_tools.py`
+
+**Can run in parallel with**
+- launch hardening and deployment docs once side-effecting flows stabilize
+
+**Acceptance criteria**
+- seller can view active listings and current claim state
+- seller can view completed sales / transaction history
+- seller can add and remove blacklist entries
+- seller can toggle vacation mode without breaking existing listings
+
+### Milestone 6 — Launch Hardening
+**Goal**
+- move from local polling dependence toward a repeatable webhook-friendly deployment path
+- add duplicate-update / idempotency protection around critical Telegram side effects
+- make monitoring and recurring OCR regression checks operational, not ad hoc
+
+**Depends on**
+- core listing, claim, payment, and SOLD flows being stable enough to harden
+
+**Can run in parallel with**
+- late-stage seller-op polish
+- OCR regression workflow polish that does not alter live claim/payment behavior
+
+**Acceptance criteria**
+- one documented deployment path can run continuously without manual babysitting
+- duplicate Telegram updates do not duplicate claims, posts, or SOLD transitions
+- logs and recurring eval jobs are sufficient to catch regressions before users report them
+
+## Dependency Summary
+- Milestone 1 must land before any trustworthy end-to-end claim QA exists
+- Milestone 2 is the contract layer for all later claim/payment behavior
+- Milestone 3 and Milestone 4 can overlap in implementation, but both depend on the Milestone 2 claim-state model
+- Milestone 5 should mostly wait until Milestones 1 through 4 expose stable read/write semantics
+- Milestone 6 should start early for observability, but GA sign-off only makes sense after Milestones 1 through 5 are operational
+
+## Definition Of “Ready For Minimal GA”
+Minimal Phase 1 GA is reached when Milestones 1 through 6 are complete for the Pokémon EN fixed-price path, even if auctions, Japanese Pokémon, and One Piece are still deferred.
 
 ## What Not To Do Yet
+- do not treat auctions as a blocker for minimal GA
+- do not expand One Piece before the fixed-price Pokémon EN seller ops loop works
+- do not over-invest in JP OCR before the live claim/payment lifecycle exists
 - do not build the web dashboard yet
-- do not expand One Piece before Pokémon EN end-to-end works
-- do not treat scrape-only pricing as production-reliable when the provider is blocked
-- do not over-invest in JP OCR before EN identifier resolution and evaluation coverage are stable
 - do not chase marketplace/escrow features in Phase 1

@@ -58,15 +58,16 @@
 - multi-candidate OCR and full-catalog matching now work better on tested real Pokémon photos, but latency is still high and live-photo tuning is still needed for glare, partial crops, and non-Pokémon layouts
 - older Pokémon cards still need real-photo validation for set-symbol disambiguation beyond the currently conservative shortlist reranker
 - card identification is still local-catalog and low-volume friendly
-- claim monitoring, queue advancement, and SOLD lifecycle are still todo
+- claim monitoring is partially scaffolded, but linked-discussion validation, later-claim queueing, and blacklist enforcement are still unfinished
+- payment deadline handling, seller-paid completion, SOLD edits, and transaction closure are still unfinished
 - seller/buyer reputation and dedicated price history are still todo
 
 ### Near-Term Priorities
-1. live-test the updated OCR heuristics on more real Pokémon photos, especially glare and older cards
-2. verify the conservative set-symbol reranker on real Base/Jungle/Fossil/Base Set 2 photos before trusting it to reorder often
-3. verify linked discussion-thread `Claim` handling against real Telegram reply/update shapes
-4. add a real One Piece external pricing path or provider-backed fallback
-5. support front + back photo intake
+1. validate and harden linked discussion-thread `Claim` handling against real Telegram reply/update shapes
+2. extend claim state so later claims queue deterministically behind the winner
+3. implement payment deadline expiry, queue advancement, and listing reactivation
+4. implement seller-paid -> SOLD -> transaction closure
+5. replace seller-tool placeholders with active listings, sold history, blacklist, and vacation mode
 
 ### Working Rules For Future Tasks
 - after any meaningful task, update this file with new current state and next risks
@@ -144,3 +145,6 @@
 - listing posting now sends multiple images as a Telegram media group when more than one photo was uploaded, while `db/listings.py` persists `primary_image_path` and `secondary_image_path` for the selected front/back pair
 - verified on April 12, 2026: handler + classifier compile passed, and a monkeypatched smoke test confirmed the classifier orders a synthetic front/back pair correctly
 - process note from the user: when a new feature is requested, do not jump straight to execution suggestions; first evaluate the request carefully, think through scope / architecture / tradeoffs, and only then recommend the right execution path
+- roadmap evaluation on April 13, 2026: the repo is strongest on listing creation and OCR, but the truthful minimum-GA path is now fixed-price seller ops completion, not more scope expansion; the critical sequence is claim handling -> payment deadline/queue advancement -> SOLD/transactions -> minimal seller ops -> launch hardening
+- planning baseline on April 13, 2026: Phase 2 GA execution is now defined as six milestones in `ROADMAP.md` — claim hardening, queue integrity, payment deadline worker, mark-paid/SOLD/transactions, minimal seller ops, and launch hardening
+- repo-baseline note on April 13, 2026: `handlers/claims.py` and `db/claims.py` already provide partial live claim scaffolding, while `jobs/payment_deadlines.py`, `handlers/transactions.py`, `db/transactions.py`, and `handlers/seller_tools.py` remain mostly placeholder-level and are the main execution gap for the minimum-GA path
