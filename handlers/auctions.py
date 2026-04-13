@@ -43,6 +43,7 @@ from services.ocr import OCRNotConfiguredError
 from services.price_lookup import PriceReference, lookup_price_references
 from services.set_symbol_matcher import rerank_candidate_options_by_symbol
 from utils.formatters import format_auction_listing
+from utils.photo_quality import format_quality_summary
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,27 @@ PHOTO, TITLE, STARTING_BID, BID_INCREMENT, DURATION, NOTES, CONFIRM = range(7)
 
 
 AUCTION_DURATION_OPTIONS_HOURS = (6, 12, 24, 48)
+
+
+def _photo_quality_warning_lines(*, label: str, quality) -> list[str]:
+    if quality is None:
+        return []
+    lines = [f'• {label}: {format_quality_summary(quality)}.']
+    lines.extend(f'• {warning}' for warning in quality.warnings)
+    if not quality.acceptable:
+        lines.append('• This image looks weak for OCR. If the match looks wrong, retake the front photo with tighter framing and lower glare.')
+    return lines
+
+
+async def reject_unsupported_auction_media(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Reject unsupported auction intake media types with a clear message."""
+
+    if update.effective_message is not None:
+        await update.effective_message.reply_text(
+            'Please send card photos only while building an auction, or reply with <code>done</code> when the batch is complete.',
+            parse_mode='HTML',
+        )
+    return PHOTO
 
 
 def _clear_auction_state(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -296,6 +318,9 @@ async def finalize_auction_photo_batch(update: Update, context: ContextTypes.DEF
         extra_count = max(len(ordered_entries) - (2 if back_entry is not None else 1), 0)
         if extra_count:
             warning_lines.append(f'• {extra_count} extra photo(s) will also be attached to the auction post.')
+        warning_lines.extend(_photo_quality_warning_lines(label='Selected front photo quality', quality=front_analysis.photo_quality))
+        if back_entry is not None and back_index is not None:
+            warning_lines.extend(_photo_quality_warning_lines(label='Selected back photo quality', quality=selection.analyses[back_index].photo_quality))
         warning_lines.extend(f'• {warning}' for warning in ocr_result.warnings)
         warning_block = '\n'.join(warning_lines) + f'\n• Build: {OCR_BUILD_MARKER}.\n\n'
         admin_debug = _admin_debug_line(update=update, identification=identification, candidate_options=candidate_options)
@@ -734,6 +759,7 @@ def register_auction_handlers(application: Application) -> None:
             PHOTO: [
                 MessageHandler(filters.ChatType.PRIVATE & filters.PHOTO, capture_auction_photo),
                 MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, finalize_auction_photo_batch),
+                MessageHandler(filters.ChatType.PRIVATE & ~filters.TEXT & ~filters.PHOTO, reject_unsupported_auction_media),
             ],
             TITLE: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_auction_title)],
             STARTING_BID: [

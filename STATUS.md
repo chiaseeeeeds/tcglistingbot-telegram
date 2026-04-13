@@ -2,11 +2,12 @@
 
 ## Working Now
 - Bot process runs locally in Telegram polling mode
-- `/start`, `/help`, `/setup`, `/ping`, and `/list` respond
+- `/start`, `/help`, `/setup`, `/ping`, `/list`, `/auction`, `/sold`, `/stats`, and `/admin` respond
 - Seller account and setup data persist in Supabase
 - Seller can link a primary Telegram channel
 - `/list` starts from a DM photo upload
 - OCR runs locally with Tesseract
+- Photo quality is checked before OCR on listing and auction intake
 - Pokémon EN card matching uses the imported `cards` catalog
 - Bottom-left identifier matching works when OCR reads set code + card number
 - Manual identifier fallback works with input like `PAF 234/091`
@@ -17,14 +18,14 @@
 
 ## Partially Working
 - OCR is functional but still needs live tuning on real seller photos
+- `/setup` now stores claim keywords and default postage, but richer payment/template settings are still incomplete
 - Price references prefer exact `card_id` history, but bot history is still sparse
 - Title/manual fallback works, but the seller UX can still be tightened
 - Image storage works, but production hardening is still pending
 - Local runtime is stable for development, but always-on hosting is not done yet
 
 ## Not Working Yet
-- Linked discussion comment monitoring
-- Claim keyword parsing and claim queue logic
+- Linked discussion comment monitoring live QA
 - Payment deadline automation
 - Queue advancement after missed payment
 - SOLD message edits and transaction completion flow

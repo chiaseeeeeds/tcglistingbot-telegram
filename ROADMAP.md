@@ -302,3 +302,11 @@ Minimal Phase 1 GA is reached when Milestones 1 through 6 are complete for the P
 - do not over-invest in JP OCR before the live claim/payment lifecycle exists
 - do not build the web dashboard yet
 - do not chase marketplace/escrow features in Phase 1
+
+
+## Auction Track Status — 2026-04-13
+- implemented: `/auction` creation flow, numeric bid parsing from discussion replies/comments, atomic high-bid updates, live Telegram post edits, anti-snipe extension, and auction closeout into the existing payment flow
+- next hardening: live linked-discussion QA, seller auction controls, cross-post sync for edits, and abuse/edge-case handling around duplicate or malformed bids
+- sequencing guidance: keep minimal GA sign-off anchored to the fixed-price seller loop, but auction work is no longer a scaffold-only track and can now be hardened in parallel
+
+- 2026-04-13 update: `/setup` now captures claim keywords and default postage, `utils/photo_quality.py` is wired into listing/auction front-image selection before OCR, and `/admin` now exposes a live readiness snapshot including catalog coverage gaps.

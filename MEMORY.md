@@ -11,6 +11,8 @@
 - claims model: linked discussion comments monitored by bot
 
 ### Current Working State
+- `/auction` now exists as a photo-first DM flow that reuses the same OCR/front-back image classification path as fixed-price listings
+- auction replies/comments now parse numeric bids on bot-posted auction listings, record the high bid atomically in Postgres, live-edit the Telegram post, apply anti-snipe extension, and hand the winning bidder into the existing payment-deadline flow when the auction closes
 - `/start`, `/help`, `/setup`, `/ping`, and `/list` respond again
 - seller setup persists in Supabase
 - `/list` now starts as a photo-first flow in DM
@@ -161,3 +163,7 @@
 - roadmap evaluation on April 13, 2026: the repo is strongest on listing creation and OCR, but the truthful minimum-GA path is now fixed-price seller ops completion, not more scope expansion; the critical sequence is claim handling -> payment deadline/queue advancement -> SOLD/transactions -> minimal seller ops -> launch hardening
 - planning baseline on April 13, 2026: Phase 2 GA execution is now defined as six milestones in `ROADMAP.md` — claim hardening, queue integrity, payment deadline worker, mark-paid/SOLD/transactions, minimal seller ops, and launch hardening
 - repo-baseline note on April 13, 2026: `handlers/claims.py` and `db/claims.py` already provide partial live claim scaffolding, while `jobs/payment_deadlines.py`, `handlers/transactions.py`, `db/transactions.py`, and `handlers/seller_tools.py` remain mostly placeholder-level and are the main execution gap for the minimum-GA path
+
+- April 13, 2026 completion pass: `/setup` now captures seller claim keywords and default postage, so claim parsing is no longer hardcoded to the schema default for configured sellers
+- April 13, 2026 completion pass: `utils/photo_quality.py` now scores resolution / sharpness / glare / exposure before OCR, and listing + auction flows surface those quality warnings when choosing the front image
+- April 13, 2026 completion pass: `/admin` now reports live runtime + database readiness, including the hard blocker that the current catalog only contains 2 One Piece rows and 2 Japanese-name rows, so strict PRD launch scope is still data-blocked

@@ -31,6 +31,7 @@ from services.set_symbol_matcher import rerank_candidate_options_by_symbol
 from services.ocr import OCRNotConfiguredError
 from services.price_lookup import PriceReference, lookup_price_references
 from utils.formatters import format_fixed_price_listing
+from utils.photo_quality import format_quality_summary
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +88,27 @@ def _photo_collection_prompt(*, count: int) -> str:
         f'Got <code>{count}</code> photos so far. Send more if needed, then reply with <code>done</code>.\n\n'
         'I will pick the most likely front image for OCR and keep a back image for buyers.'
     )
+
+
+def _photo_quality_warning_lines(*, label: str, quality) -> list[str]:
+    if quality is None:
+        return []
+    lines = [f'• {label}: {format_quality_summary(quality)}.']
+    lines.extend(f'• {warning}' for warning in quality.warnings)
+    if not quality.acceptable:
+        lines.append('• This image looks weak for OCR. If the match looks wrong, retake the front photo with tighter framing and lower glare.')
+    return lines
+
+
+async def reject_unsupported_listing_media(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Reject unsupported listing intake media types with a clear message."""
+
+    if update.effective_message is not None:
+        await update.effective_message.reply_text(
+            'Please send card photos only while building a listing, or reply with <code>done</code> when the batch is complete.',
+            parse_mode='HTML',
+        )
+    return PHOTO
 
 
 def _listing_preview(*, game: str, title: str, price_sgd: float, notes: str, price_refs: list[PriceReference], image_count: int = 1, has_back: bool = False) -> str:
@@ -409,6 +431,9 @@ async def finalize_photo_batch(update: Update, context: ContextTypes.DEFAULT_TYP
         extra_count = max(len(ordered_entries) - (2 if back_entry is not None else 1), 0)
         if extra_count:
             warning_lines.append(f'• {extra_count} extra photo(s) will also be attached to the listing post.')
+        warning_lines.extend(_photo_quality_warning_lines(label='Selected front photo quality', quality=front_analysis.photo_quality))
+        if back_entry is not None and back_index is not None:
+            warning_lines.extend(_photo_quality_warning_lines(label='Selected back photo quality', quality=selection.analyses[back_index].photo_quality))
         warning_lines.extend(f'• {warning}' for warning in ocr_result.warnings)
         warning_block = '\n'.join(warning_lines) + f'\n• Build: {OCR_BUILD_MARKER}.\n\n'
         admin_debug = _admin_debug_line(update=update, identification=identification, candidate_options=candidate_options)
@@ -796,6 +821,7 @@ def register_listing_handlers(application: Application) -> None:
             PHOTO: [
                 MessageHandler(filters.ChatType.PRIVATE & filters.PHOTO, capture_photo),
                 MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, finalize_photo_batch),
+                MessageHandler(filters.ChatType.PRIVATE & ~filters.TEXT & ~filters.PHOTO, reject_unsupported_listing_media),
             ],
             TITLE: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_title)],
             PRICE: [

@@ -12,6 +12,7 @@ from services.card_identifier import CardIdentificationResult, identify_card_fro
 from services.game_detection import GameDetectionResult, detect_game_from_image
 from services.ocr import OCRNotConfiguredError, OCRResult, extract_text_from_image
 from services.ocr_signals import OCRStructuredResult
+from utils.photo_quality import PhotoQualityAssessment, assess_photo_quality
 
 logger = logging.getLogger(__name__)
 SUPPORTED_GAMES = {'pokemon', 'onepiece'}
@@ -25,6 +26,7 @@ class ListingImageAnalysis:
     game_detection: GameDetectionResult
     ocr_result: OCRResult
     identification: CardIdentificationResult
+    photo_quality: PhotoQualityAssessment
     front_score: float
     back_score: float
     blue_ratio: float
@@ -39,6 +41,7 @@ class ListingImageClassification:
     ordered_indices: list[int]
 
 
+
 def _empty_ocr_result(*, warning: str) -> OCRResult:
     return OCRResult(
         text='',
@@ -46,6 +49,7 @@ def _empty_ocr_result(*, warning: str) -> OCRResult:
         warnings=[warning],
         structured=OCRStructuredResult(layout_family='unknown', selected_source='none', signals=[]),
     )
+
 
 
 def _color_ratios(image_path: str | Path) -> tuple[float, float]:
@@ -58,7 +62,16 @@ def _color_ratios(image_path: str | Path) -> tuple[float, float]:
     return blue_pixels / total, yellow_pixels / total
 
 
-def _score_front_back(*, ocr_result: OCRResult, identification: CardIdentificationResult, game_detection: GameDetectionResult, blue_ratio: float, yellow_ratio: float) -> tuple[float, float]:
+
+def _score_front_back(
+    *,
+    ocr_result: OCRResult,
+    identification: CardIdentificationResult,
+    game_detection: GameDetectionResult,
+    photo_quality: PhotoQualityAssessment,
+    blue_ratio: float,
+    yellow_ratio: float,
+) -> tuple[float, float]:
     ocr_text = str(ocr_result.text or '').strip()
     structured = ocr_result.structured
     identifier_value = structured.top_value('identifier') or structured.top_value('printed_ratio')
@@ -75,6 +88,9 @@ def _score_front_back(*, ocr_result: OCRResult, identification: CardIdentificati
         front_score += 0.25
     if game_detection.confidence >= 0.6:
         front_score += 0.10
+    front_score += photo_quality.score * 0.30
+    if not photo_quality.acceptable:
+        front_score -= 0.18
     if blue_ratio >= 0.34 and yellow_ratio >= 0.03:
         front_score -= 0.10
 
@@ -93,12 +109,16 @@ def _score_front_back(*, ocr_result: OCRResult, identification: CardIdentificati
         back_score += 0.22
     if blue_ratio >= 0.28 and yellow_ratio >= 0.03:
         back_score += 0.12
+    if photo_quality.score < 0.35:
+        back_score += 0.08
     return front_score, back_score
+
 
 
 def classify_listing_images(image_paths: list[str], *, preferred_game: str | None = None) -> ListingImageClassification:
     analyses: list[ListingImageAnalysis] = []
     for index, image_path in enumerate(image_paths):
+        photo_quality = assess_photo_quality(image_path)
         game_detection = detect_game_from_image(image_path)
         game = game_detection.game if game_detection.game in SUPPORTED_GAMES else (preferred_game or 'pokemon')
         try:
@@ -114,6 +134,7 @@ def classify_listing_images(image_paths: list[str], *, preferred_game: str | Non
             ocr_result=ocr_result,
             identification=identification,
             game_detection=game_detection,
+            photo_quality=photo_quality,
             blue_ratio=blue_ratio,
             yellow_ratio=yellow_ratio,
         )
@@ -125,6 +146,7 @@ def classify_listing_images(image_paths: list[str], *, preferred_game: str | Non
                 game_detection=game_detection,
                 ocr_result=ocr_result,
                 identification=identification,
+                photo_quality=photo_quality,
                 front_score=front_score,
                 back_score=back_score,
                 blue_ratio=blue_ratio,

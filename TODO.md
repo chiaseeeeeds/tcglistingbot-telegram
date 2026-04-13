@@ -25,9 +25,8 @@
 - DONE: channel permission verification
 - PARTIAL: richer seller settings capture
   - payment methods beyond PayNow
-  - postage defaults
-  - claim keyword settings
   - template settings
+  - claim keywords and default postage are now captured in `/setup`
 - TODO: additional approved channels / cross-post configuration
 
 ## 3. Listing Creation
@@ -48,7 +47,7 @@
   - shortlist / fallback UX still needs more refinement for ambiguous cases
 - DONE: front + back photo support
 - TODO: unsupported media rejection UX
-- TODO: image quality checks before OCR
+- DONE: image quality checks before OCR
 - TODO: One Piece listing creation path
 - TODO: Japanese Pokémon catalog support
 
@@ -99,7 +98,7 @@
 - PARTIAL: linked-discussion comment monitoring
   - `handlers/claims.py` already watches group/supergroup text replies and tries multiple reply-origin shapes
   - real linked-discussion verification against production Telegram update shapes is still required
-- PARTIAL: seller-configured claim keywords
+- DONE: seller-configured claim keywords
   - claim handler now respects `seller_configs.claim_keywords` with sane defaults
   - seller-facing config UI for editing keywords is still missing
 - DONE: atomic first-claim lock end-to-end
@@ -116,12 +115,14 @@
 - TODO: comment-based bid parsing
 - TODO: minimum increment enforcement
 - TODO: atomic highest-bid updates
-- PARTIAL: message edits with current bid / time left
-  - reusable listing post editor now exists in `services/listing_message_editor.py`
-  - scheduled auction refresh/close scaffold now exists in `jobs/auction_close.py`
-  - full bid-driven auction lifecycle is still not implemented
-- TODO: anti-snipe extension logic
-- TODO: auction winner flow reusing payment path
+- PARTIAL: auction lifecycle now works end-to-end
+  - `/auction` now creates bot-posted auction listings from the same photo/OCR intake shape as `/list`
+  - numeric bids from linked discussion replies/comments now update the high bid atomically and live-edit the Telegram post
+  - anti-snipe extension now exists in the atomic bid RPC
+  - auction closeout now promotes the winner into the existing payment-deadline flow
+- TODO: live QA on linked-discussion bid parsing and award notifications
+- TODO: seller-side auction controls (cancel / end-early / relist)
+- TODO: cross-post synchronization for auction edits and closure states
 
 ## 9. Transactions and SOLD Lifecycle
 - PARTIAL: transaction domain scaffolding exists

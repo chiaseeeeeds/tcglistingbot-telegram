@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Protocol
+
+from services.card_identifier import identify_card_from_text
+from services.ocr_signals import OCRStructuredResult
 
 
 @dataclass(frozen=True)
@@ -13,6 +16,7 @@ class CardMatchHint:
     raw_text: str
     game: str | None = None
     language: str | None = None
+    structured: OCRStructuredResult | None = None
 
 
 class GameAdapter(Protocol):
@@ -20,27 +24,53 @@ class GameAdapter(Protocol):
 
     game: str
 
-    def identify(self, hint: CardMatchHint) -> dict:
+    def identify(self, hint: CardMatchHint) -> dict[str, Any]:
         """Return a best-effort canonical card match payload from OCR-derived input."""
 
 
 class PokemonAdapter:
-    """Basic adapter shell for Pokémon-specific OCR and identity normalization."""
+    """Pokémon-specific identity normalization wrapper."""
 
-    game = "pokemon"
+    game = 'pokemon'
 
-    def identify(self, hint: CardMatchHint) -> dict:
-        """Return a placeholder structure for future Pokémon identification logic."""
-
-        return {"game": self.game, "matched": False, "raw_text": hint.raw_text}
+    def identify(self, hint: CardMatchHint) -> dict[str, Any]:
+        result = identify_card_from_text(
+            raw_text=hint.raw_text,
+            game=self.game,
+            structured=hint.structured,
+        )
+        return {
+            'game': self.game,
+            'matched': result.matched,
+            'card_id': result.card_id,
+            'display_name': result.display_name,
+            'confidence': result.confidence,
+            'match_reasons': list(result.match_reasons),
+            'metadata': dict(result.metadata),
+            'raw_text': hint.raw_text,
+            'language': hint.language,
+        }
 
 
 class OnePieceAdapter:
-    """Basic adapter shell for One Piece-specific OCR and identity normalization."""
+    """One Piece-specific identity normalization wrapper."""
 
-    game = "onepiece"
+    game = 'onepiece'
 
-    def identify(self, hint: CardMatchHint) -> dict:
-        """Return a placeholder structure for future One Piece identification logic."""
-
-        return {"game": self.game, "matched": False, "raw_text": hint.raw_text}
+    def identify(self, hint: CardMatchHint) -> dict[str, Any]:
+        result = identify_card_from_text(
+            raw_text=hint.raw_text,
+            game=self.game,
+            structured=hint.structured,
+        )
+        return {
+            'game': self.game,
+            'matched': result.matched,
+            'card_id': result.card_id,
+            'display_name': result.display_name,
+            'confidence': result.confidence,
+            'match_reasons': list(result.match_reasons),
+            'metadata': dict(result.metadata),
+            'raw_text': hint.raw_text,
+            'language': hint.language,
+        }

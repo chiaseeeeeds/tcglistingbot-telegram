@@ -62,11 +62,15 @@ def update_seller_setup(
     payment_methods: list[str],
     paynow_identifier: str,
     primary_channel_id: int | None = None,
+    claim_keywords: list[str] | None = None,
+    offers_postage: bool | None = None,
+    postage_fee_sgd: float | None = None,
+    postage_method: str | None = None,
     setup_complete: bool = True,
 ) -> dict[str, Any]:
-    """Persist the first working seller setup slice."""
+    """Persist the working seller setup slice used by the Telegram bot."""
 
-    payload = {
+    payload: dict[str, Any] = {
         'seller_display_name': seller_display_name,
         'primary_channel_name': primary_channel_name,
         'payment_methods': payment_methods,
@@ -75,6 +79,14 @@ def update_seller_setup(
     }
     if primary_channel_id is not None:
         payload['primary_channel_id'] = primary_channel_id
+    if claim_keywords is not None:
+        payload['claim_keywords'] = claim_keywords
+    if offers_postage is not None:
+        payload['offers_postage'] = offers_postage
+    if postage_fee_sgd is not None:
+        payload['postage_fee_sgd'] = round(postage_fee_sgd, 2)
+    if postage_method is not None:
+        payload['postage_method'] = postage_method
     response = (
         get_client()
         .table('seller_configs')

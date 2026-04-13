@@ -620,3 +620,21 @@ Use this log after meaningful implementation tasks.
 - what was weak: auction creation, bid parsing, highest-bid updates, and anti-snipe behavior are still not implemented, so the new refresh worker is infrastructure-first rather than a complete live auction feature
 - follow-up: if auctions are reprioritized, wire bid parsing plus atomic bid updates next; otherwise keep focus on runtime hardening and live verification of the current fixed-price flow
 - user reaction: asked whether the bot can edit Telegram posts in real time and then asked to do it, so this pass implemented the reusable edit layer and the auction refresh scaffold rather than pretending auctions were already complete
+
+
+## 2026-04-13 — Real Auction Lifecycle
+- date: 2026-04-13
+- goal: move auctions from scaffolding to a working Telegram-native flow without forking into brittle hardcoded paths
+- outcome: added a dedicated `/auction` photo-first conversation, extended listing persistence for auction fields, added `record_auction_bid_atomic(...)` and `close_auction_atomic(...)`, routed discussion comments to claim-vs-bid behavior based on listing type, enabled live auction post edits on every accepted bid, applied anti-snipe in the bid RPC, and awarded the winner into the existing payment deadline path on close
+- validation: `python3 -m py_compile $(rg --files -g '*.py')` passed after wiring `handlers/auctions.py`, `handlers/claims.py`, `db/claims.py`, `db/listings.py`, `jobs/auction_close.py`, `utils/formatters.py`, and `main.py`
+- what went well: the feature reused the existing OCR/front-back flow and payment lifecycle instead of inventing a separate hardcoded resolver path, so auctions now sit on the same product rails as fixed-price listings
+- what was weak: live linked-discussion bidding still needs real Telegram QA, and seller-facing auction controls like cancel / end early are not built yet
+- follow-up: run live auction tests in the real channel/discussion setup, then add seller auction management controls and any missing cross-post edit synchronization
+- user reaction: asked to build out auctions after confirming the bot can edit Telegram posts in real time, while explicitly pushing against brittle hardcoded logic
+
+- date: 2026-04-13
+- goal: close a few truthful Phase 1 gaps instead of claiming launch readiness prematurely
+- outcome: expanded `/setup` to store seller-configurable claim keywords plus default postage, added `utils/photo_quality.py` and wired quality scoring into listing/auction front-image selection before OCR, replaced the `/admin` placeholder with a live operational snapshot, and swapped the generic game-adapter placeholders for real wrappers over the current identifier pipeline
+- validation: `.venv/bin/python -m py_compile handlers/listing.py handlers/auctions.py handlers/setup.py handlers/admin.py services/listing_image_classifier.py services/game_adapters.py utils/photo_quality.py db/seller_configs.py` passed; a live Supabase probe via `handlers.admin._admin_snapshot()` confirmed the current launch blocker counts (`cards_onepiece=2`, `cards_jp_named=2`)
+- what was weak: this still does not conjure the missing One Piece / Japanese catalog data, PriceCharting linkage, or live linked-discussion QA, so strict PRD Phase 1 remains incomplete even after these core UX/runtime improvements
+- follow-up: import real One Piece + Japanese catalog data, finish provider-status reporting in pricing, and run live linked-discussion claim/payment QA on the current bot

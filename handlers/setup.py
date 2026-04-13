@@ -22,24 +22,48 @@ from utils.validators import is_digits_only, is_letters_and_spaces
 
 logger = logging.getLogger(__name__)
 
-DISPLAY_NAME, PAYNOW_IDENTIFIER, CONFIRM = range(3)
+DISPLAY_NAME, PAYNOW_IDENTIFIER, CLAIM_KEYWORDS, POSTAGE_FEE, CONFIRM = range(5)
 
 
-def _setup_summary(display_name: str, primary_channel: str, paynow_identifier: str) -> str:
+
+def _parse_claim_keywords(raw_text: str) -> list[str]:
+    text = raw_text.strip()
+    if text.lower() in {'default', 'skip'}:
+        return ['claim']
+    chunks = [chunk.strip().lower() for chunk in text.split(',') if chunk.strip()]
+    deduped: list[str] = []
+    for chunk in chunks:
+        normalized = ' '.join(chunk.split())
+        if normalized and normalized not in deduped:
+            deduped.append(normalized)
+    return deduped
+
+
+
+def _setup_summary(
+    display_name: str,
+    primary_channel: str,
+    paynow_identifier: str,
+    claim_keywords: list[str],
+    postage_fee_sgd: float,
+) -> str:
     """Build the compact setup confirmation summary."""
 
+    keywords_text = ', '.join(claim_keywords) if claim_keywords else 'claim'
     return (
         '<b>Setup Summary</b>\n\n'
         f'Display name: <code>{display_name}</code>\n'
         f'Primary channel: <code>{primary_channel}</code>\n'
         'Payment methods: <code>PayNow</code>\n'
-        f'PayNow identifier: <code>{paynow_identifier}</code>\n\n'
+        f'PayNow identifier: <code>{paynow_identifier}</code>\n'
+        f'Claim keywords: <code>{keywords_text}</code>\n'
+        f'Default postage fee: <code>SGD {postage_fee_sgd:.2f}</code>\n\n'
         'Reply with <code>confirm</code> to save, or <code>cancel</code> to stop.'
     )
 
 
 async def setup_entry(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Start the minimal seller setup flow and ensure seller records exist."""
+    """Start the seller setup flow and ensure seller records exist."""
 
     if update.effective_message is None or update.effective_user is None:
         return ConversationHandler.END
@@ -139,7 +163,7 @@ async def capture_display_name(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def capture_paynow_identifier(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Store the PayNow identifier and ask for confirmation."""
+    """Store the PayNow identifier and ask for claim keywords."""
 
     if update.effective_message is None or update.effective_message.text is None:
         return PAYNOW_IDENTIFIER
@@ -154,10 +178,67 @@ async def capture_paynow_identifier(update: Update, context: ContextTypes.DEFAUL
 
     context.user_data['setup_paynow_identifier'] = paynow_identifier
     await update.effective_message.reply_text(
+        'Enter your claim keywords separated by commas, for example <code>claim, mine</code>.\n\nReply with <code>default</code> to keep the standard keyword.',
+        parse_mode='HTML',
+    )
+    return CLAIM_KEYWORDS
+
+
+async def capture_claim_keywords(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Capture seller-configurable claim keywords."""
+
+    if update.effective_message is None or update.effective_message.text is None:
+        return CLAIM_KEYWORDS
+
+    claim_keywords = _parse_claim_keywords(update.effective_message.text)
+    if not claim_keywords:
+        await update.effective_message.reply_text(
+            'Please enter at least one keyword, or reply with <code>default</code>.',
+            parse_mode='HTML',
+        )
+        return CLAIM_KEYWORDS
+    context.user_data['setup_claim_keywords'] = claim_keywords
+
+    await update.effective_message.reply_text(
+        'Enter your default postage fee in SGD, for example <code>2</code> or <code>3.50</code>. Reply with <code>skip</code> for <code>0</code>.',
+        parse_mode='HTML',
+    )
+    return POSTAGE_FEE
+
+
+async def capture_postage_fee(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Capture the default postage fee and ask for final confirmation."""
+
+    if update.effective_message is None or update.effective_message.text is None:
+        return POSTAGE_FEE
+
+    text = update.effective_message.text.strip().lower()
+    if text == 'skip':
+        postage_fee_sgd = 0.0
+    else:
+        try:
+            postage_fee_sgd = float(update.effective_message.text.strip())
+        except ValueError:
+            await update.effective_message.reply_text(
+                'Please enter a valid postage fee like <code>2</code> or <code>3.50</code>, or reply with <code>skip</code>.',
+                parse_mode='HTML',
+            )
+            return POSTAGE_FEE
+        if postage_fee_sgd < 0:
+            await update.effective_message.reply_text(
+                'Postage fee cannot be negative.',
+                parse_mode='HTML',
+            )
+            return POSTAGE_FEE
+
+    context.user_data['setup_postage_fee_sgd'] = postage_fee_sgd
+    await update.effective_message.reply_text(
         _setup_summary(
             context.user_data['setup_display_name'],
             context.user_data['setup_primary_channel_name'],
-            paynow_identifier,
+            context.user_data['setup_paynow_identifier'],
+            context.user_data['setup_claim_keywords'],
+            postage_fee_sgd,
         ),
         parse_mode='HTML',
     )
@@ -190,11 +271,15 @@ async def confirm_setup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         payment_methods=['PayNow'],
         paynow_identifier=context.user_data['setup_paynow_identifier'],
         primary_channel_id=context.user_data['setup_primary_channel_id'],
+        claim_keywords=list(context.user_data.get('setup_claim_keywords') or ['claim']),
+        offers_postage=True,
+        postage_fee_sgd=float(context.user_data.get('setup_postage_fee_sgd') or 0.0),
+        postage_method='Registered Mail',
         setup_complete=True,
     )
     logger.info('Seller %s completed setup.', context.user_data['setup_seller_id'])
     await update.effective_message.reply_text(
-        '✅ Seller setup saved.\n\nNext: add the bot as admin in your posting channel and linked discussion flow, then we can build listing posting and claim handling on top.',
+        '✅ Seller setup saved.\n\nYour claim keywords and default postage settings are now stored too.',
         parse_mode='HTML',
         reply_markup=ReplyKeyboardRemove(),
     )
@@ -211,6 +296,7 @@ async def cancel_setup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     return ConversationHandler.END
 
 
+
 def register_setup_handlers(application: Application) -> None:
     """Register setup-related command handlers on the Telegram application."""
 
@@ -220,6 +306,8 @@ def register_setup_handlers(application: Application) -> None:
         states={
             DISPLAY_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, capture_display_name)],
             PAYNOW_IDENTIFIER: [MessageHandler(filters.TEXT & ~filters.COMMAND, capture_paynow_identifier)],
+            CLAIM_KEYWORDS: [MessageHandler(filters.TEXT & ~filters.COMMAND, capture_claim_keywords)],
+            POSTAGE_FEE: [MessageHandler(filters.TEXT & ~filters.COMMAND, capture_postage_fee)],
             CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND, confirm_setup)],
         },
         fallbacks=[CommandHandler('cancel', cancel_setup)],
