@@ -125,11 +125,12 @@ Add the remaining catalog and game scope once the EN Pokémon path is production
 - EN + JP Pokémon and One Piece all work through the same bot-first pipeline
 
 ## Immediate Next Sequence
-1. continue Phase A: expand the new structured OCR signal object so the matcher can consume it directly instead of the legacy merged text
-2. split identification into generic candidate generation and one unified evidence scorer
-3. expand synthetic audits to parser/scorer invariants, including false set-code parse guards
-4. build real-photo evaluation buckets by failure class so the user is not the primary QA loop
-5. add promo/alphanumeric identifier coverage (for cases like `BW95`, `TG28`)
+1. continue the candidate-generation / scoring split until exact, modern, nearby, and generic branches all use the shared evidence model instead of custom inline score math
+2. formalize snapshot refresh cadence and add class-based eval manifests on top of the new offline snapshot-backed audit path; the basic one-command wrapper now exists via `make ocr-eval-snapshot`
+3. harden the new multi-image listing intake with better front/back confidence checks and optional seller override when classification is uncertain
+4. continue Phase A: expand structured OCR consumption beyond text-context heuristics so the matcher fully stops depending on merged text as its primary interface
+5. build real-photo evaluation buckets by failure class so the user is not the primary QA loop
+6. add promo/alphanumeric identifier coverage (for cases like `BW95`, `TG28`)
 6. improve foil and glare robustness within the new structured OCR pipeline
 7. make pricing provider availability explicit in the seller flow
 8. implement linked-discussion claim handling

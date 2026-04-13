@@ -1,0 +1,5213 @@
+{
+  "summary": {
+    "total_cases": 100,
+    "passed_cases": 100,
+    "failed_cases": 0,
+    "pass_rate": 100.0,
+    "failures_by_reason": {},
+    "failures_by_source": {},
+    "failures_by_tag": {}
+  },
+  "cases": [
+    {
+      "case_id": "exact_identifier:AOR:74",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: AOR 74/098 | NAME_EN: Forest of Giant Plants",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Forest of Giant Plants (Ancient Origins)",
+        "card_id": "97465268-e3b5-480e-bd67-91cfe66325fb",
+        "resolver": "exact_identifier",
+        "set_code": "AOR",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "AOR",
+          "card_number": "74",
+          "detected_print_number": "74/098",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "97465268-e3b5-480e-bd67-91cfe66325fb",
+            "display_name": "Forest of Giant Plants (Ancient Origins)",
+            "confidence": 0.99,
+            "set_code": "AOR",
+            "set_name": "Ancient Origins",
+            "card_number": "74",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: forest, giant, of, plants",
+              "Exact English name matched: Forest of Giant Plants"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: forest, giant, of, plants",
+          "Exact English name matched: Forest of Giant Plants",
+          "Printed total matched set count: 98"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:AQ:134",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: AQ 134/147 | NAME_EN: Super Energy Removal 2",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Super Energy Removal 2 (Aquapolis)",
+        "card_id": "32b581e0-f29b-47b2-b357-b93d813996bf",
+        "resolver": "exact_identifier",
+        "set_code": "AQ",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "AQ",
+          "card_number": "134",
+          "detected_print_number": "134/147",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "32b581e0-f29b-47b2-b357-b93d813996bf",
+            "display_name": "Super Energy Removal 2 (Aquapolis)",
+            "confidence": 0.99,
+            "set_code": "AQ",
+            "set_name": "Aquapolis",
+            "card_number": "134",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: 2, removal, super",
+              "Exact English name matched: Super Energy Removal 2"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: 2, removal, super",
+          "Exact English name matched: Super Energy Removal 2",
+          "Printed total matched set count: 147"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:AR:85",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: AR 85/099 | NAME_EN: Department Store Girl",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Department Store Girl (Arceus)",
+        "card_id": "3a266309-cdfd-459d-9f06-ca20731218fa",
+        "resolver": "exact_identifier",
+        "set_code": "AR",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "AR",
+          "card_number": "85",
+          "detected_print_number": "85/099",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "3a266309-cdfd-459d-9f06-ca20731218fa",
+            "display_name": "Department Store Girl (Arceus)",
+            "confidence": 0.99,
+            "set_code": "AR",
+            "set_name": "Arceus",
+            "card_number": "85",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: department, girl, store",
+              "Exact English name matched: Department Store Girl"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: department, girl, store",
+          "Exact English name matched: Department Store Girl",
+          "Printed total matched set count: 99"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:ASC:162",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: ASC 162/217 | NAME_EN: Team Rocket's Kangaskhan ex",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Team Rocket's Kangaskhan ex (Ascended Heroes)",
+        "card_id": "7f908356-72a2-4600-a7b1-e48c3df8622d",
+        "resolver": "exact_identifier",
+        "set_code": "ASC",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "ASC",
+          "card_number": "162",
+          "detected_print_number": "162/217",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "7f908356-72a2-4600-a7b1-e48c3df8622d",
+            "display_name": "Team Rocket's Kangaskhan ex (Ascended Heroes)",
+            "confidence": 0.99,
+            "set_code": "ASC",
+            "set_name": "Ascended Heroes",
+            "card_number": "162",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: ex, kangaskhan, rocket, team",
+              "Exact English name matched: Team Rocket's Kangaskhan ex"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: ex, kangaskhan, rocket, team",
+          "Exact English name matched: Team Rocket's Kangaskhan ex",
+          "Printed total matched set count: 217"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:ASR:114",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: ASR 114/189 | NAME_EN: Origin Forme Dialga VSTAR",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Origin Forme Dialga VSTAR Holo (Astral Radiance)",
+        "card_id": "63209472-d106-483c-91de-594495750339",
+        "resolver": "exact_identifier",
+        "set_code": "ASR",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "ASR",
+          "card_number": "114",
+          "detected_print_number": "114/189",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "63209472-d106-483c-91de-594495750339",
+            "display_name": "Origin Forme Dialga VSTAR Holo (Astral Radiance)",
+            "confidence": 0.99,
+            "set_code": "ASR",
+            "set_name": "Astral Radiance",
+            "card_number": "114",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: dialga, forme, origin, vstar",
+              "Exact English name matched: Origin Forme Dialga VSTAR"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: dialga, forme, origin, vstar",
+          "Exact English name matched: Origin Forme Dialga VSTAR",
+          "Printed total matched set count: 189"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:B2:124",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: B2 124/130 | NAME_EN: Double Colorless Energy",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Double Colorless Energy (Base Set 2)",
+        "card_id": "bc9865fd-d520-4291-a693-00bce3e225e8",
+        "resolver": "exact_identifier",
+        "set_code": "B2",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "B2",
+          "card_number": "124",
+          "detected_print_number": "124/130",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "bc9865fd-d520-4291-a693-00bce3e225e8",
+            "display_name": "Double Colorless Energy (Base Set 2)",
+            "confidence": 0.99,
+            "set_code": "B2",
+            "set_name": "Base Set 2",
+            "card_number": "124",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: colorless, double",
+              "Exact English name matched: Double Colorless Energy"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: colorless, double",
+          "Exact English name matched: Double Colorless Energy",
+          "Printed total matched set count: 130"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:BCR:127",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: BCR 127/149 | NAME_EN: Aspertia City Gym",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Aspertia City Gym (Boundaries Crossed)",
+        "card_id": "453e6ae4-8530-4479-8f7f-6f53d517db0f",
+        "resolver": "exact_identifier",
+        "set_code": "BCR",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "BCR",
+          "card_number": "127",
+          "detected_print_number": "127/149",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "453e6ae4-8530-4479-8f7f-6f53d517db0f",
+            "display_name": "Aspertia City Gym (Boundaries Crossed)",
+            "confidence": 0.99,
+            "set_code": "BCR",
+            "set_name": "Boundaries Crossed",
+            "card_number": "127",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: aspertia, city, gym",
+              "Exact English name matched: Aspertia City Gym"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: aspertia, city, gym",
+          "Exact English name matched: Aspertia City Gym",
+          "Printed total matched set count: 149"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:BKP:104",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: BKP 104/122 | NAME_EN: Misty's Determination",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Misty's Determination (BREAKpoint)",
+        "card_id": "9cb00769-a6f1-4c76-8db4-f6d24cfe2f88",
+        "resolver": "exact_identifier",
+        "set_code": "BKP",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "BKP",
+          "card_number": "104",
+          "detected_print_number": "104/122",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "9cb00769-a6f1-4c76-8db4-f6d24cfe2f88",
+            "display_name": "Misty's Determination (BREAKpoint)",
+            "confidence": 0.99,
+            "set_code": "BKP",
+            "set_name": "BREAKpoint",
+            "card_number": "104",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: determination, misty",
+              "Exact English name matched: Misty's Determination"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: determination, misty",
+          "Exact English name matched: Misty's Determination",
+          "Printed total matched set count: 122"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:BKT:142",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: BKT 142/162 | NAME_EN: Houndoom Spirit Link",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Houndoom Spirit Link (BREAKthrough)",
+        "card_id": "8e30e574-a3df-439f-8c74-66c2fbd94841",
+        "resolver": "exact_identifier",
+        "set_code": "BKT",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "BKT",
+          "card_number": "142",
+          "detected_print_number": "142/162",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "8e30e574-a3df-439f-8c74-66c2fbd94841",
+            "display_name": "Houndoom Spirit Link (BREAKthrough)",
+            "confidence": 0.99,
+            "set_code": "BKT",
+            "set_name": "BREAKthrough",
+            "card_number": "142",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: houndoom, link, spirit",
+              "Exact English name matched: Houndoom Spirit Link"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: houndoom, link, spirit",
+          "Exact English name matched: Houndoom Spirit Link",
+          "Printed total matched set count: 162"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:BLK:60",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: BLK 60/086 | NAME_EN: Antique Cover Fossil",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Antique Cover Fossil (Black Bolt)",
+        "card_id": "1a2a2369-ab34-472e-860c-08261d826474",
+        "resolver": "exact_identifier",
+        "set_code": "BLK",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "BLK",
+          "card_number": "60",
+          "detected_print_number": "60/086",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "1a2a2369-ab34-472e-860c-08261d826474",
+            "display_name": "Antique Cover Fossil (Black Bolt)",
+            "confidence": 0.99,
+            "set_code": "BLK",
+            "set_name": "Black Bolt",
+            "card_number": "60",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: antique, cover, fossil",
+              "Exact English name matched: Antique Cover Fossil"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: antique, cover, fossil",
+          "Exact English name matched: Antique Cover Fossil",
+          "Printed total matched set count: 86"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:BLW:99",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: BLW 99/114 | NAME_EN: Pok\u00e9mon Communication",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Pok\u00e9mon Communication (Black and White)",
+        "card_id": "d0bdfd41-0afb-4c77-bc62-27317fca6e68",
+        "resolver": "exact_identifier",
+        "set_code": "BLW",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "BLW",
+          "card_number": "99",
+          "detected_print_number": "99/114",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "d0bdfd41-0afb-4c77-bc62-27317fca6e68",
+            "display_name": "Pok\u00e9mon Communication (Black and White)",
+            "confidence": 0.99,
+            "set_code": "BLW",
+            "set_name": "Black and White",
+            "card_number": "99",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: communication, mon, pok",
+              "Exact English name matched: Pok\u00e9mon Communication"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: communication, mon, pok",
+          "Exact English name matched: Pok\u00e9mon Communication",
+          "Printed total matched set count: 114"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:BRS:129",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: BRS 129/172 | NAME_EN: Acerola's Premonition",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Acerola's Premonition (Brilliant Stars)",
+        "card_id": "0f682916-1844-4dfa-90da-435306d6dca8",
+        "resolver": "exact_identifier",
+        "set_code": "BRS",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "BRS",
+          "card_number": "129",
+          "detected_print_number": "129/172",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "0f682916-1844-4dfa-90da-435306d6dca8",
+            "display_name": "Acerola's Premonition (Brilliant Stars)",
+            "confidence": 0.99,
+            "set_code": "BRS",
+            "set_name": "Brilliant Stars",
+            "card_number": "129",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: acerola, premonition",
+              "Exact English name matched: Acerola's Premonition"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: acerola, premonition",
+          "Exact English name matched: Acerola's Premonition",
+          "Printed total matched set count: 172"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:BS:96",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: BS 96/102 | NAME_EN: Double Colorless Energy",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Double Colorless Energy (Base)",
+        "card_id": "d2ccb2bf-4eac-43e9-a019-9f365457133a",
+        "resolver": "exact_identifier",
+        "set_code": "BS",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "BS",
+          "card_number": "96",
+          "detected_print_number": "96/102",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "d2ccb2bf-4eac-43e9-a019-9f365457133a",
+            "display_name": "Double Colorless Energy (Base)",
+            "confidence": 0.99,
+            "set_code": "BS",
+            "set_name": "Base",
+            "card_number": "96",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: colorless, double",
+              "Exact English name matched: Double Colorless Energy"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: colorless, double",
+          "Exact English name matched: Double Colorless Energy",
+          "Printed total matched set count: 102"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:BST:131",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: BST 131/163 | NAME_EN: Rapid Strike Scroll of Swirls",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Rapid Strike Scroll of Swirls (Battle Styles)",
+        "card_id": "3f3cf9f5-ade3-49c3-9932-f76a79d36c32",
+        "resolver": "exact_identifier",
+        "set_code": "BST",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "BST",
+          "card_number": "131",
+          "detected_print_number": "131/163",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "3f3cf9f5-ade3-49c3-9932-f76a79d36c32",
+            "display_name": "Rapid Strike Scroll of Swirls (Battle Styles)",
+            "confidence": 0.99,
+            "set_code": "BST",
+            "set_name": "Battle Styles",
+            "card_number": "131",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: of, rapid, scroll, strike, swirls",
+              "Exact English name matched: Rapid Strike Scroll of Swirls"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: of, rapid, scroll, strike, swirls",
+          "Exact English name matched: Rapid Strike Scroll of Swirls",
+          "Printed total matched set count: 163"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:BUS:122",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: BUS 122/147 | NAME_EN: Rotom Dex Pok\u00e9 Finder Mode",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Rotom Dex Pok\u00e9 Finder Mode (Burning Shadows)",
+        "card_id": "21b81844-b3f4-4964-9f61-3a7110aa4398",
+        "resolver": "exact_identifier",
+        "set_code": "BUS",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "BUS",
+          "card_number": "122",
+          "detected_print_number": "122/147",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "21b81844-b3f4-4964-9f61-3a7110aa4398",
+            "display_name": "Rotom Dex Pok\u00e9 Finder Mode (Burning Shadows)",
+            "confidence": 0.99,
+            "set_code": "BUS",
+            "set_name": "Burning Shadows",
+            "card_number": "122",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: dex, finder, mode, pok, rotom",
+              "Exact English name matched: Rotom Dex Pok\u00e9 Finder Mode"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: dex, finder, mode, pok, rotom",
+          "Exact English name matched: Rotom Dex Pok\u00e9 Finder Mode",
+          "Printed total matched set count: 147"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:CEC:143",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: CEC 143/236 | NAME_EN: Togepi & Cleffa & Igglybuff-GX",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Togepi & Cleffa & Igglybuff-GX Holo (Cosmic Eclipse)",
+        "card_id": "155237a5-e501-4840-9358-31c09292c27c",
+        "resolver": "exact_identifier",
+        "set_code": "CEC",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "CEC",
+          "card_number": "143",
+          "detected_print_number": "143/236",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "155237a5-e501-4840-9358-31c09292c27c",
+            "display_name": "Togepi & Cleffa & Igglybuff-GX Holo (Cosmic Eclipse)",
+            "confidence": 0.99,
+            "set_code": "CEC",
+            "set_name": "Cosmic Eclipse",
+            "card_number": "143",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: cleffa, gx, igglybuff, togepi",
+              "Exact English name matched: Togepi & Cleffa & Igglybuff-GX"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: cleffa, gx, igglybuff, togepi",
+          "Exact English name matched: Togepi & Cleffa & Igglybuff-GX",
+          "Printed total matched set count: 236"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:CEL:23",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: CEL 23/025 | NAME_EN: Professor's Research (Professor Oak)",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Professor's Research (Professor Oak) Holo (Celebrations)",
+        "card_id": "626d93c4-45e6-4637-ba7a-bb225c78b8f7",
+        "resolver": "exact_identifier",
+        "set_code": "CEL",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "CEL",
+          "card_number": "23",
+          "detected_print_number": "23/025",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "626d93c4-45e6-4637-ba7a-bb225c78b8f7",
+            "display_name": "Professor's Research (Professor Oak) Holo (Celebrations)",
+            "confidence": 0.99,
+            "set_code": "CEL",
+            "set_name": "Celebrations",
+            "card_number": "23",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: oak, professor, research",
+              "Exact English name matched: Professor's Research (Professor Oak)"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: oak, professor, research",
+          "Exact English name matched: Professor's Research (Professor Oak)",
+          "Printed total matched set count: 25"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:CES:150",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: CES 150/168 | NAME_EN: Underground Expedition",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Underground Expedition (Celestial Storm)",
+        "card_id": "8d6eaa59-1e25-4aa5-b583-a0c484d75102",
+        "resolver": "exact_identifier",
+        "set_code": "CES",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "CES",
+          "card_number": "150",
+          "detected_print_number": "150/168",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "8d6eaa59-1e25-4aa5-b583-a0c484d75102",
+            "display_name": "Underground Expedition (Celestial Storm)",
+            "confidence": 0.99,
+            "set_code": "CES",
+            "set_name": "Celestial Storm",
+            "card_number": "150",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: expedition, underground",
+              "Exact English name matched: Underground Expedition"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: expedition, underground",
+          "Exact English name matched: Underground Expedition",
+          "Printed total matched set count: 168"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:CG:88",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: CG 88/100 | NAME_EN: Double Rainbow Energy",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Double Rainbow Energy (Crystal Guardians)",
+        "card_id": "1196d8c7-f11a-4a1d-a388-072a4d4982c1",
+        "resolver": "exact_identifier",
+        "set_code": "CG",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "CG",
+          "card_number": "88",
+          "detected_print_number": "88/100",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "1196d8c7-f11a-4a1d-a388-072a4d4982c1",
+            "display_name": "Double Rainbow Energy (Crystal Guardians)",
+            "confidence": 0.99,
+            "set_code": "CG",
+            "set_name": "Crystal Guardians",
+            "card_number": "88",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: double, rainbow",
+              "Exact English name matched: Double Rainbow Energy"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: double, rainbow",
+          "Exact English name matched: Double Rainbow Energy",
+          "Printed total matched set count: 100"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:CIN:107",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: CIN 107/111 | NAME_EN: Alolan Exeggutor-GX",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Alolan Exeggutor-GX (Crimson Invasion)",
+        "card_id": "86ad4a7a-85b2-4896-9542-a3ff8d518fd5",
+        "resolver": "exact_identifier",
+        "set_code": "CIN",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "CIN",
+          "card_number": "107",
+          "detected_print_number": "107/111",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "86ad4a7a-85b2-4896-9542-a3ff8d518fd5",
+            "display_name": "Alolan Exeggutor-GX (Crimson Invasion)",
+            "confidence": 0.99,
+            "set_code": "CIN",
+            "set_name": "Crimson Invasion",
+            "card_number": "107",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: alolan, exeggutor, gx",
+              "Exact English name matched: Alolan Exeggutor-GX"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: alolan, exeggutor, gx",
+          "Exact English name matched: Alolan Exeggutor-GX",
+          "Printed total matched set count: 111"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:CL:82",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: CL 82/095 | NAME_EN: Professor Elm's Training Method",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Professor Elm's Training Method (Call of Legends)",
+        "card_id": "fff23927-3409-4305-8e67-27a5b7b60b2c",
+        "resolver": "exact_identifier",
+        "set_code": "CL",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "CL",
+          "card_number": "82",
+          "detected_print_number": "82/095",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "fff23927-3409-4305-8e67-27a5b7b60b2c",
+            "display_name": "Professor Elm's Training Method (Call of Legends)",
+            "confidence": 0.99,
+            "set_code": "CL",
+            "set_name": "Call of Legends",
+            "card_number": "82",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: elm, method, professor, training",
+              "Exact English name matched: Professor Elm's Training Method"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: elm, method, professor, training",
+          "Exact English name matched: Professor Elm's Training Method"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:CPA:62",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: CPA 62/073 | NAME_EN: Professor's Research (Professor Magnolia)",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Professor's Research (Professor Magnolia) Holo (Champions Path)",
+        "card_id": "b013608d-f330-4064-b4b2-c8bff334f672",
+        "resolver": "exact_identifier",
+        "set_code": "CPA",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "CPA",
+          "card_number": "62",
+          "detected_print_number": "62/073",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "b013608d-f330-4064-b4b2-c8bff334f672",
+            "display_name": "Professor's Research (Professor Magnolia) Holo (Champions Path)",
+            "confidence": 0.99,
+            "set_code": "CPA",
+            "set_name": "Champions Path",
+            "card_number": "62",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: magnolia, professor, research",
+              "Exact English name matched: Professor's Research (Professor Magnolia)"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: magnolia, professor, research",
+          "Exact English name matched: Professor's Research (Professor Magnolia)",
+          "Printed total matched set count: 73"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:CRE:151",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: CRE 151/198 | NAME_EN: Rapid Strike Scroll of the Skies",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Rapid Strike Scroll of the Skies (Chilling Reign)",
+        "card_id": "9959c7c8-5b3a-491f-8c65-62365a790a22",
+        "resolver": "exact_identifier",
+        "set_code": "CRE",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "CRE",
+          "card_number": "151",
+          "detected_print_number": "151/198",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "9959c7c8-5b3a-491f-8c65-62365a790a22",
+            "display_name": "Rapid Strike Scroll of the Skies (Chilling Reign)",
+            "confidence": 0.99,
+            "set_code": "CRE",
+            "set_name": "Chilling Reign",
+            "card_number": "151",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: of, rapid, scroll, skies, strike, the",
+              "Exact English name matched: Rapid Strike Scroll of the Skies"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: of, rapid, scroll, skies, strike, the",
+          "Exact English name matched: Rapid Strike Scroll of the Skies",
+          "Printed total matched set count: 198"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:CRZ:150",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: CRZ 150/159 | NAME_EN: Professor's Research",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Professor's Research (Crown Zenith)",
+        "card_id": "cf219970-4a27-4ad7-b459-cc9475592434",
+        "resolver": "exact_identifier",
+        "set_code": "CRZ",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "CRZ",
+          "card_number": "150",
+          "detected_print_number": "150/159",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "cf219970-4a27-4ad7-b459-cc9475592434",
+            "display_name": "Professor's Research (Crown Zenith)",
+            "confidence": 0.99,
+            "set_code": "CRZ",
+            "set_name": "Crown Zenith",
+            "card_number": "150",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: professor, research",
+              "Exact English name matched: Professor's Research"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: professor, research",
+          "Exact English name matched: Professor's Research",
+          "Printed total matched set count: 159"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:DAA:166",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: DAA 166/189 | NAME_EN: Pok\u00e9mon Breeder's Nurturing",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Pok\u00e9mon Breeder's Nurturing (Darkness Ablaze)",
+        "card_id": "a4aa0c2a-8412-47e6-b441-880ddf56bd6c",
+        "resolver": "exact_identifier",
+        "set_code": "DAA",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "DAA",
+          "card_number": "166",
+          "detected_print_number": "166/189",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "a4aa0c2a-8412-47e6-b441-880ddf56bd6c",
+            "display_name": "Pok\u00e9mon Breeder's Nurturing (Darkness Ablaze)",
+            "confidence": 0.99,
+            "set_code": "DAA",
+            "set_name": "Darkness Ablaze",
+            "card_number": "166",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: breeder, mon, nurturing, pok",
+              "Exact English name matched: Pok\u00e9mon Breeder's Nurturing"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: breeder, mon, nurturing, pok",
+          "Exact English name matched: Pok\u00e9mon Breeder's Nurturing",
+          "Printed total matched set count: 189"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:DCR:32",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: DCR 32/034 | NAME_EN: Team Magma's Secret Base",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Team Magma's Secret Base (Double Crisis)",
+        "card_id": "e196dec0-db3e-43f8-9332-1f31128e777d",
+        "resolver": "exact_identifier",
+        "set_code": "DCR",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "DCR",
+          "card_number": "32",
+          "detected_print_number": "32/034",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "e196dec0-db3e-43f8-9332-1f31128e777d",
+            "display_name": "Team Magma's Secret Base (Double Crisis)",
+            "confidence": 0.99,
+            "set_code": "DCR",
+            "set_name": "Double Crisis",
+            "card_number": "32",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: base, magma, secret, team",
+              "Exact English name matched: Team Magma's Secret Base"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: base, magma, secret, team",
+          "Exact English name matched: Team Magma's Secret Base",
+          "Printed total matched set count: 34"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:DET:10",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: DET 10/018 | NAME_EN: Detective Pikachu",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Detective Pikachu (Detective Pikachu)",
+        "card_id": "73e93aac-5876-4708-8b04-2bc92b6a18ed",
+        "resolver": "exact_identifier",
+        "set_code": "DET",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "DET",
+          "card_number": "10",
+          "detected_print_number": "10/018",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "73e93aac-5876-4708-8b04-2bc92b6a18ed",
+            "display_name": "Detective Pikachu (Detective Pikachu)",
+            "confidence": 0.99,
+            "set_code": "DET",
+            "set_name": "Detective Pikachu",
+            "card_number": "10",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: detective, pikachu",
+              "Exact English name matched: Detective Pikachu"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: detective, pikachu",
+          "Exact English name matched: Detective Pikachu",
+          "Printed total matched set count: 18"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:DEX:97",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: DEX 97/108 | NAME_EN: Old Amber Aerodactyl",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Old Amber Aerodactyl (Dark Explorers)",
+        "card_id": "a01bd776-abc9-4e84-80b9-caee3afd027f",
+        "resolver": "exact_identifier",
+        "set_code": "DEX",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "DEX",
+          "card_number": "97",
+          "detected_print_number": "97/108",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "a01bd776-abc9-4e84-80b9-caee3afd027f",
+            "display_name": "Old Amber Aerodactyl (Dark Explorers)",
+            "confidence": 0.99,
+            "set_code": "DEX",
+            "set_name": "Dark Explorers",
+            "card_number": "97",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: aerodactyl, amber, old",
+              "Exact English name matched: Old Amber Aerodactyl"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: aerodactyl, amber, old",
+          "Exact English name matched: Old Amber Aerodactyl",
+          "Printed total matched set count: 108"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:DF:79",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: DF 79/101 | NAME_EN: Professor Elm's Training Method",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Professor Elm's Training Method (Dragon Frontiers)",
+        "card_id": "86566f3b-9de8-45e7-8c9d-6349ef08b290",
+        "resolver": "exact_identifier",
+        "set_code": "DF",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "DF",
+          "card_number": "79",
+          "detected_print_number": "79/101",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "86566f3b-9de8-45e7-8c9d-6349ef08b290",
+            "display_name": "Professor Elm's Training Method (Dragon Frontiers)",
+            "confidence": 0.99,
+            "set_code": "DF",
+            "set_name": "Dragon Frontiers",
+            "card_number": "79",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: elm, method, professor, training",
+              "Exact English name matched: Professor Elm's Training Method"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: elm, method, professor, training",
+          "Exact English name matched: Professor Elm's Training Method",
+          "Printed total matched set count: 101"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:DP:108",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: DP 108/130 | NAME_EN: Night Pok\u00e9mon Center",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Night Pok\u00e9mon Center (Diamond and Pearl)",
+        "card_id": "2de59223-9a00-4e84-b4ad-a6d83eb91528",
+        "resolver": "exact_identifier",
+        "set_code": "DP",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "DP",
+          "card_number": "108",
+          "detected_print_number": "108/130",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "2de59223-9a00-4e84-b4ad-a6d83eb91528",
+            "display_name": "Night Pok\u00e9mon Center (Diamond and Pearl)",
+            "confidence": 0.99,
+            "set_code": "DP",
+            "set_name": "Diamond and Pearl",
+            "card_number": "108",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: center, mon, night, pok",
+              "Exact English name matched: Night Pok\u00e9mon Center"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: center, mon, night, pok",
+          "Exact English name matched: Night Pok\u00e9mon Center",
+          "Printed total matched set count: 130"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:DR:87",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: DR 87/097 | NAME_EN: Mr. Briney's Compassion",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Mr. Briney's Compassion (Dragon)",
+        "card_id": "cba5511f-a1b1-4a57-8e2b-be66c7b0321d",
+        "resolver": "exact_identifier",
+        "set_code": "DR",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "DR",
+          "card_number": "87",
+          "detected_print_number": "87/097",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "cba5511f-a1b1-4a57-8e2b-be66c7b0321d",
+            "display_name": "Mr. Briney's Compassion (Dragon)",
+            "confidence": 0.99,
+            "set_code": "DR",
+            "set_name": "Dragon",
+            "card_number": "87",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: briney, compassion, mr",
+              "Exact English name matched: Mr. Briney's Compassion"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: briney, compassion, mr",
+          "Exact English name matched: Mr. Briney's Compassion",
+          "Printed total matched set count: 97"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:DRI:179",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: DRI 179/182 | NAME_EN: Team Rocket's Venture Bomb",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Team Rocket's Venture Bomb (Destined Rivals)",
+        "card_id": "d0b8b88b-b198-4f21-9660-112b71a294a2",
+        "resolver": "exact_identifier",
+        "set_code": "DRI",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "DRI",
+          "card_number": "179",
+          "detected_print_number": "179/182",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "d0b8b88b-b198-4f21-9660-112b71a294a2",
+            "display_name": "Team Rocket's Venture Bomb (Destined Rivals)",
+            "confidence": 0.99,
+            "set_code": "DRI",
+            "set_name": "Destined Rivals",
+            "card_number": "179",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: bomb, rocket, team, venture",
+              "Exact English name matched: Team Rocket's Venture Bomb"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: bomb, rocket, team, venture",
+          "Exact English name matched: Team Rocket's Venture Bomb",
+          "Printed total matched set count: 182"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:DRM:58",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: DRM 58/070 | NAME_EN: Blaine's Last Stand",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Blaine's Last Stand Holo (Dragon Majesty)",
+        "card_id": "ef883478-5c3c-440c-87c8-c9d9f6746d40",
+        "resolver": "exact_identifier",
+        "set_code": "DRM",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "DRM",
+          "card_number": "58",
+          "detected_print_number": "58/070",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "ef883478-5c3c-440c-87c8-c9d9f6746d40",
+            "display_name": "Blaine's Last Stand Holo (Dragon Majesty)",
+            "confidence": 0.99,
+            "set_code": "DRM",
+            "set_name": "Dragon Majesty",
+            "card_number": "58",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: blaine, last, stand",
+              "Exact English name matched: Blaine's Last Stand"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: blaine, last, stand",
+          "Exact English name matched: Blaine's Last Stand",
+          "Printed total matched set count: 70"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:DRV:19",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: DRV 19/020 | NAME_EN: First Ticket",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "First Ticket (Dragon Vault)",
+        "card_id": "208bb11c-38fc-44a2-b81e-6f2dac4bd894",
+        "resolver": "exact_identifier",
+        "set_code": "DRV",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "DRV",
+          "card_number": "19",
+          "detected_print_number": "19/020",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "208bb11c-38fc-44a2-b81e-6f2dac4bd894",
+            "display_name": "First Ticket (Dragon Vault)",
+            "confidence": 0.99,
+            "set_code": "DRV",
+            "set_name": "Dragon Vault",
+            "card_number": "19",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: first, ticket",
+              "Exact English name matched: First Ticket"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: first, ticket",
+          "Exact English name matched: First Ticket",
+          "Printed total matched set count: 20"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:DRX:118",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: DRX 118/124 | NAME_EN: Blend Energy WaterLightningFightingMetal",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Blend Energy WaterLightningFightingMetal (Dragons Exalted)",
+        "card_id": "136e832c-6d36-4f9e-9f01-4689660f19dc",
+        "resolver": "exact_identifier",
+        "set_code": "DRX",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "DRX",
+          "card_number": "118",
+          "detected_print_number": "118/124",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "136e832c-6d36-4f9e-9f01-4689660f19dc",
+            "display_name": "Blend Energy WaterLightningFightingMetal (Dragons Exalted)",
+            "confidence": 0.99,
+            "set_code": "DRX",
+            "set_name": "Dragons Exalted",
+            "card_number": "118",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: blend, waterlightningfightingmetal",
+              "Exact English name matched: Blend Energy WaterLightningFightingMetal"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: blend, waterlightningfightingmetal",
+          "Exact English name matched: Blend Energy WaterLightningFightingMetal",
+          "Printed total matched set count: 124"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:DS:94",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: DS 94/113 | NAME_EN: Holon Research Tower",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Holon Research Tower Holo (Delta Species)",
+        "card_id": "1a478d65-d1ad-4d33-bfa4-345f49a94997",
+        "resolver": "exact_identifier",
+        "set_code": "DS",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "DS",
+          "card_number": "94",
+          "detected_print_number": "94/113",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "1a478d65-d1ad-4d33-bfa4-345f49a94997",
+            "display_name": "Holon Research Tower Holo (Delta Species)",
+            "confidence": 0.99,
+            "set_code": "DS",
+            "set_name": "Delta Species",
+            "card_number": "94",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: holon, research, tower",
+              "Exact English name matched: Holon Research Tower"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: holon, research, tower",
+          "Exact English name matched: Holon Research Tower",
+          "Variant matched OCR text: Holo",
+          "Printed total matched set count: 113"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:DX:90",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: DX 90/107 | NAME_EN: Professor Cozmo's Discovery",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Professor Cozmo's Discovery (Deoxys)",
+        "card_id": "c5a4e19a-9852-4e5b-9740-138d73519f97",
+        "resolver": "exact_identifier",
+        "set_code": "DX",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "DX",
+          "card_number": "90",
+          "detected_print_number": "90/107",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "c5a4e19a-9852-4e5b-9740-138d73519f97",
+            "display_name": "Professor Cozmo's Discovery (Deoxys)",
+            "confidence": 0.99,
+            "set_code": "DX",
+            "set_name": "Deoxys",
+            "card_number": "90",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: cozmo, discovery, professor",
+              "Exact English name matched: Professor Cozmo's Discovery"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: cozmo, discovery, professor",
+          "Exact English name matched: Professor Cozmo's Discovery",
+          "Printed total matched set count: 107"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:EM:87",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: EM 87/106 | NAME_EN: Double Rainbow Energy",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Double Rainbow Energy (Emerald)",
+        "card_id": "ab31ece7-8acc-4af7-bd9b-c7d034c3279f",
+        "resolver": "exact_identifier",
+        "set_code": "EM",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "EM",
+          "card_number": "87",
+          "detected_print_number": "87/106",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "ab31ece7-8acc-4af7-bd9b-c7d034c3279f",
+            "display_name": "Double Rainbow Energy (Emerald)",
+            "confidence": 0.99,
+            "set_code": "EM",
+            "set_name": "Emerald",
+            "card_number": "87",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: double, rainbow",
+              "Exact English name matched: Double Rainbow Energy"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: double, rainbow",
+          "Exact English name matched: Double Rainbow Energy",
+          "Printed total matched set count: 106"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:EPO:92",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: EPO 92/098 | NAME_EN: Crushing Hammer",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Crushing Hammer (Emerging Powers)",
+        "card_id": "3345330f-dbd9-4100-82f3-88c0995c836d",
+        "resolver": "exact_identifier",
+        "set_code": "EPO",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "EPO",
+          "card_number": "92",
+          "detected_print_number": "92/098",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "3345330f-dbd9-4100-82f3-88c0995c836d",
+            "display_name": "Crushing Hammer (Emerging Powers)",
+            "confidence": 0.99,
+            "set_code": "EPO",
+            "set_name": "Emerging Powers",
+            "card_number": "92",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: crushing, hammer",
+              "Exact English name matched: Crushing Hammer"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: crushing, hammer",
+          "Exact English name matched: Crushing Hammer",
+          "Printed total matched set count: 98"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:EVS:158",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: EVS 158/203 | NAME_EN: Single Strike Scroll of the Fanged Dragon",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Single Strike Scroll of the Fanged Dragon (Evolving Skies)",
+        "card_id": "72d7fdcf-6659-4390-a3eb-db37f5e07874",
+        "resolver": "exact_identifier",
+        "set_code": "EVS",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "EVS",
+          "card_number": "158",
+          "detected_print_number": "158/203",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "72d7fdcf-6659-4390-a3eb-db37f5e07874",
+            "display_name": "Single Strike Scroll of the Fanged Dragon (Evolving Skies)",
+            "confidence": 0.99,
+            "set_code": "EVS",
+            "set_name": "Evolving Skies",
+            "card_number": "158",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: dragon, fanged, of, scroll, single, strike, the",
+              "Exact English name matched: Single Strike Scroll of the Fanged Dragon"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: dragon, fanged, of, scroll, single, strike, the",
+          "Exact English name matched: Single Strike Scroll of the Fanged Dragon",
+          "Printed total matched set count: 203"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:EX:148",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: EX 148/165 | NAME_EN: Professor Elm's Training Method",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Professor Elm's Training Method (Expedition Base Set)",
+        "card_id": "d4d2b960-3db2-4189-abc2-311c73c08f2d",
+        "resolver": "exact_identifier",
+        "set_code": "EX",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "EX",
+          "card_number": "148",
+          "detected_print_number": "148/165",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "d4d2b960-3db2-4189-abc2-311c73c08f2d",
+            "display_name": "Professor Elm's Training Method (Expedition Base Set)",
+            "confidence": 0.99,
+            "set_code": "EX",
+            "set_name": "Expedition Base Set",
+            "card_number": "148",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: elm, method, professor, training",
+              "Exact English name matched: Professor Elm's Training Method"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: elm, method, professor, training",
+          "Exact English name matched: Professor Elm's Training Method",
+          "Printed total matched set count: 165"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:FCO:112",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: FCO 112/124 | NAME_EN: Team Rocket's Handiwork",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Team Rocket's Handiwork (Fates Collide)",
+        "card_id": "35838301-4e4c-4ebe-be8f-6a70321cc2e4",
+        "resolver": "exact_identifier",
+        "set_code": "FCO",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "FCO",
+          "card_number": "112",
+          "detected_print_number": "112/124",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "35838301-4e4c-4ebe-be8f-6a70321cc2e4",
+            "display_name": "Team Rocket's Handiwork (Fates Collide)",
+            "confidence": 0.99,
+            "set_code": "FCO",
+            "set_name": "Fates Collide",
+            "card_number": "112",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: handiwork, rocket, team",
+              "Exact English name matched: Team Rocket's Handiwork"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: handiwork, rocket, team",
+          "Exact English name matched: Team Rocket's Handiwork",
+          "Printed total matched set count: 124"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:FFI:110",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: FFI 110/111 | NAME_EN: Fossil Researcher",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Fossil Researcher (Furious Fists)",
+        "card_id": "fd9820af-ce65-4be3-9165-6290d1ea6ec3",
+        "resolver": "exact_identifier",
+        "set_code": "FFI",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "FFI",
+          "card_number": "110",
+          "detected_print_number": "110/111",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "fd9820af-ce65-4be3-9165-6290d1ea6ec3",
+            "display_name": "Fossil Researcher (Furious Fists)",
+            "confidence": 0.99,
+            "set_code": "FFI",
+            "set_name": "Furious Fists",
+            "card_number": "110",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: fossil, researcher",
+              "Exact English name matched: Fossil Researcher"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: fossil, researcher",
+          "Exact English name matched: Fossil Researcher",
+          "Printed total matched set count: 111"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:FLF:105",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: FLF 105/106 | NAME_EN: Pok\u00e9mon Center Lady",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Pok\u00e9mon Center Lady (Flashfire)",
+        "card_id": "7e23db01-cc70-40a9-ac4c-e87b945aa16e",
+        "resolver": "exact_identifier",
+        "set_code": "FLF",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "FLF",
+          "card_number": "105",
+          "detected_print_number": "105/106",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "7e23db01-cc70-40a9-ac4c-e87b945aa16e",
+            "display_name": "Pok\u00e9mon Center Lady (Flashfire)",
+            "confidence": 0.99,
+            "set_code": "FLF",
+            "set_name": "Flashfire",
+            "card_number": "105",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: center, lady, mon, pok",
+              "Exact English name matched: Pok\u00e9mon Center Lady"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: center, lady, mon, pok",
+          "Exact English name matched: Pok\u00e9mon Center Lady",
+          "Printed total matched set count: 106"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:FLI:118",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: FLI 118/131 | NAME_EN: Unit Energy FightingDarknessFairy",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Unit Energy FightingDarknessFairy (Forbidden Light)",
+        "card_id": "59fd0d28-2f80-46bf-9b8c-0d8543342a17",
+        "resolver": "exact_identifier",
+        "set_code": "FLI",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "FLI",
+          "card_number": "118",
+          "detected_print_number": "118/131",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "59fd0d28-2f80-46bf-9b8c-0d8543342a17",
+            "display_name": "Unit Energy FightingDarknessFairy (Forbidden Light)",
+            "confidence": 0.99,
+            "set_code": "FLI",
+            "set_name": "Forbidden Light",
+            "card_number": "118",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: fightingdarknessfairy, unit",
+              "Exact English name matched: Unit Energy FightingDarknessFairy"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: fightingdarknessfairy, unit",
+          "Exact English name matched: Unit Energy FightingDarknessFairy",
+          "Printed total matched set count: 131"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:FO:62",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: FO 62/062 | NAME_EN: Mysterious Fossil",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Mysterious Fossil (Fossil)",
+        "card_id": "226de4d1-7948-47ff-9987-822b9c28192c",
+        "resolver": "exact_identifier",
+        "set_code": "FO",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "FO",
+          "card_number": "62",
+          "detected_print_number": "62/062",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "226de4d1-7948-47ff-9987-822b9c28192c",
+            "display_name": "Mysterious Fossil (Fossil)",
+            "confidence": 0.99,
+            "set_code": "FO",
+            "set_name": "Fossil",
+            "card_number": "62",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: fossil, mysterious",
+              "Exact English name matched: Mysterious Fossil"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: fossil, mysterious",
+          "Exact English name matched: Mysterious Fossil",
+          "Printed total matched set count: 62"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:FST:224",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: FST 224/264 | NAME_EN: Adventurer's Discovery",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Adventurer's Discovery (Fusion Strike)",
+        "card_id": "0635c339-529f-467d-b1e6-6cd2c273a86e",
+        "resolver": "exact_identifier",
+        "set_code": "FST",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "FST",
+          "card_number": "224",
+          "detected_print_number": "224/264",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "0635c339-529f-467d-b1e6-6cd2c273a86e",
+            "display_name": "Adventurer's Discovery (Fusion Strike)",
+            "confidence": 0.99,
+            "set_code": "FST",
+            "set_name": "Fusion Strike",
+            "card_number": "224",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: adventurer, discovery",
+              "Exact English name matched: Adventurer's Discovery"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: adventurer, discovery",
+          "Exact English name matched: Adventurer's Discovery",
+          "Printed total matched set count: 264"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:FUT20:4",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: FUT20 4/005 | NAME_EN: Scorbunny on the Ball",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Scorbunny on the Ball (Futsal Collection)",
+        "card_id": "523328db-6bef-43c0-9d55-3720047db88c",
+        "resolver": "exact_identifier",
+        "set_code": "FUT20",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "FUT20",
+          "card_number": "4",
+          "detected_print_number": "4/005",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "523328db-6bef-43c0-9d55-3720047db88c",
+            "display_name": "Scorbunny on the Ball (Futsal Collection)",
+            "confidence": 0.99,
+            "set_code": "FUT20",
+            "set_name": "Futsal Collection",
+            "card_number": "4",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: ball, on, scorbunny, the",
+              "Exact English name matched: Scorbunny on the Ball"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: ball, on, scorbunny, the",
+          "Exact English name matched: Scorbunny on the Ball",
+          "Printed total matched set count: 5"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:G1:104",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: G1 104/132 | NAME_EN: The Rocket's Training Gym",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "The Rocket's Training Gym (Gym Heroes)",
+        "card_id": "be6466e9-b742-4265-ab18-8078b8106b44",
+        "resolver": "exact_identifier",
+        "set_code": "G1",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "G1",
+          "card_number": "104",
+          "detected_print_number": "104/132",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "be6466e9-b742-4265-ab18-8078b8106b44",
+            "display_name": "The Rocket's Training Gym (Gym Heroes)",
+            "confidence": 0.99,
+            "set_code": "G1",
+            "set_name": "Gym Heroes",
+            "card_number": "104",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: gym, rocket, the, training",
+              "Exact English name matched: The Rocket's Training Gym"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: gym, rocket, the, training",
+          "Exact English name matched: The Rocket's Training Gym",
+          "Printed total matched set count: 132"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:G2:120",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: G2 120/132 | NAME_EN: Rocket's Secret Experiment",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Rocket's Secret Experiment (Gym Challenge)",
+        "card_id": "77ba5822-107e-4f38-bf9b-8df7f7d6252e",
+        "resolver": "exact_identifier",
+        "set_code": "G2",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "G2",
+          "card_number": "120",
+          "detected_print_number": "120/132",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "77ba5822-107e-4f38-bf9b-8df7f7d6252e",
+            "display_name": "Rocket's Secret Experiment (Gym Challenge)",
+            "confidence": 0.99,
+            "set_code": "G2",
+            "set_name": "Gym Challenge",
+            "card_number": "120",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: experiment, rocket, secret",
+              "Exact English name matched: Rocket's Secret Experiment"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: experiment, rocket, secret",
+          "Exact English name matched: Rocket's Secret Experiment",
+          "Printed total matched set count: 132"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:GE:98",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: GE 98/106 | NAME_EN: Felicity's Drawing",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Felicity's Drawing (Great Encounters)",
+        "card_id": "4aa34c29-6213-48d0-9531-9a0483f274d6",
+        "resolver": "exact_identifier",
+        "set_code": "GE",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "GE",
+          "card_number": "98",
+          "detected_print_number": "98/106",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "4aa34c29-6213-48d0-9531-9a0483f274d6",
+            "display_name": "Felicity's Drawing (Great Encounters)",
+            "confidence": 0.99,
+            "set_code": "GE",
+            "set_name": "Great Encounters",
+            "card_number": "98",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: drawing, felicity",
+              "Exact English name matched: Felicity's Drawing"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: drawing, felicity",
+          "Exact English name matched: Felicity's Drawing",
+          "Printed total matched set count: 106"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:GEN:74",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: GEN 74/083 | NAME_EN: Double Colorless Energy",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Double Colorless Energy (Generations)",
+        "card_id": "7705c63a-a4b6-4182-9e97-dd26fdf53548",
+        "resolver": "exact_identifier",
+        "set_code": "GEN",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "GEN",
+          "card_number": "74",
+          "detected_print_number": "74/083",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "7705c63a-a4b6-4182-9e97-dd26fdf53548",
+            "display_name": "Double Colorless Energy (Generations)",
+            "confidence": 0.99,
+            "set_code": "GEN",
+            "set_name": "Generations",
+            "card_number": "74",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: colorless, double",
+              "Exact English name matched: Double Colorless Energy"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: colorless, double",
+          "Exact English name matched: Double Colorless Energy",
+          "Printed total matched set count: 83"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:GRI:116",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: GRI 116/145 | NAME_EN: Aether Paradise Conservation Area",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Aether Paradise Conservation Area (Guardians Rising)",
+        "card_id": "399817fe-3a45-4eee-8aab-fadb01b50eda",
+        "resolver": "exact_identifier",
+        "set_code": "GRI",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "GRI",
+          "card_number": "116",
+          "detected_print_number": "116/145",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "399817fe-3a45-4eee-8aab-fadb01b50eda",
+            "display_name": "Aether Paradise Conservation Area (Guardians Rising)",
+            "confidence": 0.99,
+            "set_code": "GRI",
+            "set_name": "Guardians Rising",
+            "card_number": "116",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: aether, area, conservation, paradise",
+              "Exact English name matched: Aether Paradise Conservation Area"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: aether, area, conservation, paradise",
+          "Exact English name matched: Aether Paradise Conservation Area",
+          "Printed total matched set count: 145"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:HIF:44",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: HIF 44/068 | NAME_EN: Moltres & Zapdos & Articuno-GX",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Moltres & Zapdos & Articuno-GX Holo (Hidden Fates)",
+        "card_id": "7e82980b-83ad-43d3-8f44-7a673c19932f",
+        "resolver": "exact_identifier",
+        "set_code": "HIF",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "HIF",
+          "card_number": "44",
+          "detected_print_number": "44/068",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "7e82980b-83ad-43d3-8f44-7a673c19932f",
+            "display_name": "Moltres & Zapdos & Articuno-GX Holo (Hidden Fates)",
+            "confidence": 0.99,
+            "set_code": "HIF",
+            "set_name": "Hidden Fates",
+            "card_number": "44",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: articuno, gx, moltres, zapdos",
+              "Exact English name matched: Moltres & Zapdos & Articuno-GX"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: articuno, gx, moltres, zapdos",
+          "Exact English name matched: Moltres & Zapdos & Articuno-GX",
+          "Printed total matched set count: 68"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:HL:86",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: HL 86/101 | NAME_EN: Ancient Technical Machine [Steel]",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Ancient Technical Machine [Steel] (Hidden Legends)",
+        "card_id": "455edba7-d9cd-4ecd-ba45-7da904d97bb5",
+        "resolver": "exact_identifier",
+        "set_code": "HL",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "HL",
+          "card_number": "86",
+          "detected_print_number": "86/101",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "455edba7-d9cd-4ecd-ba45-7da904d97bb5",
+            "display_name": "Ancient Technical Machine [Steel] (Hidden Legends)",
+            "confidence": 0.99,
+            "set_code": "HL",
+            "set_name": "Hidden Legends",
+            "card_number": "86",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: ancient, machine, steel, technical",
+              "Exact English name matched: Ancient Technical Machine [Steel]"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: ancient, machine, steel, technical",
+          "Exact English name matched: Ancient Technical Machine [Steel]",
+          "Printed total matched set count: 101"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:HP:89",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: HP 89/110 | NAME_EN: Professor Cozmo's Discovery",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Professor Cozmo's Discovery (Holon Phantoms)",
+        "card_id": "3c17dc8d-bdc1-4513-9024-af182dbfe5a0",
+        "resolver": "exact_identifier",
+        "set_code": "HP",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "HP",
+          "card_number": "89",
+          "detected_print_number": "89/110",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "3c17dc8d-bdc1-4513-9024-af182dbfe5a0",
+            "display_name": "Professor Cozmo's Discovery (Holon Phantoms)",
+            "confidence": 0.99,
+            "set_code": "HP",
+            "set_name": "Holon Phantoms",
+            "card_number": "89",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: cozmo, discovery, professor",
+              "Exact English name matched: Professor Cozmo's Discovery"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: cozmo, discovery, professor",
+          "Exact English name matched: Professor Cozmo's Discovery",
+          "Printed total matched set count: 110"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:HS:100",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: HS 100/123 | NAME_EN: Professor Elm's Training Method",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Professor Elm's Training Method (HeartGold and SoulSilver)",
+        "card_id": "34c39733-5fe9-4171-aace-e339b0ced0a6",
+        "resolver": "exact_identifier",
+        "set_code": "HS",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "HS",
+          "card_number": "100",
+          "detected_print_number": "100/123",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "34c39733-5fe9-4171-aace-e339b0ced0a6",
+            "display_name": "Professor Elm's Training Method (HeartGold and SoulSilver)",
+            "confidence": 0.99,
+            "set_code": "HS",
+            "set_name": "HeartGold and SoulSilver",
+            "card_number": "100",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: elm, method, professor, training",
+              "Exact English name matched: Professor Elm's Training Method"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: elm, method, professor, training",
+          "Exact English name matched: Professor Elm's Training Method",
+          "Printed total matched set count: 123"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:JTG:149",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: JTG 149/159 | NAME_EN: Iris's Fighting Spirit",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Iris's Fighting Spirit (Journey Together)",
+        "card_id": "55810a17-81fc-480b-96f9-f4470055c9c4",
+        "resolver": "exact_identifier",
+        "set_code": "JTG",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "JTG",
+          "card_number": "149",
+          "detected_print_number": "149/159",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "55810a17-81fc-480b-96f9-f4470055c9c4",
+            "display_name": "Iris's Fighting Spirit (Journey Together)",
+            "confidence": 0.99,
+            "set_code": "JTG",
+            "set_name": "Journey Together",
+            "card_number": "149",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: fighting, iris, spirit",
+              "Exact English name matched: Iris's Fighting Spirit"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: fighting, iris, spirit",
+          "Exact English name matched: Iris's Fighting Spirit",
+          "Printed total matched set count: 159"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:JU:14",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: JU 14/064 | NAME_EN: Victreebel",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Victreebel Holo (Jungle)",
+        "card_id": "322db64d-82de-4953-9df8-e8b7367674fd",
+        "resolver": "exact_identifier",
+        "set_code": "JU",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "JU",
+          "card_number": "14",
+          "detected_print_number": "14/064",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "322db64d-82de-4953-9df8-e8b7367674fd",
+            "display_name": "Victreebel Holo (Jungle)",
+            "confidence": 0.99,
+            "set_code": "JU",
+            "set_name": "Jungle",
+            "card_number": "14",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: victreebel",
+              "Exact English name matched: Victreebel"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: victreebel",
+          "Exact English name matched: Victreebel",
+          "Printed total matched set count: 64"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:KSS:34",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: KSS 34/039 | NAME_EN: Crushing Hammer",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Crushing Hammer (Kalos Starter Set)",
+        "card_id": "e5f2a3ce-7852-44b1-b7ea-aa83d010fd4d",
+        "resolver": "exact_identifier",
+        "set_code": "KSS",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "KSS",
+          "card_number": "34",
+          "detected_print_number": "34/039",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "e5f2a3ce-7852-44b1-b7ea-aa83d010fd4d",
+            "display_name": "Crushing Hammer (Kalos Starter Set)",
+            "confidence": 0.99,
+            "set_code": "KSS",
+            "set_name": "Kalos Starter Set",
+            "card_number": "34",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: crushing, hammer",
+              "Exact English name matched: Crushing Hammer"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: crushing, hammer",
+          "Exact English name matched: Crushing Hammer",
+          "Printed total matched set count: 39"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:LA:50",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: LA 50/146 | NAME_EN: Castform Snow-Cloud Form",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Castform Snow-Cloud Form (Legends Awakened)",
+        "card_id": "6421c534-4589-4e1f-82d0-07cd897de351",
+        "resolver": "exact_identifier",
+        "set_code": "LA",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "LA",
+          "card_number": "50",
+          "detected_print_number": "50/146",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "6421c534-4589-4e1f-82d0-07cd897de351",
+            "display_name": "Castform Snow-Cloud Form (Legends Awakened)",
+            "confidence": 0.99,
+            "set_code": "LA",
+            "set_name": "Legends Awakened",
+            "card_number": "50",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: castform, cloud, form, snow",
+              "Exact English name matched: Castform Snow-Cloud Form"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: castform, cloud, form, snow",
+          "Exact English name matched: Castform Snow-Cloud Form",
+          "Printed total matched set count: 146"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:LC:109",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: LC 109/110 | NAME_EN: Mysterious Fossil",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Mysterious Fossil (Legendary Collection)",
+        "card_id": "8cb843ed-d952-4b47-95ee-15e9d8171b5a",
+        "resolver": "exact_identifier",
+        "set_code": "LC",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "LC",
+          "card_number": "109",
+          "detected_print_number": "109/110",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "8cb843ed-d952-4b47-95ee-15e9d8171b5a",
+            "display_name": "Mysterious Fossil (Legendary Collection)",
+            "confidence": 0.99,
+            "set_code": "LC",
+            "set_name": "Legendary Collection",
+            "card_number": "109",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: fossil, mysterious",
+              "Exact English name matched: Mysterious Fossil"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: fossil, mysterious",
+          "Exact English name matched: Mysterious Fossil",
+          "Printed total matched set count: 110"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:LM:79",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: LM 79/092 | NAME_EN: Mysterious Fossil",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Mysterious Fossil (Legend Maker)",
+        "card_id": "5a105b53-757c-4805-a6d6-44aca7e31cc9",
+        "resolver": "exact_identifier",
+        "set_code": "LM",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "LM",
+          "card_number": "79",
+          "detected_print_number": "79/092",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "5a105b53-757c-4805-a6d6-44aca7e31cc9",
+            "display_name": "Mysterious Fossil (Legend Maker)",
+            "confidence": 0.99,
+            "set_code": "LM",
+            "set_name": "Legend Maker",
+            "card_number": "79",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: fossil, mysterious",
+              "Exact English name matched: Mysterious Fossil"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: fossil, mysterious",
+          "Exact English name matched: Mysterious Fossil",
+          "Printed total matched set count: 92"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:LOR:123",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: LOR 123/196 | NAME_EN: Radiant Hisuian Sneasler",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Radiant Hisuian Sneasler (Lost Origin)",
+        "card_id": "3821879c-6d25-47ec-b6c6-df7ede2c6b08",
+        "resolver": "exact_identifier",
+        "set_code": "LOR",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "LOR",
+          "card_number": "123",
+          "detected_print_number": "123/196",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "3821879c-6d25-47ec-b6c6-df7ede2c6b08",
+            "display_name": "Radiant Hisuian Sneasler (Lost Origin)",
+            "confidence": 0.99,
+            "set_code": "LOR",
+            "set_name": "Lost Origin",
+            "card_number": "123",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: hisuian, radiant, sneasler",
+              "Exact English name matched: Radiant Hisuian Sneasler"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: hisuian, radiant, sneasler",
+          "Exact English name matched: Radiant Hisuian Sneasler",
+          "Printed total matched set count: 196"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:LOT:168",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: LOT 168/214 | NAME_EN: Aether Foundation Employee",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Aether Foundation Employee (Lost Thunder)",
+        "card_id": "0999dcce-7f74-4d8e-9f09-019aceb38dbb",
+        "resolver": "exact_identifier",
+        "set_code": "LOT",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "LOT",
+          "card_number": "168",
+          "detected_print_number": "168/214",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "0999dcce-7f74-4d8e-9f09-019aceb38dbb",
+            "display_name": "Aether Foundation Employee (Lost Thunder)",
+            "confidence": 0.99,
+            "set_code": "LOT",
+            "set_name": "Lost Thunder",
+            "card_number": "168",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: aether, employee, foundation",
+              "Exact English name matched: Aether Foundation Employee"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: aether, employee, foundation",
+          "Exact English name matched: Aether Foundation Employee",
+          "Printed total matched set count: 214"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:LTR:113",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: LTR 113/113 | NAME_EN: Double Colorless Energy",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Double Colorless Energy (Legendary Treasures)",
+        "card_id": "85e59b53-4ba7-421c-b0d5-41f38e12654e",
+        "resolver": "exact_identifier",
+        "set_code": "LTR",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "LTR",
+          "card_number": "113",
+          "detected_print_number": "113/113",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "85e59b53-4ba7-421c-b0d5-41f38e12654e",
+            "display_name": "Double Colorless Energy (Legendary Treasures)",
+            "confidence": 0.99,
+            "set_code": "LTR",
+            "set_name": "Legendary Treasures",
+            "card_number": "113",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: colorless, double",
+              "Exact English name matched: Double Colorless Energy"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: colorless, double",
+          "Exact English name matched: Double Colorless Energy",
+          "Printed total matched set count: 113"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:M11:5",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: M11 5/012 | NAME_EN: Alomomola",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Alomomola (McDonalds Collection 2011)",
+        "card_id": "f78c15c1-36b5-4faf-a68c-a9d8efcae965",
+        "resolver": "exact_identifier",
+        "set_code": "M11",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "M11",
+          "card_number": "5",
+          "detected_print_number": "5/012",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "f78c15c1-36b5-4faf-a68c-a9d8efcae965",
+            "display_name": "Alomomola (McDonalds Collection 2011)",
+            "confidence": 0.99,
+            "set_code": "M11",
+            "set_name": "McDonalds Collection 2011",
+            "card_number": "5",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: alomomola",
+              "Exact English name matched: Alomomola"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: alomomola",
+          "Exact English name matched: Alomomola",
+          "Printed total matched set count: 12"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:M12:9",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: M12 9/012 | NAME_EN: Purrloin",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Purrloin (McDonalds Collection 2012)",
+        "card_id": "5efef356-6024-40bf-a400-f7b9f5303ec4",
+        "resolver": "exact_identifier",
+        "set_code": "M12",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "M12",
+          "card_number": "9",
+          "detected_print_number": "9/012",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "5efef356-6024-40bf-a400-f7b9f5303ec4",
+            "display_name": "Purrloin (McDonalds Collection 2012)",
+            "confidence": 0.99,
+            "set_code": "M12",
+            "set_name": "McDonalds Collection 2012",
+            "card_number": "9",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: purrloin",
+              "Exact English name matched: Purrloin"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: purrloin",
+          "Exact English name matched: Purrloin",
+          "Printed total matched set count: 12"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:M14:11",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: M14 11/012 | NAME_EN: Fletchling",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Fletchling (McDonalds Collection 2014)",
+        "card_id": "0614246c-ea2a-4f78-bee0-c705f63e1c4b",
+        "resolver": "exact_identifier",
+        "set_code": "M14",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "M14",
+          "card_number": "11",
+          "detected_print_number": "11/012",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "0614246c-ea2a-4f78-bee0-c705f63e1c4b",
+            "display_name": "Fletchling (McDonalds Collection 2014)",
+            "confidence": 0.99,
+            "set_code": "M14",
+            "set_name": "McDonalds Collection 2014",
+            "card_number": "11",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: fletchling",
+              "Exact English name matched: Fletchling"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: fletchling",
+          "Exact English name matched: Fletchling",
+          "Printed total matched set count: 12"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:M15:11",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: M15 11/012 | NAME_EN: Zigzagoon",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Zigzagoon (McDonalds Collection 2015)",
+        "card_id": "753d4a8b-d4e1-44a2-a1eb-d03ab5f6a6a5",
+        "resolver": "exact_identifier",
+        "set_code": "M15",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "M15",
+          "card_number": "11",
+          "detected_print_number": "11/012",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "753d4a8b-d4e1-44a2-a1eb-d03ab5f6a6a5",
+            "display_name": "Zigzagoon (McDonalds Collection 2015)",
+            "confidence": 0.99,
+            "set_code": "M15",
+            "set_name": "McDonalds Collection 2015",
+            "card_number": "11",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: zigzagoon",
+              "Exact English name matched: Zigzagoon"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: zigzagoon",
+          "Exact English name matched: Zigzagoon",
+          "Printed total matched set count: 12"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:M16:8",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: M16 8/012 | NAME_EN: Jigglypuff",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Jigglypuff (McDonalds Collection 2016)",
+        "card_id": "72ed67e6-610a-481c-be4f-9aa5d30cdb05",
+        "resolver": "exact_identifier",
+        "set_code": "M16",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "M16",
+          "card_number": "8",
+          "detected_print_number": "8/012",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "72ed67e6-610a-481c-be4f-9aa5d30cdb05",
+            "display_name": "Jigglypuff (McDonalds Collection 2016)",
+            "confidence": 0.99,
+            "set_code": "M16",
+            "set_name": "McDonalds Collection 2016",
+            "card_number": "8",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: jigglypuff",
+              "Exact English name matched: Jigglypuff"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: jigglypuff",
+          "Exact English name matched: Jigglypuff",
+          "Printed total matched set count: 12"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:M17:9",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: M17 9/012 | NAME_EN: Alolan Diglett",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Alolan Diglett (McDonalds Collection 2017)",
+        "card_id": "0b631ab5-dedb-49a9-a027-608865fd91f0",
+        "resolver": "exact_identifier",
+        "set_code": "M17",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "M17",
+          "card_number": "9",
+          "detected_print_number": "9/012",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "0b631ab5-dedb-49a9-a027-608865fd91f0",
+            "display_name": "Alolan Diglett (McDonalds Collection 2017)",
+            "confidence": 0.99,
+            "set_code": "M17",
+            "set_name": "McDonalds Collection 2017",
+            "card_number": "9",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: alolan, diglett",
+              "Exact English name matched: Alolan Diglett"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: alolan, diglett",
+          "Exact English name matched: Alolan Diglett",
+          "Printed total matched set count: 12"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:M18:1",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: M18 1/012 | NAME_EN: Growlithe",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Growlithe (McDonalds Collection 2018)",
+        "card_id": "adb3f0eb-80b7-4777-a623-7592dceab886",
+        "resolver": "exact_identifier",
+        "set_code": "M18",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "M18",
+          "card_number": "1",
+          "detected_print_number": "1/012",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "adb3f0eb-80b7-4777-a623-7592dceab886",
+            "display_name": "Growlithe (McDonalds Collection 2018)",
+            "confidence": 0.99,
+            "set_code": "M18",
+            "set_name": "McDonalds Collection 2018",
+            "card_number": "1",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: growlithe",
+              "Exact English name matched: Growlithe"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: growlithe",
+          "Exact English name matched: Growlithe",
+          "Printed total matched set count: 12"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:M19:2",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: M19 2/012 | NAME_EN: Alolan Exeggutor",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Alolan Exeggutor (McDonalds Collection 2019)",
+        "card_id": "8ef4ff7a-42ff-4b7a-9d96-bcdb50ddc0b2",
+        "resolver": "exact_identifier",
+        "set_code": "M19",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "M19",
+          "card_number": "2",
+          "detected_print_number": "2/012",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "8ef4ff7a-42ff-4b7a-9d96-bcdb50ddc0b2",
+            "display_name": "Alolan Exeggutor (McDonalds Collection 2019)",
+            "confidence": 0.99,
+            "set_code": "M19",
+            "set_name": "McDonalds Collection 2019",
+            "card_number": "2",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: alolan, exeggutor",
+              "Exact English name matched: Alolan Exeggutor"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: alolan, exeggutor",
+          "Exact English name matched: Alolan Exeggutor",
+          "Printed total matched set count: 12"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:M21:9",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: M21 9/025 | NAME_EN: Charmander",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Charmander (McDonalds Collection 2021)",
+        "card_id": "ccffb177-2ce1-442d-b5a1-e2e35044aec6",
+        "resolver": "exact_identifier",
+        "set_code": "M21",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "M21",
+          "card_number": "9",
+          "detected_print_number": "9/025",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "ccffb177-2ce1-442d-b5a1-e2e35044aec6",
+            "display_name": "Charmander (McDonalds Collection 2021)",
+            "confidence": 0.99,
+            "set_code": "M21",
+            "set_name": "McDonalds Collection 2021",
+            "card_number": "9",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: charmander",
+              "Exact English name matched: Charmander"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: charmander",
+          "Exact English name matched: Charmander",
+          "Printed total matched set count: 25"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:M22:3",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: M22 3/015 | NAME_EN: Gossifleur",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Gossifleur (McDonalds Collection 2022)",
+        "card_id": "ac2e1ef4-d326-4988-beca-fd2455b02840",
+        "resolver": "exact_identifier",
+        "set_code": "M22",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "M22",
+          "card_number": "3",
+          "detected_print_number": "3/015",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "ac2e1ef4-d326-4988-beca-fd2455b02840",
+            "display_name": "Gossifleur (McDonalds Collection 2022)",
+            "confidence": 0.99,
+            "set_code": "M22",
+            "set_name": "McDonalds Collection 2022",
+            "card_number": "3",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: gossifleur",
+              "Exact English name matched: Gossifleur"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: gossifleur",
+          "Exact English name matched: Gossifleur",
+          "Printed total matched set count: 15"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:MA:84",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: MA 84/095 | NAME_EN: Team Magma Technical Machine 01",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Team Magma Technical Machine 01 (Team Magma vs Team Aqua)",
+        "card_id": "591073de-4c0a-4ee5-9777-53f077f04d4f",
+        "resolver": "exact_identifier",
+        "set_code": "MA",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "MA",
+          "card_number": "84",
+          "detected_print_number": "84/095",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "591073de-4c0a-4ee5-9777-53f077f04d4f",
+            "display_name": "Team Magma Technical Machine 01 (Team Magma vs Team Aqua)",
+            "confidence": 0.99,
+            "set_code": "MA",
+            "set_name": "Team Magma vs Team Aqua",
+            "card_number": "84",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: machine, magma, ol, team, technical",
+              "Exact English name matched: Team Magma Technical Machine 01"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: machine, magma, ol, team, technical",
+          "Exact English name matched: Team Magma Technical Machine 01",
+          "Printed total matched set count: 95"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:MD:54",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: MD 54/100 | NAME_EN: Burmy Sandy Cloak",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Burmy Sandy Cloak (Majestic Dawn)",
+        "card_id": "c218c0e2-f58e-4519-96ad-6ae1f6b53624",
+        "resolver": "exact_identifier",
+        "set_code": "MD",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "MD",
+          "card_number": "54",
+          "detected_print_number": "54/100",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "c218c0e2-f58e-4519-96ad-6ae1f6b53624",
+            "display_name": "Burmy Sandy Cloak (Majestic Dawn)",
+            "confidence": 0.99,
+            "set_code": "MD",
+            "set_name": "Majestic Dawn",
+            "card_number": "54",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: burmy, cloak, sandy",
+              "Exact English name matched: Burmy Sandy Cloak"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: burmy, cloak, sandy",
+          "Exact English name matched: Burmy Sandy Cloak",
+          "Printed total matched set count: 100"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:MEG:119",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: MEG 119/132 | NAME_EN: Lillie's Determination",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Lillie's Determination (Mega Evolution)",
+        "card_id": "134c7f19-9891-4749-bfc8-c31ee0627871",
+        "resolver": "exact_identifier",
+        "set_code": "MEG",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "MEG",
+          "card_number": "119",
+          "detected_print_number": "119/132",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "134c7f19-9891-4749-bfc8-c31ee0627871",
+            "display_name": "Lillie's Determination (Mega Evolution)",
+            "confidence": 0.99,
+            "set_code": "MEG",
+            "set_name": "Mega Evolution",
+            "card_number": "119",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: determination, lillie",
+              "Exact English name matched: Lillie's Determination"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: determination, lillie",
+          "Exact English name matched: Lillie's Determination",
+          "Printed total matched set count: 132"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:MT:115",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: MT 115/123 | NAME_EN: Team Galactic's Wager",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Team Galactic's Wager (Mysterious Treasures)",
+        "card_id": "d4670b6b-cb8d-42ef-816f-3c3a4b51cdf1",
+        "resolver": "exact_identifier",
+        "set_code": "MT",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "MT",
+          "card_number": "115",
+          "detected_print_number": "115/123",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "d4670b6b-cb8d-42ef-816f-3c3a4b51cdf1",
+            "display_name": "Team Galactic's Wager (Mysterious Treasures)",
+            "confidence": 0.99,
+            "set_code": "MT",
+            "set_name": "Mysterious Treasures",
+            "card_number": "115",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: galactic, team, wager",
+              "Exact English name matched: Team Galactic's Wager"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: galactic, team, wager",
+          "Exact English name matched: Team Galactic's Wager",
+          "Printed total matched set count: 123"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:N1:89",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: N1 89/111 | NAME_EN: Super Energy Retrieval",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Super Energy Retrieval (Neo Genesis)",
+        "card_id": "39d4ee5d-c535-42a6-9ae6-295e2f5d9275",
+        "resolver": "exact_identifier",
+        "set_code": "N1",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "N1",
+          "card_number": "89",
+          "detected_print_number": "89/111",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "39d4ee5d-c535-42a6-9ae6-295e2f5d9275",
+            "display_name": "Super Energy Retrieval (Neo Genesis)",
+            "confidence": 0.99,
+            "set_code": "N1",
+            "set_name": "Neo Genesis",
+            "card_number": "89",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: retrieval, super",
+              "Exact English name matched: Super Energy Retrieval"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: retrieval, super",
+          "Exact English name matched: Super Energy Retrieval",
+          "Printed total matched set count: 111"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:N2:73",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: N2 73/075 | NAME_EN: Hyper Devolution Spray",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Hyper Devolution Spray (Neo Discovery)",
+        "card_id": "8382bd80-1e58-4a24-8369-a9a97934e93c",
+        "resolver": "exact_identifier",
+        "set_code": "N2",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "N2",
+          "card_number": "73",
+          "detected_print_number": "73/075",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "8382bd80-1e58-4a24-8369-a9a97934e93c",
+            "display_name": "Hyper Devolution Spray (Neo Discovery)",
+            "confidence": 0.99,
+            "set_code": "N2",
+            "set_name": "Neo Discovery",
+            "card_number": "73",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: devolution, hyper, spray",
+              "Exact English name matched: Hyper Devolution Spray"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: devolution, hyper, spray",
+          "Exact English name matched: Hyper Devolution Spray",
+          "Printed total matched set count: 75"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:N3:62",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: N3 62/064 | NAME_EN: Pok\u00e9mon Breeder Fields",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Pok\u00e9mon Breeder Fields (Neo Revelation)",
+        "card_id": "3c66b6d5-fc7b-4d7b-bae0-fd2721b20382",
+        "resolver": "exact_identifier",
+        "set_code": "N3",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "N3",
+          "card_number": "62",
+          "detected_print_number": "62/064",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "3c66b6d5-fc7b-4d7b-bae0-fd2721b20382",
+            "display_name": "Pok\u00e9mon Breeder Fields (Neo Revelation)",
+            "confidence": 0.99,
+            "set_code": "N3",
+            "set_name": "Neo Revelation",
+            "card_number": "62",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: breeder, fields, mon, pok",
+              "Exact English name matched: Pok\u00e9mon Breeder Fields"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: breeder, fields, mon, pok",
+          "Exact English name matched: Pok\u00e9mon Breeder Fields",
+          "Printed total matched set count: 64"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:N4:94",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: N4 94/105 | NAME_EN: Impostor Professor Oak's Invention",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Impostor Professor Oak's Invention (Neo Destiny)",
+        "card_id": "4b3f986f-dc40-42bc-82fb-b577b6c4559f",
+        "resolver": "exact_identifier",
+        "set_code": "N4",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "N4",
+          "card_number": "94",
+          "detected_print_number": "94/105",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "4b3f986f-dc40-42bc-82fb-b577b6c4559f",
+            "display_name": "Impostor Professor Oak's Invention (Neo Destiny)",
+            "confidence": 0.99,
+            "set_code": "N4",
+            "set_name": "Neo Destiny",
+            "card_number": "94",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: impostor, invention, oak, professor",
+              "Exact English name matched: Impostor Professor Oak's Invention"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: impostor, invention, oak, professor",
+          "Exact English name matched: Impostor Professor Oak's Invention",
+          "Printed total matched set count: 105"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:NP:27",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: NP 27/040 | NAME_EN: Tropical Tidal Wave",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Tropical Tidal Wave Promo (Nintendo Black Star Promos)",
+        "card_id": "bd4c00fa-dfd6-4217-8079-8afbea5a3748",
+        "resolver": "exact_identifier",
+        "set_code": "NP",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "NP",
+          "card_number": "27",
+          "detected_print_number": "27/040",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "bd4c00fa-dfd6-4217-8079-8afbea5a3748",
+            "display_name": "Tropical Tidal Wave Promo (Nintendo Black Star Promos)",
+            "confidence": 0.99,
+            "set_code": "NP",
+            "set_name": "Nintendo Black Star Promos",
+            "card_number": "27",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: tidal, tropical, wave",
+              "Exact English name matched: Tropical Tidal Wave"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: tidal, tropical, wave",
+          "Exact English name matched: Tropical Tidal Wave",
+          "Printed total matched set count: 40"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:NVI:90",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: NVI 90/101 | NAME_EN: Cover Fossil",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Cover Fossil (Noble Victories)",
+        "card_id": "910f8b2f-8d8d-431b-a4e6-e9467add5b2e",
+        "resolver": "exact_identifier",
+        "set_code": "NVI",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "NVI",
+          "card_number": "90",
+          "detected_print_number": "90/101",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "910f8b2f-8d8d-431b-a4e6-e9467add5b2e",
+            "display_name": "Cover Fossil (Noble Victories)",
+            "confidence": 0.99,
+            "set_code": "NVI",
+            "set_name": "Noble Victories",
+            "card_number": "90",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: cover, fossil",
+              "Exact English name matched: Cover Fossil"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: cover, fossil",
+          "Exact English name matched: Cover Fossil",
+          "Printed total matched set count: 101"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:NXD:92",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: NXD 92/099 | NAME_EN: Double Colorless Energy",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Double Colorless Energy (Next Destinies)",
+        "card_id": "0ef8c5cd-6b1e-4ffa-9a14-14d96dab25c4",
+        "resolver": "exact_identifier",
+        "set_code": "NXD",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "NXD",
+          "card_number": "92",
+          "detected_print_number": "92/099",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "0ef8c5cd-6b1e-4ffa-9a14-14d96dab25c4",
+            "display_name": "Double Colorless Energy (Next Destinies)",
+            "confidence": 0.99,
+            "set_code": "NXD",
+            "set_name": "Next Destinies",
+            "card_number": "92",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: colorless, double",
+              "Exact English name matched: Double Colorless Energy"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: colorless, double",
+          "Exact English name matched: Double Colorless Energy",
+          "Printed total matched set count: 99"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:OBF:192",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: OBF 192/197 | NAME_EN: Pok\u00e9mon League Headquarters",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Pok\u00e9mon League Headquarters (Obsidian Flames)",
+        "card_id": "c4a68bf6-34dd-421e-bc9e-597741fa2f16",
+        "resolver": "exact_identifier",
+        "set_code": "OBF",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "OBF",
+          "card_number": "192",
+          "detected_print_number": "192/197",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "c4a68bf6-34dd-421e-bc9e-597741fa2f16",
+            "display_name": "Pok\u00e9mon League Headquarters (Obsidian Flames)",
+            "confidence": 0.99,
+            "set_code": "OBF",
+            "set_name": "Obsidian Flames",
+            "card_number": "192",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: headquarters, league, mon, pok",
+              "Exact English name matched: Pok\u00e9mon League Headquarters"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: headquarters, league, mon, pok",
+          "Exact English name matched: Pok\u00e9mon League Headquarters",
+          "Printed total matched set count: 197"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:PAF:90",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: PAF 90/091 | NAME_EN: Technical Machine: Crisis Punch",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Technical Machine: Crisis Punch (Paldean Fates)",
+        "card_id": "70aaf6a5-4afe-48d5-a437-ee6d5789c5df",
+        "resolver": "exact_identifier",
+        "set_code": "PAF",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "PAF",
+          "card_number": "90",
+          "detected_print_number": "90/091",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "70aaf6a5-4afe-48d5-a437-ee6d5789c5df",
+            "display_name": "Technical Machine: Crisis Punch (Paldean Fates)",
+            "confidence": 0.99,
+            "set_code": "PAF",
+            "set_name": "Paldean Fates",
+            "card_number": "90",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: crisis, machine, punch, technical",
+              "Exact English name matched: Technical Machine: Crisis Punch"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: crisis, machine, punch, technical",
+          "Exact English name matched: Technical Machine: Crisis Punch",
+          "Printed total matched set count: 91"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:PAL:174",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: PAL 174/193 | NAME_EN: Calamitous Snowy Mountain",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Calamitous Snowy Mountain (Paldea Evolved)",
+        "card_id": "3ed147ca-938d-4bf0-9ae4-392fa8179c6e",
+        "resolver": "exact_identifier",
+        "set_code": "PAL",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "PAL",
+          "card_number": "174",
+          "detected_print_number": "174/193",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "3ed147ca-938d-4bf0-9ae4-392fa8179c6e",
+            "display_name": "Calamitous Snowy Mountain (Paldea Evolved)",
+            "confidence": 0.99,
+            "set_code": "PAL",
+            "set_name": "Paldea Evolved",
+            "card_number": "174",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: calamitous, mountain, snowy",
+              "Exact English name matched: Calamitous Snowy Mountain"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: calamitous, mountain, snowy",
+          "Exact English name matched: Calamitous Snowy Mountain",
+          "Printed total matched set count: 193"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:PAR:179",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: PAR 179/182 | NAME_EN: Technical Machine: Turbo Energize",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Technical Machine: Turbo Energize (Paradox Rift)",
+        "card_id": "9254016b-bd13-4901-b8e5-6ab344268715",
+        "resolver": "exact_identifier",
+        "set_code": "PAR",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "PAR",
+          "card_number": "179",
+          "detected_print_number": "179/182",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "9254016b-bd13-4901-b8e5-6ab344268715",
+            "display_name": "Technical Machine: Turbo Energize (Paradox Rift)",
+            "confidence": 0.99,
+            "set_code": "PAR",
+            "set_name": "Paradox Rift",
+            "card_number": "179",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: energize, machine, technical, turbo",
+              "Exact English name matched: Technical Machine: Turbo Energize"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: energize, machine, technical, turbo",
+          "Exact English name matched: Technical Machine: Turbo Energize",
+          "Printed total matched set count: 182"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:PFL:109",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: PFL 109/094 | NAME_EN: Mega Charizard X ex",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Mega Charizard X ex (Phantasmal Flames)",
+        "card_id": "d2fb62b9-6b1a-47f7-b13a-b1bc8b4f5533",
+        "resolver": "exact_identifier",
+        "set_code": "PFL",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "PFL",
+          "card_number": "109",
+          "detected_print_number": "109/094",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "d2fb62b9-6b1a-47f7-b13a-b1bc8b4f5533",
+            "display_name": "Mega Charizard X ex (Phantasmal Flames)",
+            "confidence": 0.99,
+            "set_code": "PFL",
+            "set_name": "Phantasmal Flames",
+            "card_number": "109",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: charizard, ex, mega",
+              "Exact English name matched: Mega Charizard X ex"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: charizard, ex, mega",
+          "Exact English name matched: Mega Charizard X ex",
+          "Printed total matched set count: 94"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:PGO:78",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: PGO 78/078 | NAME_EN: Professor's Research",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Professor's Research (GO)",
+        "card_id": "4713966b-6953-49bd-9a6f-1f75a53a281c",
+        "resolver": "exact_identifier",
+        "set_code": "PGO",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "PGO",
+          "card_number": "78",
+          "detected_print_number": "78/078",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "4713966b-6953-49bd-9a6f-1f75a53a281c",
+            "display_name": "Professor's Research (GO)",
+            "confidence": 0.99,
+            "set_code": "PGO",
+            "set_name": "GO",
+            "card_number": "78",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: professor, research",
+              "Exact English name matched: Professor's Research"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: professor, research",
+          "Exact English name matched: Professor's Research",
+          "Printed total matched set count: 78"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:PHF:92",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: PHF 92/119 | NAME_EN: Battle Compressor Team Flare Gear",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Battle Compressor Team Flare Gear (Phantom Forces)",
+        "card_id": "2625c507-0f4a-4e11-8ae0-42bb0bbffb4f",
+        "resolver": "exact_identifier",
+        "set_code": "PHF",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "PHF",
+          "card_number": "92",
+          "detected_print_number": "92/119",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "2625c507-0f4a-4e11-8ae0-42bb0bbffb4f",
+            "display_name": "Battle Compressor Team Flare Gear (Phantom Forces)",
+            "confidence": 0.99,
+            "set_code": "PHF",
+            "set_name": "Phantom Forces",
+            "card_number": "92",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: battle, compressor, flare, gear, team",
+              "Exact English name matched: Battle Compressor Team Flare Gear"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: battle, compressor, flare, gear, team",
+          "Exact English name matched: Battle Compressor Team Flare Gear",
+          "Printed total matched set count: 119"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:PK:73",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: PK 73/108 | NAME_EN: Energy Recycle System",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Energy Recycle System (Power Keepers)",
+        "card_id": "1f7173b3-545c-4588-9f8d-f9dfa1658c76",
+        "resolver": "exact_identifier",
+        "set_code": "PK",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "PK",
+          "card_number": "73",
+          "detected_print_number": "73/108",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "1f7173b3-545c-4588-9f8d-f9dfa1658c76",
+            "display_name": "Energy Recycle System (Power Keepers)",
+            "confidence": 0.99,
+            "set_code": "PK",
+            "set_name": "Power Keepers",
+            "card_number": "73",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: recycle, system",
+              "Exact English name matched: Energy Recycle System"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: recycle, system",
+          "Exact English name matched: Energy Recycle System",
+          "Printed total matched set count: 108"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:PL:116",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: PL 116/127 | NAME_EN: Team Galactic's Invention G-101 Energy Gain",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Team Galactic's Invention G-101 Energy Gain (Platinum)",
+        "card_id": "89579adc-20f5-4d84-b4e1-2c904224f2d6",
+        "resolver": "exact_identifier",
+        "set_code": "PL",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "PL",
+          "card_number": "116",
+          "detected_print_number": "116/127",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "89579adc-20f5-4d84-b4e1-2c904224f2d6",
+            "display_name": "Team Galactic's Invention G-101 Energy Gain (Platinum)",
+            "confidence": 0.99,
+            "set_code": "PL",
+            "set_name": "Platinum",
+            "card_number": "116",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: gain, galactic, invention, lol, team",
+              "Exact English name matched: Team Galactic's Invention G-101 Energy Gain"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: gain, galactic, invention, lol, team",
+          "Exact English name matched: Team Galactic's Invention G-101 Energy Gain",
+          "Printed total matched set count: 127"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:PLB:87",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: PLB 87/101 | NAME_EN: Root Fossil Lileep",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Root Fossil Lileep (Plasma Blast)",
+        "card_id": "3aed225d-c431-48df-a3a7-a9d76765833c",
+        "resolver": "exact_identifier",
+        "set_code": "PLB",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "PLB",
+          "card_number": "87",
+          "detected_print_number": "87/101",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "3aed225d-c431-48df-a3a7-a9d76765833c",
+            "display_name": "Root Fossil Lileep (Plasma Blast)",
+            "confidence": 0.99,
+            "set_code": "PLB",
+            "set_name": "Plasma Blast",
+            "card_number": "87",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: fossil, lileep, root",
+              "Exact English name matched: Root Fossil Lileep"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: fossil, lileep, root",
+          "Exact English name matched: Root Fossil Lileep",
+          "Printed total matched set count: 101"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:PLF:103",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: PLF 103/116 | NAME_EN: Superior Energy Retrieval",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Superior Energy Retrieval (Plasma Freeze)",
+        "card_id": "8de42dd9-8803-4c8e-bb14-70c1680db191",
+        "resolver": "exact_identifier",
+        "set_code": "PLF",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "PLF",
+          "card_number": "103",
+          "detected_print_number": "103/116",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "8de42dd9-8803-4c8e-bb14-70c1680db191",
+            "display_name": "Superior Energy Retrieval (Plasma Freeze)",
+            "confidence": 0.99,
+            "set_code": "PLF",
+            "set_name": "Plasma Freeze",
+            "card_number": "103",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: retrieval, superior",
+              "Exact English name matched: Superior Energy Retrieval"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: retrieval, superior",
+          "Exact English name matched: Superior Energy Retrieval",
+          "Printed total matched set count: 116"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:PLS:125",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: PLS 125/135 | NAME_EN: Team Plasma Grunt",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Team Plasma Grunt (Plasma Storm)",
+        "card_id": "5f4eea5f-ccce-4826-9d03-0386d3fb95c0",
+        "resolver": "exact_identifier",
+        "set_code": "PLS",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "PLS",
+          "card_number": "125",
+          "detected_print_number": "125/135",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "5f4eea5f-ccce-4826-9d03-0386d3fb95c0",
+            "display_name": "Team Plasma Grunt (Plasma Storm)",
+            "confidence": 0.99,
+            "set_code": "PLS",
+            "set_name": "Plasma Storm",
+            "card_number": "125",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: grunt, plasma, team",
+              "Exact English name matched: Team Plasma Grunt"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: grunt, plasma, team",
+          "Exact English name matched: Team Plasma Grunt",
+          "Printed total matched set count: 135"
+        ]
+      }
+    },
+    {
+      "case_id": "exact_identifier:POP1:17",
+      "source": "synthetic:exact_identifier",
+      "kind": "text",
+      "game": "pokemon",
+      "tags": [
+        "synthetic",
+        "catalog",
+        "exact_identifier"
+      ],
+      "passed": true,
+      "failure_reasons": [],
+      "raw_text": "IDENTIFIER: POP1 17/017 | NAME_EN: Tyranitar ex",
+      "ocr_text": null,
+      "identification": {
+        "matched": true,
+        "confidence": 0.99,
+        "display_name": "Tyranitar ex (POP Series 1)",
+        "card_id": "00fefca2-5c95-458c-b44c-ca52524e50a5",
+        "resolver": "exact_identifier",
+        "set_code": "POP1",
+        "metadata": {
+          "game": "pokemon",
+          "set_code": "POP1",
+          "card_number": "17",
+          "detected_print_number": "17/017",
+          "resolver": "exact_identifier",
+          "service_build": "card-identify-2026-04-12-shared-evidence-v17"
+        },
+        "candidate_options": [
+          {
+            "card_id": "00fefca2-5c95-458c-b44c-ca52524e50a5",
+            "display_name": "Tyranitar ex (POP Series 1)",
+            "confidence": 0.99,
+            "set_code": "POP1",
+            "set_name": "POP Series 1",
+            "card_number": "17",
+            "reasons": [
+              "Set code and printed number matched the catalog.",
+              "Name token overlap: ex, tyranitar",
+              "Exact English name matched: Tyranitar ex"
+            ]
+          }
+        ],
+        "match_reasons": [
+          "Set code and printed number matched the catalog.",
+          "Name token overlap: ex, tyranitar",
+          "Exact English name matched: Tyranitar ex",
+          "Printed total matched set count: 17"
+        ]
+      }
+    }
+  ]
+}

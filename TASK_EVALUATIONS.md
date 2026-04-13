@@ -477,3 +477,59 @@ Use this log after meaningful implementation tasks.
 - what was weak: the matcher still consumes the legacy merged OCR text today, so this is an interface-layer start rather than the full candidate-generation/scoring refactor
 - follow-up: implement the next Phase A slice by teaching the identification layer to consume structured OCR signals directly instead of reparsing the merged OCR string
 - user reaction: asked to start the architecture reset immediately; this begins the shift away from text-only OCR handling and toward the generalized pipeline they want
+- date: 2026-04-12
+- goal: complete the necessary refactor so the matcher consumes structured OCR signals directly instead of reparsing the merged OCR text for identifier metadata
+- outcome: updated `services/card_identifier.py` to accept `OCRStructuredResult` and extract `detected_set_code` / `detected_print_number` from structured OCR signals first, with the old text parser retained as fallback; updated `handlers/listing.py` to pass `ocr_result.structured` into identification so the live listing flow now uses the structured path end-to-end for identifier metadata
+- validation: `python -m py_compile services/card_identifier.py handlers/listing.py services/ocr.py services/ocr_signals.py` passed; direct structured matcher probes on saved legacy and modern debug crops still resolved `Electrode Holo (Hidden Legends)` and `Mega Charizard X ex (Phantasmal Flames)` correctly while using the structured OCR object as input
+- what was weak: only identifier metadata is now sourced from structured signals directly; most of the broader candidate scoring logic still uses the legacy merged text and should be migrated in later Phase A / Phase B work
+- follow-up: next, move name/variant/set-text consumption into structured inputs too, then split candidate generation from scoring as planned in `OCR_ARCHITECTURE_RESET.md`
+- user reaction: approved the refactor only if it was necessary; this one was necessary because otherwise the new OCR signal layer would still be bypassed by a text reparser at the matcher boundary
+- date: 2026-04-12
+- goal: complete the next necessary refactor by moving name, variant, and set-text consumption onto structured OCR signals too
+- outcome: added `_structured_search_text(...)` and `_ocr_text_context(...)` in `services/card_identifier.py`; the matcher now builds its lowercase search text, token set, and word-token context from structured OCR signals first, and only falls back to the legacy merged OCR string when structured signals are unavailable; threaded this through the remaining text-dependent helpers such as shortlist generation, exact identifier scoring, nearby-ratio scoring, modern-ratio scoring, and generic match scoring
+- validation: `python -m py_compile services/card_identifier.py handlers/listing.py services/ocr.py services/ocr_signals.py` passed; direct structured matcher probes on saved legacy and modern debug crops still resolved `Electrode Holo (Hidden Legends)` and `Mega Charizard X ex (Phantasmal Flames)` correctly while using structured OCR-derived search context
+- what was weak: candidate generation and scoring are still coupled inside `services/card_identifier.py`, so the broader Phase B split is still ahead
+- follow-up: implement the actual candidate-generation layer next, then migrate scoring onto candidate evidence instead of iterating the full catalog inside one large function
+- user reaction: asked to continue only if the refactor was necessary; this one was necessary because the matcher still depended on merged text for most of its semantic context even after structured identifier metadata was introduced
+- date: 2026-04-12
+- goal: start Phase B by separating candidate generation from scoring in a narrow, necessary way
+- outcome: added `services/candidate_generation.py` to build a recall-oriented generic candidate pool from structured OCR signals, printed number hints, set-code hints, and fuzzy name evidence; updated `services/card_identifier.py` so the main generic catalog scoring path now scores that candidate pool instead of iterating the full catalog inline
+- validation: `python -m py_compile services/candidate_generation.py services/card_identifier.py handlers/listing.py services/ocr.py services/ocr_signals.py` passed; validation still resolved `Medicham V (Evolving Skies)` from `IDENTIFIER: 186/203 | NAME_EN: Medicham sa` and `Electrode Holo (Hidden Legends)` from the saved legacy structured sample
+- what was weak: the exact/unique/nearby resolver branches still live in `services/card_identifier.py`, and the candidate pool is recall-oriented rather than yet being a clean standalone candidate-generation service with provenance-rich scoring inputs
+- follow-up: extract candidate provenance explicitly and continue moving more matching branches onto the shared candidate-generation + scorer pipeline
+- user reaction: asked to proceed with the candidate-generation split; this is the first narrow Phase B cut that is necessary without over-refactoring in one step
+- date: 2026-04-12
+- goal: complete the next necessary refactor by wiring the shared evidence scorer into the matcher without adding any per-card runtime rules
+- outcome: updated `services/card_identifier.py` to use `services/candidate_scoring.py` for shortlist, exact-identifier, nearby-ratio, modern-ratio, and generic scoring; fixed the undefined `candidate_catalog` bug in the modern branch; switched the main generic loop onto `candidate_catalog`; and added a guard so legacy nearby-ratio rescue no longer intercepts modern high-number identifier cases
+- validation: `.venv/bin/python -m py_compile services/candidate_scoring.py services/card_identifier.py services/ocr.py services/ocr_signals.py handlers/listing.py` passed; synthetic catalog probes confirmed `PFL 130/094` -> `Mega Charizard X ex (Phantasmal Flames)`, `5/101 + Electrode OCR` -> `Electrode Holo (Hidden Legends)`, and `ABC 123/456` still no-matches safely
+- what was weak: live Supabase-backed resolver probes still hung in this shell session, so validation had to rely on compile checks and synthetic catalog probes instead of the full remote catalog
+- follow-up: finish the split by extracting the remaining branch policy from `services/card_identifier.py` and add a stable local/snapshot eval path so OCR regression checks are not blocked by live catalog latency
+- user reaction: explicitly wanted only necessary refactoring and no hardcoded resolves; this change stays generic by unifying evidence scoring and by making ambiguous modern cases fail safe instead of inventing a match
+- date: 2026-04-12
+- goal: add a stable snapshot-backed eval path so OCR/resolver validation no longer depends on live Supabase latency during every evaluation run
+- outcome: added `db/catalog_snapshot.py`, taught `db/cards.py` and `db/pokemon_sets.py` to serve local snapshot data when `CARD_CATALOG_SNAPSHOT_PATH` is set, added `scripts/export_catalog_snapshot.py` to export a local catalog snapshot, and updated `scripts/evaluate_ocr_resolver.py` so synthetic audits can run entirely from `--catalog-snapshot` without live catalog reads during resolver execution
+- validation: `.venv/bin/python -m py_compile db/catalog_snapshot.py db/cards.py db/pokemon_sets.py scripts/evaluate_ocr_resolver.py scripts/export_catalog_snapshot.py` passed; `.venv/bin/python scripts/export_catalog_snapshot.py --out .snapshots/catalog_snapshot.json --game pokemon` exported 19,917 cards and 180 set rows; snapshot-backed evaluator runs passed 20/20 smoke cases and 100/100 broader synthetic cases
+- what was weak: the first full uncapped snapshot audit was slower than desired, so this session validated with smoke plus 100-case baseline rather than waiting indefinitely on a very large first run
+- follow-up: add snapshot refresh workflow/docs and layer failure-class real-photo manifests on top of the new offline snapshot baseline
+- user reaction: asked for the next necessary step so they do not have to keep doing manual QA against live catalog latency; this gives them a reproducible local audit path
+- date: 2026-04-12
+- goal: make the new snapshot-backed offline eval path easy to run as a routine regression command instead of a multi-step manual sequence
+- outcome: added `scripts/run_snapshot_eval.py` to wrap snapshot export plus snapshot-backed evaluation into one command and added `Makefile` target `ocr-eval-snapshot` as the stable shorthand entrypoint
+- validation: `.venv/bin/python -m py_compile scripts/run_snapshot_eval.py` passed; `make ocr-eval-snapshot OCR_EVAL_LIMIT=20` exported the snapshot and then completed a passing 20/20 offline audit, writing a timestamped report to `.logs/ocr_eval_snapshot_20260412-235821.json`
+- what was weak: the wrapper currently defaults to synthetic audits only; class-based real-photo manifest runs still need to be layered onto this command as the next step
+- follow-up: extend the wrapper to accept manifest paths and standardize snapshot refresh cadence so eval baselines stay fresh without ad hoc manual judgment
+- user reaction: asked to "do it" for the one-command flow; this removes another chunk of manual QA legwork from future sessions
+- date: 2026-04-12
+- goal: implement the important listing-photo upgrade so sellers can upload multiple images per listing and the bot can recognize front vs back for buyer condition visibility
+- outcome: added `services/listing_image_classifier.py`; refactored `handlers/listing.py` so `/list` now collects a photo batch until the seller replies `done`; selected likely front/back images before OCR; posted multi-image listings via Telegram media groups; and persisted both `primary_image_path` and `secondary_image_path` through `db/listings.py`
+- validation: `.venv/bin/python -m py_compile handlers/listing.py services/listing_image_classifier.py db/listings.py` passed; a monkeypatched smoke test confirmed the classifier picks the synthetic front image as front and the blue low-text image as back
+- what was weak: this first cut does not yet expose a seller override button if the front/back guess is wrong, and album uploads still generate one acknowledgment per Telegram photo message because the flow currently collects photos message-by-message
+- follow-up: add explicit seller override for front/back roles and smooth out media-group UX so album uploads feel less chatty while keeping the batch-based OCR pipeline
+- user reaction: asked for batch uploads plus front/back recognition because buyers need condition photos; this implements that core workflow without waiting for a bigger redesign
+- date: 2026-04-12
+- goal: record a standing workflow preference from the user for handling future feature requests
+- outcome: updated `MEMORY.md` with the instruction that new feature requests should be evaluated thoughtfully before suggesting execution, so future sessions start with that expectation in mind
+- validation: documentation-only change; no code path changed
+- what was weak: this is guidance in repo memory, not an enforced runtime rule
+- follow-up: apply this consistently in future feature-planning turns and surface evaluation reasoning before implementation proposals
+- user reaction: explicitly asked that this be remembered in a relevant project document

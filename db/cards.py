@@ -5,6 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
+from db.catalog_snapshot import snapshot_cards
 from db.client import extract_many, extract_single, get_client
 
 _PAGE_SIZE = 1000
@@ -39,6 +40,9 @@ def _list_cards_for_game_cached(game: str) -> tuple[dict[str, Any], ...]:
 def list_cards_for_game(game: str) -> list[dict[str, Any]]:
     """Return all active catalog cards for a supported game."""
 
+    snapshot_rows = snapshot_cards(game=game)
+    if snapshot_rows:
+        return [dict(row) for row in snapshot_rows if bool(row.get('is_active', True))]
     return [dict(row) for row in _list_cards_for_game_cached(game)]
 
 

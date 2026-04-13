@@ -29,12 +29,15 @@
 ## 3. Listing Creation
 - DONE: `/list` starts from Telegram DM
 - DONE: photo-first listing flow exists
+- DONE: listing intake now accepts multiple photos per listing batch, including front + back capture before OCR begins
 - DONE: seller confirmation before posting
 - PARTIAL: OCR and identification
   - Pokémon EN catalog pipeline exists
+  - current listing flow now classifies likely front/back roles from a photo batch and runs OCR from the selected front image
   - current OCR identification works but still leans too much on branchy resolver heuristics
   - architecture reset is now planned in `OCR_ARCHITECTURE_RESET.md` to move toward structured OCR signals, generic candidate generation, and one evidence scorer
   - Phase A has started: OCR now emits a first structured signal object alongside the legacy merged OCR text
+  - the matcher now consumes structured OCR signals for identifier metadata and search text context instead of relying only on reparsing merged text
   - live-photo coverage is still incomplete for foil, glare, and promo/alphanumeric identifiers
 - PARTIAL: card match confidence flow
   - best-effort suggestion exists
@@ -53,7 +56,10 @@
 - DONE: initial OCR/resolver evaluation harness
 - PARTIAL: final OCR identifier resolver against imported `cards`
   - numeric printed-number flows are now audited via synthetic catalog coverage without shipping named per-card OCR manifests in-repo
-  - current resolver should be refactored into a cleaner candidate-generation + scoring architecture instead of accumulating rescue branches
+  - current resolver is now partially split into candidate generation + scoring, but the split is still incomplete and broader scoring logic remains inside `services/card_identifier.py`
+  - shared name-evidence scoring now lives in `services/candidate_scoring.py`, and the main generic path consumes the generated candidate pool instead of iterating the full catalog
+  - legacy nearby-ratio rescue now intentionally skips modern high-number cards so old-card heuristics do not override modern identifier flows
+  - live shell validation against the Supabase catalog is still flaky, so synthetic catalog probes remain part of the required regression workflow until a stable local snapshot eval path exists
   - keep guarding against digit-only false set-code parses on plain ratios like `186/203`
   - promo/alphanumeric identifiers like `BW95` and `TG28` still need dedicated support and evaluation coverage
 - PARTIAL: fallback prompt for manual `series code + serial code`
@@ -61,6 +67,8 @@
 - TODO: Japanese OCR/resolver evaluation coverage
 - TODO: One Piece catalog source and importer
 - TODO: broader real-photo evaluation corpus stored in-repo or in a managed eval bucket
+- PARTIAL: snapshot-backed offline resolver evaluation now exists via `scripts/export_catalog_snapshot.py` + `scripts/evaluate_ocr_resolver.py --catalog-snapshot ...`, but the repo still needs a routine refresh policy for the snapshot baseline
+- DONE: one-command offline snapshot audit exists via `make ocr-eval-snapshot` / `scripts/run_snapshot_eval.py` for routine regression checks
 
 ## 5. Price Lookup
 - PARTIAL: bot-history fallback price references exist

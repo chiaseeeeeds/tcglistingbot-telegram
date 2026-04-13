@@ -9,7 +9,7 @@ from pathlib import Path
 from tempfile import gettempdir
 from uuid import uuid4
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, ReplyKeyboardRemove, Update
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -25,19 +25,20 @@ from db.listings import create_listing
 from db.seller_configs import get_seller_config_by_seller_id
 from db.sellers import get_seller_by_telegram_id
 from services.card_identifier import identify_card_from_text, parse_manual_identifier
-from services.game_detection import detect_game_from_image
+from services.listing_image_classifier import classify_listing_images
 from services.image_storage import upload_listing_photo
 from services.set_symbol_matcher import rerank_candidate_options_by_symbol
-from services.ocr import OCRNotConfiguredError, extract_text_from_image
+from services.ocr import OCRNotConfiguredError
 from services.price_lookup import PriceReference, lookup_price_references
 from utils.formatters import format_fixed_price_listing
 
 logger = logging.getLogger(__name__)
 
-OCR_BUILD_MARKER = 'ocr-build-2026-04-12-structured-signals-v13'
+OCR_BUILD_MARKER = 'ocr-build-2026-04-13-multi-image-v18'
 
 PHOTO, TITLE, PRICE, NOTES, CONFIRM = range(5)
 SUPPORTED_GAMES = {'pokemon', 'onepiece'}
+MAX_LISTING_IMAGES = 6
 TEMP_PHOTO_DIR = Path(gettempdir()) / 'tcg-listing-bot'
 
 
@@ -52,7 +53,15 @@ def _clear_listing_state(context: ContextTypes.DEFAULT_TYPE) -> None:
         'listing_seller_config',
         'listing_photo_path',
         'listing_storage_path',
+        'listing_secondary_photo_path',
+        'listing_secondary_storage_path',
+        'listing_photos',
+        'listing_post_image_local_paths',
+        'listing_post_image_storage_paths',
+        'listing_front_photo_index',
+        'listing_back_photo_index',
         'listing_ocr_text',
+        'listing_ocr_structured',
         'listing_game',
         'listing_title',
         'listing_suggested_title',
@@ -66,7 +75,21 @@ def _clear_listing_state(context: ContextTypes.DEFAULT_TYPE) -> None:
         context.user_data.pop(key, None)
 
 
-def _listing_preview(*, game: str, title: str, price_sgd: float, notes: str, price_refs: list[PriceReference]) -> str:
+def _photo_collection_prompt(*, count: int) -> str:
+    if count <= 0:
+        return 'Send card photos to begin. Reply with <code>done</code> once the batch is complete.'
+    if count == 1:
+        return (
+            'Got <code>1</code> photo. Send the back photo or any extra listing images now.\n\n'
+            'When you are done, reply with <code>done</code> and I will detect the front/back pair automatically.'
+        )
+    return (
+        f'Got <code>{count}</code> photos so far. Send more if needed, then reply with <code>done</code>.\n\n'
+        'I will pick the most likely front image for OCR and keep a back image for buyers.'
+    )
+
+
+def _listing_preview(*, game: str, title: str, price_sgd: float, notes: str, price_refs: list[PriceReference], image_count: int = 1, has_back: bool = False) -> str:
     """Build a compact listing preview for seller confirmation."""
 
     notes_text = notes if notes else 'No extra notes'
@@ -82,6 +105,8 @@ def _listing_preview(*, game: str, title: str, price_sgd: float, notes: str, pri
         f'Game: <code>{game}</code>\n'
         f'Title: <code>{title}</code>\n'
         f'Price: <code>SGD {price_sgd:.2f}</code>\n'
+        f'Photos: <code>{image_count}</code>\n'
+        f'Front/back: <code>{"yes" if has_back else "front only"}</code>\n'
         f'Notes: <code>{notes_text}</code>\n'
         'Price refs:\n'
         + '\n'.join(price_lines)
@@ -221,8 +246,8 @@ async def list_entry(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data['listing_seller_id'] = seller['id']
     context.user_data['listing_seller_config'] = seller_config
     await update.effective_message.reply_text(
-        'Send a clear front photo of the card to begin.\n\n'
-        'For now, v1 works best with one front image per listing.',
+        'Send the card photos now — front and back, individually or as an album.\n\n'
+        'When you are done uploading photos, reply with <code>done</code>.',
         parse_mode='HTML',
         reply_markup=ReplyKeyboardRemove(),
     )
@@ -244,20 +269,35 @@ async def photo_entry(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
 
 async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Store a listing photo locally, auto-detect the game, run OCR, and continue the flow."""
+    """Collect one or more listing photos before OCR and matching."""
 
     if update.effective_message is None or not update.effective_message.photo:
-        await update.effective_message.reply_text('Please send a card photo to continue.', parse_mode='HTML')
+        await update.effective_message.reply_text('Please send card photos to continue.', parse_mode='HTML')
         return PHOTO
 
     try:
+        photo_entries = list(context.user_data.get('listing_photos') or [])
+        if len(photo_entries) >= MAX_LISTING_IMAGES:
+            await update.effective_message.reply_text(
+                f'I already have <code>{MAX_LISTING_IMAGES}</code> photos for this listing. Reply with <code>done</code> to continue.',
+                parse_mode='HTML',
+            )
+            return PHOTO
+
         photo = update.effective_message.photo[-1]
+        if any(str(entry.get('file_unique_id') or '') == photo.file_unique_id for entry in photo_entries):
+            await update.effective_message.reply_text(
+                'That photo is already in the current batch. Send another image or reply with <code>done</code>.',
+                parse_mode='HTML',
+            )
+            return PHOTO
+
         telegram_file = await context.bot.get_file(photo.file_id)
         temp_dir = _ensure_temp_photo_dir()
         local_path = temp_dir / f'{uuid4()}.jpg'
         await telegram_file.download_to_drive(custom_path=local_path)
-        context.user_data['listing_photo_path'] = str(local_path)
 
+        storage_path = None
         seller_id = context.user_data.get('listing_seller_id')
         if seller_id:
             storage_path = await asyncio.to_thread(
@@ -266,18 +306,77 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
                 seller_id=seller_id,
                 telegram_file_id=photo.file_unique_id,
             )
-            if storage_path:
-                context.user_data['listing_storage_path'] = storage_path
 
-        detected_game = await asyncio.to_thread(detect_game_from_image, str(local_path))
-        game = detected_game.game if detected_game.game in SUPPORTED_GAMES else 'pokemon'
+        photo_entries.append({
+            'local_path': str(local_path),
+            'storage_path': storage_path,
+            'file_unique_id': str(photo.file_unique_id),
+        })
+        context.user_data['listing_photos'] = photo_entries
+        await update.effective_message.reply_text(
+            _photo_collection_prompt(count=len(photo_entries)),
+            parse_mode='HTML',
+        )
+        return PHOTO
+    except Exception as exc:
+        logger.exception('Failed to capture photo for listing: %s', exc)
+        await update.effective_message.reply_text(
+            'I could not save that photo. Please send it again, or reply with <code>done</code> if the batch is complete.',
+            parse_mode='HTML',
+        )
+        return PHOTO
+
+
+async def finalize_photo_batch(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Classify uploaded photos, choose front/back, and continue to OCR + matching."""
+
+    if update.effective_message is None or update.effective_message.text is None:
+        return PHOTO
+
+    decision = update.effective_message.text.strip().lower()
+    if decision not in {'done', 'finish', 'continue', 'next'}:
+        await update.effective_message.reply_text(
+            'Send more card photos, or reply with <code>done</code> when the batch is complete.',
+            parse_mode='HTML',
+        )
+        return PHOTO
+
+    photo_entries = list(context.user_data.get('listing_photos') or [])
+    if not photo_entries:
+        await update.effective_message.reply_text('Please send at least one card photo first.', parse_mode='HTML')
+        return PHOTO
+
+    try:
+        selection = await asyncio.to_thread(
+            classify_listing_images,
+            [str(entry['local_path']) for entry in photo_entries],
+            preferred_game=str(context.user_data.get('listing_game') or '') or None,
+        )
+        front_index = selection.front_index if selection.front_index is not None else 0
+        back_index = selection.back_index
+        ordered_entries = [photo_entries[index] for index in selection.ordered_indices]
+        front_entry = photo_entries[front_index]
+        back_entry = photo_entries[back_index] if back_index is not None else None
+        front_analysis = selection.analyses[front_index]
+
+        context.user_data['listing_front_photo_index'] = front_index
+        context.user_data['listing_back_photo_index'] = back_index
+        context.user_data['listing_photo_path'] = str(front_entry['local_path'])
+        context.user_data['listing_storage_path'] = front_entry.get('storage_path')
+        context.user_data['listing_secondary_photo_path'] = str(back_entry['local_path']) if back_entry else None
+        context.user_data['listing_secondary_storage_path'] = back_entry.get('storage_path') if back_entry else None
+        context.user_data['listing_post_image_local_paths'] = [str(entry['local_path']) for entry in ordered_entries]
+        context.user_data['listing_post_image_storage_paths'] = [str(entry.get('storage_path') or '') for entry in ordered_entries]
+
+        detected_game = front_analysis.game_detection
+        game = front_analysis.game if front_analysis.game in SUPPORTED_GAMES else 'pokemon'
         context.user_data['listing_game'] = game
 
-        ocr_result = await asyncio.to_thread(extract_text_from_image, str(local_path), game=game)
+        ocr_result = front_analysis.ocr_result
+        identification = front_analysis.identification
         context.user_data['listing_ocr_text'] = ocr_result.text
         context.user_data['listing_ocr_structured'] = ocr_result.structured.as_dict()
-        raw_text = str(ocr_result.text or '')
-        identification = await asyncio.to_thread(identify_card_from_text, raw_text=raw_text, game=game)
+
         candidate_options = list(identification.candidate_options or [])
         detected_print_number = str(identification.metadata.get('detected_print_number') or '')
         detected_set_code = str(identification.metadata.get('detected_set_code') or '')
@@ -294,15 +393,26 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         if older_style_symbol_mode:
             candidate_options = await asyncio.to_thread(
                 rerank_candidate_options_by_symbol,
-                image_path=str(local_path),
+                image_path=str(front_entry['local_path']),
                 candidate_options=candidate_options,
             )
         context.user_data['listing_candidate_options'] = candidate_options
 
-        warning_lines = [f'• Auto-detected game: {game} ({detected_game.reason}).']
+        warning_lines = [f'• Received <code>{len(photo_entries)}</code> image(s) for this listing.']
+        warning_lines.append(f'• Auto-detected game from the selected front image: {game} ({detected_game.reason}).')
+        if back_entry is not None:
+            warning_lines.append(
+                f'• Selected photo <code>{front_index + 1}</code> as front and photo <code>{back_index + 1}</code> as back.'
+            )
+        else:
+            warning_lines.append('• Only one usable photo was provided, so this listing will post with a single image.')
+        extra_count = max(len(ordered_entries) - (2 if back_entry is not None else 1), 0)
+        if extra_count:
+            warning_lines.append(f'• {extra_count} extra photo(s) will also be attached to the listing post.')
         warning_lines.extend(f'• {warning}' for warning in ocr_result.warnings)
         warning_block = '\n'.join(warning_lines) + f'\n• Build: {OCR_BUILD_MARKER}.\n\n'
         admin_debug = _admin_debug_line(update=update, identification=identification, candidate_options=candidate_options)
+        raw_text = str(ocr_result.text or '')
 
         if identification.matched and identification.confidence >= 0.6:
             context.user_data['listing_detection_mode'] = 'matched'
@@ -375,9 +485,9 @@ async def capture_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         _clear_listing_state(context)
         return ConversationHandler.END
     except Exception as exc:
-        logger.exception('Failed to capture photo for listing: %s', exc)
+        logger.exception('Failed to finalize listing photo batch: %s', exc)
         await update.effective_message.reply_text(
-            'I could not process that photo. Please send a clear card image and try again.',
+            'I could not process that photo batch. Please send the photos again, or try with clearer front/back images.',
             parse_mode='HTML',
         )
         return PHOTO
@@ -561,6 +671,8 @@ async def capture_notes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             price_sgd=float(context.user_data['listing_price_sgd']),
             notes=notes,
             price_refs=list(context.user_data.get('listing_price_refs') or []),
+            image_count=len(context.user_data.get('listing_post_image_local_paths') or ([context.user_data.get('listing_photo_path')] if context.user_data.get('listing_photo_path') else [])),
+            has_back=bool(context.user_data.get('listing_secondary_photo_path')),
         ),
         parse_mode='HTML',
     )
@@ -598,15 +710,35 @@ async def confirm_listing(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         payment_methods=seller_config.get('payment_methods') or ['PayNow'],
     )
 
-    photo_path = context.user_data.get('listing_photo_path')
-    if photo_path:
-        with Path(photo_path).open('rb') as photo_file:
-            sent_message = await context.bot.send_photo(
-                chat_id=seller_config['primary_channel_name'],
-                photo=photo_file,
-                caption=listing_text,
-                parse_mode='HTML',
-            )
+    photo_paths = [path for path in list(context.user_data.get('listing_post_image_local_paths') or []) if path]
+    if photo_paths:
+        if len(photo_paths) == 1:
+            with Path(photo_paths[0]).open('rb') as photo_file:
+                sent_message = await context.bot.send_photo(
+                    chat_id=seller_config['primary_channel_name'],
+                    photo=photo_file,
+                    caption=listing_text,
+                    parse_mode='HTML',
+                )
+        else:
+            opened_files = []
+            try:
+                media = []
+                for index, photo_path in enumerate(photo_paths[:10]):
+                    file_handle = Path(photo_path).open('rb')
+                    opened_files.append(file_handle)
+                    if index == 0:
+                        media.append(InputMediaPhoto(media=file_handle, caption=listing_text, parse_mode='HTML'))
+                    else:
+                        media.append(InputMediaPhoto(media=file_handle))
+                sent_messages = await context.bot.send_media_group(
+                    chat_id=seller_config['primary_channel_name'],
+                    media=media,
+                )
+                sent_message = sent_messages[0]
+            finally:
+                for file_handle in opened_files:
+                    file_handle.close()
     else:
         sent_message = await context.bot.send_message(
             chat_id=seller_config['primary_channel_name'],
@@ -626,6 +758,7 @@ async def confirm_listing(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         posted_channel_id=sent_message.chat.id,
         posted_message_id=sent_message.message_id,
         primary_image_path=context.user_data.get('listing_storage_path'),
+        secondary_image_path=context.user_data.get('listing_secondary_storage_path'),
         tcgplayer_price_sgd=next((reference.amount_sgd for reference in price_refs if 'tcgplayer' in reference.source.lower()), None),
         pricecharting_price_sgd=next((reference.amount_sgd for reference in price_refs if 'pricecharting' in reference.source.lower()), None),
         yuyutei_price_sgd=next((reference.amount_sgd for reference in price_refs if 'yuyutei' in reference.source.lower()), None),
@@ -660,7 +793,10 @@ def register_listing_handlers(application: Application) -> None:
             MessageHandler(filters.ChatType.PRIVATE & filters.PHOTO, photo_entry),
         ],
         states={
-            PHOTO: [MessageHandler(filters.ChatType.PRIVATE & filters.PHOTO, capture_photo)],
+            PHOTO: [
+                MessageHandler(filters.ChatType.PRIVATE & filters.PHOTO, capture_photo),
+                MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, finalize_photo_batch),
+            ],
             TITLE: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_title)],
             PRICE: [
                 CallbackQueryHandler(capture_price_callback, pattern=r'^listing_price_(?:ref:\d+|custom)$'),

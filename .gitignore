@@ -17,3 +17,5 @@ build/
 service-account.json
 
 .DS_Store
+
+.snapshots/

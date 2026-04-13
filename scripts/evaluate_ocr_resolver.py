@@ -18,6 +18,9 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from config import get_config
+from db.catalog_snapshot import clear_catalog_snapshot_cache, load_catalog_snapshot
+from db.cards import clear_card_catalog_cache
+from db.pokemon_sets import clear_pokemon_set_cache
 from services.card_identifier import CardIdentificationResult, identify_card_from_text
 from services.ocr import OCRResult, extract_text_from_image
 
@@ -75,7 +78,16 @@ def load_manifest(path: Path) -> list[LoadedCase]:
     return cases
 
 
-def build_synthetic_exact_identifier_cases(*, per_set: int = 1) -> list[LoadedCase]:
+def _snapshot_rows(*, snapshot_payload: dict[str, Any] | None, key: str) -> list[dict[str, Any]]:
+    if snapshot_payload is None:
+        return []
+    rows = snapshot_payload.get(key, [])
+    if not isinstance(rows, list):
+        raise SystemExit(f'Snapshot field must be a list: {key}')
+    return [dict(row) for row in rows]
+
+
+def build_synthetic_exact_identifier_cases(*, per_set: int = 1, snapshot_payload: dict[str, Any] | None = None) -> list[LoadedCase]:
     sql = """
         with ranked as (
             select
@@ -130,7 +142,7 @@ def build_synthetic_exact_identifier_cases(*, per_set: int = 1) -> list[LoadedCa
     return cases
 
 
-def build_synthetic_unique_ratio_cases(*, per_set: int = 1) -> list[LoadedCase]:
+def build_synthetic_unique_ratio_cases(*, per_set: int = 1, snapshot_payload: dict[str, Any] | None = None) -> list[LoadedCase]:
     sql = """
         with base as (
             select
@@ -307,18 +319,30 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--per-set', type=int, default=1, help='How many synthetic cases to generate per set.')
     parser.add_argument('--limit', type=int, default=0, help='Optional max number of cases to evaluate.')
     parser.add_argument('--json-out', default='', help='Optional path to write full JSON results.')
+    parser.add_argument('--catalog-snapshot', default='', help='Optional local snapshot JSON path for offline catalog-backed evaluation.')
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    snapshot_payload: dict[str, Any] | None = None
+    if args.catalog_snapshot:
+        snapshot_path = Path(args.catalog_snapshot).expanduser().resolve()
+        os.environ['CARD_CATALOG_SNAPSHOT_PATH'] = str(snapshot_path)
+        clear_catalog_snapshot_cache()
+        clear_card_catalog_cache()
+        clear_pokemon_set_cache()
+        snapshot_payload = load_catalog_snapshot()
+        if snapshot_payload is None:
+            raise SystemExit('Snapshot path was provided but no snapshot payload could be loaded.')
+
     cases: list[LoadedCase] = []
     for manifest in args.manifest:
         cases.extend(load_manifest(Path(manifest)))
     if args.synthetic_exact_identifier:
-        cases.extend(build_synthetic_exact_identifier_cases(per_set=args.per_set))
+        cases.extend(build_synthetic_exact_identifier_cases(per_set=args.per_set, snapshot_payload=snapshot_payload))
     if args.synthetic_unique_ratio:
-        cases.extend(build_synthetic_unique_ratio_cases(per_set=args.per_set))
+        cases.extend(build_synthetic_unique_ratio_cases(per_set=args.per_set, snapshot_payload=snapshot_payload))
     if args.limit > 0:
         cases = cases[: args.limit]
     if not cases:
