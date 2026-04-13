@@ -32,6 +32,40 @@ _BROWSER_HEADERS = {
     'Referer': 'https://www.pokemon-card.com/card-search/',
     'Origin': 'https://www.pokemon-card.com',
 }
+
+
+async def get_with_retries(
+    client: httpx.AsyncClient,
+    url: str,
+    *,
+    params: dict[str, Any] | None = None,
+    label: str,
+    retries: int,
+    retryable_statuses: set[int] | None = None,
+) -> httpx.Response:
+    retryable = retryable_statuses or {403, 408, 409, 425, 429, 500, 502, 503, 504}
+    last_error: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            return response
+        except httpx.HTTPStatusError as exc:
+            last_error = exc
+            status_code = exc.response.status_code if exc.response is not None else None
+            if attempt >= retries or status_code not in retryable:
+                break
+            delay = min(45.0, (3.0 * attempt) + random.uniform(0.5, 1.5))
+            print(json.dumps({'event': 'pokemon_jp_retry_wait', 'label': label, 'attempt': attempt, 'status_code': status_code, 'delay_seconds': round(delay, 2)}), flush=True)
+            await asyncio.sleep(delay)
+        except httpx.HTTPError as exc:
+            last_error = exc
+            if attempt >= retries:
+                break
+            delay = min(20.0, (1.5 * attempt) + random.uniform(0.25, 0.75))
+            print(json.dumps({'event': 'pokemon_jp_retry_wait', 'label': label, 'attempt': attempt, 'delay_seconds': round(delay, 2)}), flush=True)
+            await asyncio.sleep(delay)
+    raise RuntimeError(f'Could not fetch {label}: {last_error}')
 CARD_NUMBER_RE = re.compile(r'(\d+[A-Za-z]?)[\s\u00a0]*\/[\s\u00a0]*(\d+[A-Za-z]?)')
 SET_NAME_RE = re.compile(r'拡張パック|強化拡張パック|ハイクラスパック|プロモカード|スタートデッキ|構築デッキ|デッキビルドBOX|スターターセット|スペシャルデッキセット')
 
@@ -114,59 +148,39 @@ def parse_detail_html(html_text: str, *, card_id: str, thumb_path: str, card_nam
 
 
 async def fetch_page(client: httpx.AsyncClient, page: int) -> dict[str, Any]:
-    last_error: Exception | None = None
-    for attempt in range(1, 5):
-        try:
-            response = await client.get(RESULT_API_URL, params={'regulation_sidebar_form': 'all', 'page': page})
-            response.raise_for_status()
-            payload = response.json()
-            if int(payload.get('result') or 0) != 1:
-                raise RuntimeError(f'Official Pokémon result API returned an error for page {page}: {payload}')
-            return payload
-        except httpx.HTTPStatusError as exc:
-            last_error = exc
-            status_code = exc.response.status_code if exc.response is not None else None
-            if attempt >= 4 or status_code not in {403, 408, 409, 425, 429, 500, 502, 503, 504}:
-                break
-            await asyncio.sleep((0.8 * attempt) + random.uniform(0.0, 0.5))
-        except httpx.HTTPError as exc:
-            last_error = exc
-            if attempt >= 4:
-                break
-            await asyncio.sleep((0.8 * attempt) + random.uniform(0.0, 0.5))
+    response = await get_with_retries(
+        client,
+        RESULT_API_URL,
+        params={'regulation_sidebar_form': 'all', 'page': page},
+        label=f'result page {page}',
+        retries=6,
+    )
+    payload = response.json()
+    if int(payload.get('result') or 0) != 1:
+        raise RuntimeError(f'Official Pokémon result API returned an error for page {page}: {payload}')
+    return payload
 
-    raise RuntimeError(f'Could not fetch result page {page}: {last_error}')
 
 
 async def fetch_detail(client: httpx.AsyncClient, card: dict[str, Any]) -> dict[str, Any]:
     card_id = str(card['cardID'])
     detail_url = DETAIL_URL_TEMPLATE.format(card_id=card_id)
-    last_error: Exception | None = None
-    for attempt in range(1, 4):
-        try:
-            response = await client.get(detail_url)
-            response.raise_for_status()
-            return parse_detail_html(
-                response.text,
-                card_id=card_id,
-                thumb_path=str(card.get('cardThumbFile') or ''),
-                card_name_fallback=str(card.get('cardNameAltText') or card.get('cardNameViewText') or card_id),
-            )
-        except CardDetailParseError:
-            raise
-        except httpx.HTTPStatusError as exc:
-            last_error = exc
-            status_code = exc.response.status_code if exc.response is not None else None
-            if attempt >= 3 or status_code not in {403, 408, 409, 425, 429, 500, 502, 503, 504}:
-                break
-            await asyncio.sleep((0.6 * attempt) + random.uniform(0.0, 0.4))
-        except httpx.HTTPError as exc:
-            last_error = exc
-            if attempt >= 3:
-                break
-            await asyncio.sleep((0.6 * attempt) + random.uniform(0.0, 0.4))
-
-    raise CardDetailFetchError(f'Could not fetch detail page for card {card_id}: {last_error}')
+    await asyncio.sleep(random.uniform(0.12, 0.28))
+    try:
+        response = await get_with_retries(
+            client,
+            detail_url,
+            label=f'detail card {card_id}',
+            retries=4,
+        )
+    except Exception as exc:
+        raise CardDetailFetchError(f'Could not fetch detail page for card {card_id}: {exc}') from exc
+    return parse_detail_html(
+        response.text,
+        card_id=card_id,
+        thumb_path=str(card.get('cardThumbFile') or ''),
+        card_name_fallback=str(card.get('cardNameAltText') or card.get('cardNameViewText') or card_id),
+    )
 
 
 
