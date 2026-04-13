@@ -112,6 +112,52 @@ async def claim_listing_atomic(
     raise RuntimeError('Atomic claim RPC returned no claim payload.')
 
 
+
+
+async def record_auction_bid_atomic(
+    *,
+    listing_id: str,
+    buyer_telegram_id: int,
+    buyer_username: str | None,
+    buyer_display_name: str,
+    bid_amount_sgd: float,
+) -> dict[str, Any]:
+    """Atomically record an auction bid and return the updated bid state."""
+
+    data = await call_rpc(
+        'record_auction_bid_atomic',
+        {
+            'p_listing_id': listing_id,
+            'p_buyer_telegram_id': buyer_telegram_id,
+            'p_buyer_username': buyer_username,
+            'p_buyer_display_name': buyer_display_name,
+            'p_bid_amount_sgd': round(bid_amount_sgd, 2),
+        },
+    )
+    if isinstance(data, list):
+        return data[0]
+    if isinstance(data, dict):
+        return data
+    raise RuntimeError('Auction bid RPC returned no payload.')
+
+
+async def close_auction_atomic(*, listing_id: str, payment_deadline_hours: int) -> dict[str, Any]:
+    """Close a due auction atomically and promote the highest bidder when present."""
+
+    payment_deadline = datetime.now(timezone.utc) + timedelta(hours=payment_deadline_hours)
+    data = await call_rpc(
+        'close_auction_atomic',
+        {
+            'p_listing_id': listing_id,
+            'p_payment_deadline': payment_deadline.isoformat(),
+        },
+    )
+    if isinstance(data, list):
+        return data[0]
+    if isinstance(data, dict):
+        return data
+    raise RuntimeError('Close auction RPC returned no payload.')
+
 async def advance_claim_queue(*, claim_id: str, payment_deadline_hours: int) -> dict[str, Any]:
     """Expire the current winning claim and promote the next queued claim when available."""
 

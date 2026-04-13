@@ -40,7 +40,7 @@ These are explicitly not blockers for minimal GA and should be treated as post-G
 
 ### What still blocks GA
 - claim reply monitoring, seller-configured keyword matching, blacklist enforcement, and queued-claim semantics are now wired, but linked-discussion behavior is not yet verified end-to-end
-- payment deadline expiry, seller-paid completion, SOLD edits, and transaction closure are now wired, but seller operations and idempotent live hardening are still missing
+- payment deadline expiry, seller-paid completion, SOLD edits, transaction closure, a minimal Telegram seller dashboard, first-pass DB-backed idempotency, and reusable live message-edit infrastructure are now wired, but full runtime hardening and operational polish are still missing
 - seller mark-paid -> SOLD -> transaction loop now exists through the minimal `/sold` command path
 - seller operational tools are still placeholder-level
 - no production deployment / webhook path yet
@@ -160,11 +160,10 @@ Make the minimum GA scope safe to run live.
 5. richer seller ops and cross-post tooling
 
 ## Immediate Next Sequence
-1. add active/sold listing views and blacklist/vacation minimum tools
-2. harden multi-image listing intake with seller front/back override and less chatty album UX
-3. make pricing provider availability explicit in the seller flow
-4. finish webhook deployment and duplicate-update/idempotency protection
-5. continue OCR architecture cleanup only where it directly improves live listing accuracy or reduces manual correction rate
+1. harden multi-image listing intake with seller front/back override and less chatty album UX
+2. make pricing provider availability explicit in the seller flow
+3. finish webhook deployment and duplicate-update/idempotency protection
+4. continue OCR architecture cleanup only where it directly improves live listing accuracy or reduces manual correction rate
 
 ## Phase 2 Execution Plan For Minimal GA
 

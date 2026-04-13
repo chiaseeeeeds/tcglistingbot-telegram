@@ -116,7 +116,10 @@
 - TODO: comment-based bid parsing
 - TODO: minimum increment enforcement
 - TODO: atomic highest-bid updates
-- TODO: message edits with current bid
+- PARTIAL: message edits with current bid / time left
+  - reusable listing post editor now exists in `services/listing_message_editor.py`
+  - scheduled auction refresh/close scaffold now exists in `jobs/auction_close.py`
+  - full bid-driven auction lifecycle is still not implemented
 - TODO: anti-snipe extension logic
 - TODO: auction winner flow reusing payment path
 
@@ -131,13 +134,13 @@
 - TODO: dispute support / notes
 
 ## 10. Seller Operations
-- PARTIAL: seller-tools handler scaffold exists
-  - `handlers/seller_tools.py` is still placeholder-level
-- TODO: active listings view
-- TODO: sold listings view
-- TODO: transaction history view
-- TODO: blacklist management
-- TODO: vacation mode
+- DONE: seller-tools dashboard exists
+  - `handlers/seller_tools.py` now provides a Telegram button dashboard for inventory, listing detail, queue view, sales, blacklist, and vacation mode
+- DONE: active listings view
+- DONE: sold listings view
+- DONE: transaction history view
+- DONE: blacklist management
+- DONE: vacation mode
 - TODO: scheduled listings
 - TODO: cross-post tools
 
@@ -151,7 +154,9 @@
 ## 12. Non-Functional / Launch Hardening
 - PARTIAL: important setup state persists in DB
 - TODO: important listing draft state persists across restarts
-- TODO: idempotent duplicate Telegram update handling
+- PARTIAL: idempotent duplicate Telegram update handling
+  - claim comments, `/sold`, blacklist/vacation mutations, and dashboard mark-paid/vacation callbacks now use DB-backed processed-event keys
+  - broader coverage for all callback/message mutations and full webhook/runtime rollout is still needed
 - TODO: structured template/message centralization
 - TODO: production webhook deployment
 - PARTIAL: observability and evaluation

@@ -11,15 +11,24 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 from db.claims import get_current_winning_claim
-from db.listing_channels import get_listing_channels_for_listing
-from db.listings import get_claim_pending_listings_for_seller, get_listing_by_id
+from db.idempotency import register_processed_event
+from db.listings import get_claim_pending_listings_for_seller
 from db.seller_configs import get_seller_config_by_seller_id
 from db.sellers import get_seller_by_telegram_id
 from db.transactions import complete_transaction_atomic
+from services.listing_message_editor import edit_listing_messages
 from utils.formatters import format_sold_listing
 
 logger = logging.getLogger(__name__)
 
+
+
+def _sold_command_event_key(update: Update) -> str | None:
+    message = update.effective_message
+    user = update.effective_user
+    if message is None or user is None or getattr(message, 'chat', None) is None:
+        return None
+    return f'sold-command:{message.chat.id}:{message.message_id}:{user.id}'
 
 
 def _looks_like_uuid(value: str) -> bool:
@@ -86,40 +95,56 @@ async def _edit_listing_messages_to_sold(
         payment_methods=(seller_config or {}).get('payment_methods') or ['PayNow'],
         buyer_display_name=buyer_display_name,
     )
+    await edit_listing_messages(application=application, listing=listing, text=sold_text)
 
-    channel_targets = []
-    if listing.get('posted_channel_id') and listing.get('posted_message_id'):
-        channel_targets.append((int(listing['posted_channel_id']), int(listing['posted_message_id'])))
 
-    listing_channels = await asyncio.to_thread(get_listing_channels_for_listing, str(listing['id']))
-    for listing_channel in listing_channels:
-        channel_id = listing_channel.get('channel_id')
-        message_id = listing_channel.get('message_id')
-        if channel_id and message_id:
-            target = (int(channel_id), int(message_id))
-            if target not in channel_targets:
-                channel_targets.append(target)
+async def complete_sale_for_listing(
+    *,
+    context: ContextTypes.DEFAULT_TYPE,
+    seller: dict[str, Any],
+    listing: dict[str, Any],
+) -> dict[str, Any]:
+    """Complete the sale for a seller-owned claim-pending listing."""
 
-    for chat_id, message_id in channel_targets:
-        try:
-            await application.bot.edit_message_caption(
-                chat_id=chat_id,
-                message_id=message_id,
-                caption=sold_text,
-                parse_mode='HTML',
-            )
-            continue
-        except Exception as caption_exc:
-            logger.info('Caption edit fallback for sold listing chat=%s message=%s: %s', chat_id, message_id, caption_exc)
-        try:
-            await application.bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=message_id,
-                text=sold_text,
-                parse_mode='HTML',
-            )
-        except Exception as text_exc:
-            logger.warning('Could not edit listing to SOLD for chat=%s message=%s: %s', chat_id, message_id, text_exc)
+    winning_claim = await asyncio.to_thread(get_current_winning_claim, listing_id=str(listing['id']))
+    if winning_claim is None:
+        raise ValueError('This listing has no active winning claim to complete yet.')
+
+    result = await complete_transaction_atomic(
+        listing_id=str(listing['id']),
+        seller_id=str(seller['id']),
+    )
+
+    paid_claim = result.get('paid_claim') or winning_claim
+    latest_listing = result.get('listing') or listing
+    seller_config = await asyncio.to_thread(get_seller_config_by_seller_id, str(seller['id']))
+
+    await _edit_listing_messages_to_sold(
+        application=context.application,
+        listing=latest_listing,
+        seller_config=seller_config,
+        buyer_display_name=paid_claim.get('buyer_display_name'),
+    )
+
+    if str(result.get('action') or '') != 'already_completed':
+        buyer_telegram_id = paid_claim.get('buyer_telegram_id')
+        if buyer_telegram_id:
+            try:
+                await context.bot.send_message(
+                    chat_id=int(buyer_telegram_id),
+                    text=(
+                        '<b>Payment received.</b>\n\n'
+                        f'Item: <code>{latest_listing.get("card_name")}</code>\n'
+                        'The seller has marked this listing as sold.'
+                    ),
+                    parse_mode='HTML',
+                )
+            except Exception as exc:
+                logger.info('Could not DM buyer %s after sold completion: %s', buyer_telegram_id, exc)
+
+    result['paid_claim'] = paid_claim
+    result['listing'] = latest_listing
+    return result
 
 
 async def sold_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -143,19 +168,23 @@ async def sold_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await update.effective_message.reply_text(_sold_usage_message(pending_listings), parse_mode='HTML')
         return
 
-    winning_claim = await asyncio.to_thread(get_current_winning_claim, listing_id=str(listing['id']))
-    if winning_claim is None:
-        await update.effective_message.reply_text(
-            'This listing has no active winning claim to complete yet.',
-            parse_mode='HTML',
+    event_key = _sold_command_event_key(update)
+    if event_key is not None:
+        first_seen = await asyncio.to_thread(
+            register_processed_event,
+            source='sold_command',
+            event_key=event_key,
+            metadata={'seller_id': str(seller['id']), 'listing_id': str(listing['id'])},
         )
-        return
+        if not first_seen:
+            logger.info('Skipping duplicate /sold command event %s.', event_key)
+            return
 
     try:
-        result = await complete_transaction_atomic(
-            listing_id=str(listing['id']),
-            seller_id=str(seller['id']),
-        )
+        result = await complete_sale_for_listing(context=context, seller=seller, listing=listing)
+    except ValueError as exc:
+        await update.effective_message.reply_text(str(exc), parse_mode='HTML')
+        return
     except Exception as exc:
         logger.exception('Failed to complete transaction for listing %s: %s', listing.get('id'), exc)
         await update.effective_message.reply_text(
@@ -166,16 +195,8 @@ async def sold_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     action = str(result.get('action') or 'completed')
     transaction = result.get('transaction') or {}
-    paid_claim = result.get('paid_claim') or winning_claim
+    paid_claim = result.get('paid_claim') or {}
     latest_listing = result.get('listing') or listing
-    seller_config = await asyncio.to_thread(get_seller_config_by_seller_id, str(seller['id']))
-
-    await _edit_listing_messages_to_sold(
-        application=context.application,
-        listing=latest_listing,
-        seller_config=seller_config,
-        buyer_display_name=paid_claim.get('buyer_display_name'),
-    )
 
     if action == 'already_completed':
         await update.effective_message.reply_text(
@@ -183,21 +204,6 @@ async def sold_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             parse_mode='HTML',
         )
         return
-
-    buyer_telegram_id = paid_claim.get('buyer_telegram_id')
-    if buyer_telegram_id:
-        try:
-            await context.bot.send_message(
-                chat_id=int(buyer_telegram_id),
-                text=(
-                    '<b>Payment received.</b>\n\n'
-                    f'Item: <code>{latest_listing.get("card_name")}</code>\n'
-                    'The seller has marked this listing as sold.'
-                ),
-                parse_mode='HTML',
-            )
-        except Exception as exc:
-            logger.info('Could not DM buyer %s after sold completion: %s', buyer_telegram_id, exc)
 
     await update.effective_message.reply_text(
         (

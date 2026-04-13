@@ -39,6 +39,10 @@
 - the live claim handler now recognizes queued outcomes, avoids duplicate open claims per buyer/listing in normal flow, and sends different buyer/seller messaging for confirmed versus queued claims
 - payment deadline expiry is now implemented via `jobs/payment_deadlines.py`, backed by the new `advance_claim_queue(...)` RPC and APScheduler startup wiring in `main.py`
 - seller-paid completion now exists via `/sold`: `complete_transaction_atomic(...)` marks the winning claim paid, creates a transaction row, marks the listing sold, updates seller `total_sales_sgd`, and `handlers/transactions.py` edits the posted listing message(s) to a SOLD state
+- minimal seller ops now exist in `handlers/seller_tools.py`: `/stats`, `/inventory`, `/sales`, `/blacklist`, and `/vacation` are wired; vacation mode is also enforced in the live claim handler so away sellers do not keep accepting new claims
+- seller ops are no longer command-only: `handlers/seller_tools.py` now renders a Telegram button dashboard with paginated inventory, per-listing detail, queue view, vacation controls, sales view, and a safe mark-paid confirmation flow keyed by `listing_id`
+- first-pass DB-backed idempotency now exists via `processed_events` and `db/idempotency.py`; claim comments, `/sold`, blacklist/vacation commands, and mutating seller dashboard callbacks now register processed event keys before side effects
+- the bot now has a reusable Telegram listing message editor in `services/listing_message_editor.py`; SOLD edits already use it, and `jobs/auction_close.py` now provides a scheduled scaffold for refreshing auction posts with live time-left/current-bid text and closing them when the end time passes
 - setup now verifies not only the posting channel but also bot access to the linked discussion chat when discussion-based comments are enabled
 - local catalog matching works against seeded cards first
 - listing posting still requires seller confirmation before posting
@@ -72,11 +76,11 @@
 - seller/buyer reputation and dedicated price history are still todo
 
 ### Near-Term Priorities
-1. live-test the linked discussion-thread `Claim` handler plus `/sold` completion flow against real Telegram traffic once the polling conflict is removed
-2. replace seller-tool placeholders with active listings, sold history, blacklist, and vacation mode
-3. add duplicate-update protection around claim comments and payment/SOLD side effects
-4. move to one real always-on runtime path so the polling conflict stops blocking live verification
-5. tighten transaction history and seller-facing sold views on top of the now-working transaction records
+1. live-test the linked discussion-thread `Claim` handler plus the new seller dashboard flows against real Telegram traffic once the polling conflict is removed
+2. move to one real always-on runtime path so the polling conflict stops blocking live verification
+3. extend idempotency coverage to any remaining mutating callbacks/messages and then verify it under webhook/runtime conditions
+4. if auctions are brought into scope, wire bid parsing and atomic bid updates onto the already-added auction message refresh/close scaffold
+5. harden multi-image listing intake with seller front/back override and less chatty album UX
 
 ### Working Rules For Future Tasks
 - after any meaningful task, update this file with new current state and next risks

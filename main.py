@@ -20,6 +20,7 @@ from handlers.seller_tools import register_seller_tool_handlers
 from handlers.setup import register_setup_handlers
 from handlers.start import register_start_handlers
 from handlers.transactions import register_transaction_handlers
+from jobs.auction_close import register_auction_jobs
 from jobs.payment_deadlines import register_payment_deadline_jobs
 from jobs.scheduler import build_scheduler
 
@@ -88,14 +89,21 @@ async def post_init(application: Application) -> None:
             BotCommand('start', 'Open the bot home'),
             BotCommand('help', 'Show available commands'),
             BotCommand('setup', 'Configure seller profile'),
-            BotCommand('list', 'Start a new listing'),
+            BotCommand('list', 'Start a new fixed-price listing'),
+            BotCommand('auction', 'Start a new auction listing'),
+            BotCommand('sold', 'Mark a paid listing as sold'),
+            BotCommand('inventory', 'Show active and pending listings'),
+            BotCommand('sales', 'Show recent transaction history'),
+            BotCommand('blacklist', 'Manage blocked buyers'),
+            BotCommand('vacation', 'Toggle vacation mode'),
+            BotCommand('stats', 'Show seller summary'),
             BotCommand('cancel', 'Cancel current flow'),
-            BotCommand('stats', 'Open seller tools'),
             BotCommand('ping', 'Quick bot health check'),
         ]
     )
     scheduler = build_scheduler(config.default_timezone)
     register_payment_deadline_jobs(application, scheduler)
+    register_auction_jobs(application, scheduler)
     scheduler.start()
     application.bot_data['scheduler'] = scheduler
 

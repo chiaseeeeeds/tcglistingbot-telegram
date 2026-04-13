@@ -588,3 +588,35 @@ Use this log after meaningful implementation tasks.
 - what was weak: the `/sold` UX is still command-driven rather than button-driven, and live Telegram verification is still blocked by the other polling instance on the same bot token
 - follow-up: build seller active/sold history views and then add duplicate-update protection around claim/payment completion side effects
 - user reaction: asked to continue with the next step, so this pass completed the seller-paid/SOLD/transaction milestone before moving on to seller dashboards or optional polish
+
+- date: 2026-04-13
+- goal: implement the minimum seller-ops surface after the claim, expiry, and SOLD transaction path were in place
+- outcome: replaced the seller-tools placeholder with working `/stats`, `/inventory`, `/sales`, `/blacklist`, and `/vacation` commands in `handlers/seller_tools.py`; added blacklist CRUD/count helpers in `db/blacklist.py`; added open-listing and claim-pending counts in `db/listings.py`; added vacation toggling in `db/sellers.py`; updated bot command registration in `main.py`; and enforced vacation mode in `handlers/claims.py` so away sellers stop accepting new claims automatically
+- validation: `.venv/bin/python -m py_compile handlers/seller_tools.py db/blacklist.py db/listings.py db/sellers.py main.py handlers/claims.py` passed; an import-level registration probe confirmed seller tool handlers can be added to a PTB application cleanly
+- what was weak: seller ops are command-based and minimal, not yet button-driven or paginated, and the live Telegram runtime conflict still blocks full end-to-end verification against the actual bot token
+- follow-up: implement duplicate-update protection and move the bot to one stable always-on runtime path so the now-complete seller flow can be verified live without polling conflicts
+- user reaction: asked to implement seller ops next, so this pass focused on the minimum operational command surface instead of adding dashboard-like UI or optional analytics
+
+- date: 2026-04-13
+- goal: build the Telegram-native seller dashboard so active listings can be managed by buttons instead of relying only on commands and message IDs
+- outcome: refactored `handlers/transactions.py` to expose reusable sale-completion logic, then upgraded `handlers/seller_tools.py` into a button-driven dashboard with home, paginated inventory, listing detail, queue view, sales view, blacklist view, vacation controls, and a safe mark-paid confirmation flow; dashboard actions operate on concrete `listing_id` values so sellers can manage multiple similar items without ambiguity
+- validation: `.venv/bin/python -m py_compile handlers/seller_tools.py handlers/transactions.py main.py db/blacklist.py db/listings.py db/sellers.py db/transactions.py` passed; a registration probe confirmed callback handlers register cleanly; callback-data length checks passed within Telegram's 64-byte limit
+- what was weak: blacklist add/remove is still text-command-based even though blacklist viewing is now on the dashboard, and the new button flows are not yet verified live because the Telegram polling conflict still exists
+- follow-up: add duplicate-update protection around dashboard callbacks and claim/payment actions, then remove the competing poller so the dashboard can be verified against the real bot token
+- user reaction: asked to build out the Telegram dashboard for sellers when viewing active listings, so this pass prioritized listing-specific button flows over backend hardening work
+
+- date: 2026-04-13
+- goal: add a first-pass idempotency layer so duplicate Telegram deliveries stop causing duplicate claim/payment side effects while still allowing multiple similar listings
+- outcome: added `migrations/008_processed_events.sql` plus `db/idempotency.py`, then wrapped claim comments, `/sold`, blacklist/vacation commands, and mutating seller dashboard callbacks with DB-backed processed-event keys; dedupe is keyed on Telegram event identity, not on card identity, so sellers can still list multiple copies of the same item safely
+- validation: `.venv/bin/python -m py_compile db/idempotency.py handlers/claims.py handlers/transactions.py handlers/seller_tools.py` passed; live pooler-backed probe confirmed `register_processed_event(...)` returns `True` on first insert and `False` on duplicate insert for the same `(source, event_key)`
+- what was weak: this is a first-pass idempotency layer, not a full distributed runtime-hardening solution yet; read-only dashboard callbacks are intentionally not deduped, and live verification is still blocked by the competing polling instance on the bot token
+- follow-up: move to one stable runtime path, then extend the same dedupe pattern to any remaining mutating handlers/jobs and verify behavior under real webhook/polling retry conditions
+- user reaction: asked to implement idempotency next and raised the concern about multiple quantities of the same item, so this pass explicitly dedupes event deliveries instead of deduping item identity
+
+- date: 2026-04-13
+- goal: answer the real-time Telegram message-edit question by building the reusable live-edit infrastructure without overcommitting to full auction scope before bid parsing exists
+- outcome: added `services/listing_message_editor.py` as the shared Telegram post-edit utility, refactored SOLD edits in `handlers/transactions.py` to use it, extended `utils/formatters.py` with auction countdown/current-bid formatting, added live auction listing queries in `db/listings.py`, and replaced the auction-close placeholder with `jobs/auction_close.py`, which can now refresh auction posts on a minute schedule and mark expired auction listings as `auction_closed`
+- validation: `.venv/bin/python -m py_compile jobs/auction_close.py services/listing_message_editor.py utils/formatters.py handlers/transactions.py main.py` passed; pure checks confirmed countdown markers and auction message formatting work, and scheduler registration for auction jobs succeeded
+- what was weak: auction creation, bid parsing, highest-bid updates, and anti-snipe behavior are still not implemented, so the new refresh worker is infrastructure-first rather than a complete live auction feature
+- follow-up: if auctions are reprioritized, wire bid parsing plus atomic bid updates next; otherwise keep focus on runtime hardening and live verification of the current fixed-price flow
+- user reaction: asked whether the bot can edit Telegram posts in real time and then asked to do it, so this pass implemented the reusable edit layer and the auction refresh scaffold rather than pretending auctions were already complete

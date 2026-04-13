@@ -7,6 +7,7 @@ from typing import Any
 from db.client import extract_many, extract_single, get_client
 
 
+
 def get_blacklist_entry(*, seller_id: str, blocked_telegram_id: int) -> dict[str, Any] | None:
     """Return the blacklist entry for a seller/buyer pair when it exists."""
 
@@ -45,3 +46,61 @@ def list_blacklist_entries(*, seller_id: str) -> list[dict[str, Any]]:
         .execute()
     )
     return extract_many(response)
+
+
+
+def count_blacklist_entries(*, seller_id: str) -> int:
+    """Return the total blacklist count for a seller."""
+
+    response = (
+        get_client()
+        .table('seller_buyer_blacklist')
+        .select('id', count='exact')
+        .eq('seller_id', seller_id)
+        .execute()
+    )
+    return int(response.count or 0)
+
+
+
+def upsert_blacklist_entry(
+    *,
+    seller_id: str,
+    blocked_telegram_id: int,
+    blocked_username: str | None = None,
+    reason: str | None = None,
+) -> dict[str, Any]:
+    """Create or update a blacklist entry for a seller."""
+
+    payload = {
+        'seller_id': seller_id,
+        'blocked_telegram_id': blocked_telegram_id,
+        'blocked_username': blocked_username,
+        'reason': reason or '',
+    }
+    response = (
+        get_client()
+        .table('seller_buyer_blacklist')
+        .upsert(payload, on_conflict='seller_id,blocked_telegram_id')
+        .execute()
+    )
+    row = extract_single(response)
+    if row is not None:
+        return row
+    refreshed = get_blacklist_entry(seller_id=seller_id, blocked_telegram_id=blocked_telegram_id)
+    if refreshed is None:
+        raise RuntimeError('Failed to load blacklist entry after upsert.')
+    return refreshed
+
+
+
+def remove_blacklist_entry(*, seller_id: str, blocked_telegram_id: int) -> bool:
+    """Remove a blacklist entry and return whether one existed."""
+
+    existing = get_blacklist_entry(seller_id=seller_id, blocked_telegram_id=blocked_telegram_id)
+    if existing is None:
+        return False
+    get_client().table('seller_buyer_blacklist').delete().eq('seller_id', seller_id).eq(
+        'blocked_telegram_id', blocked_telegram_id
+    ).execute()
+    return True

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from db.client import extract_single, get_client
+
 
 
 def get_seller_by_telegram_id(telegram_id: int) -> dict[str, Any] | None:
@@ -19,6 +21,7 @@ def get_seller_by_telegram_id(telegram_id: int) -> dict[str, Any] | None:
         .execute()
     )
     return extract_single(response)
+
 
 
 def upsert_seller(*, telegram_id: int, telegram_username: str | None, telegram_display_name: str) -> dict[str, Any]:
@@ -44,8 +47,29 @@ def upsert_seller(*, telegram_id: int, telegram_username: str | None, telegram_d
     return refreshed
 
 
+
 def get_seller_by_id(seller_id: str) -> dict[str, Any] | None:
     """Fetch a seller row by primary key."""
 
     response = get_client().table('sellers').select('*').eq('id', seller_id).limit(1).execute()
     return extract_single(response)
+
+
+
+def set_vacation_mode(*, seller_id: str, enabled: bool, days: int | None = None) -> dict[str, Any]:
+    """Toggle seller vacation mode and optional end date."""
+
+    payload: dict[str, Any] = {
+        'vacation_mode': enabled,
+        'vacation_until': None,
+    }
+    if enabled and days is not None:
+        payload['vacation_until'] = (datetime.now(timezone.utc) + timedelta(days=days)).isoformat()
+    response = get_client().table('sellers').update(payload).eq('id', seller_id).execute()
+    seller = extract_single(response)
+    if seller:
+        return seller
+    refreshed = get_seller_by_id(seller_id)
+    if refreshed is None:
+        raise RuntimeError('Failed to load seller after vacation update.')
+    return refreshed
