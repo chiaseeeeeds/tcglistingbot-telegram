@@ -16,7 +16,8 @@
 - PARTIAL: single-bot-process guard for polling stability
   - in-repo lock exists, but stale external/manual pollers can still survive across sessions unless all `main.py` processes are cleaned up before restart
 - PARTIAL: always-on runtime / deployment
-  - still running in local/live session for testing
+  - local PTY sessions keep the bot/importer alive reliably in this environment
+  - detached `nohup` launches are not trustworthy here and should not be treated as proof of runtime health
   - webhook production deployment still TODO
 
 ## 2. Seller Onboarding and Setup

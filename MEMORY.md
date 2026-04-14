@@ -187,3 +187,5 @@
 - April 13, 2026 catalog execution update: the JP crawl now sits at page 92 and the live audit has reached `pokemon_total=23479` with `jp_named_total=3564`.
 - April 13, 2026 importer continuation: a duplicate-identity failure surfaced on page 95 because some JP result pages contain repeated `(game, set_code, card_number, variant)` rows inside the same payload. The importer now dedupes page rows before DB writes, and the crawl has continued through page 110.
 - April 13, 2026 catalog execution update: the live audit now reads `pokemon_total=24145` and `jp_named_total=4230`, with the JP checkpoint at page 110.
+- April 14, 2026 runtime truth: detached `nohup` launches for both `main.py` and the JP importer loop appeared to start cleanly but died within seconds with no useful shutdown logs in this environment. Running both in live PTY sessions is currently the only verified way to keep them alive here.
+- April 14, 2026 runtime verification: foreground PTY run of `.venv/bin/python -u main.py` stayed alive past startup, and foreground PTY run of `./.logs/run_pokemon_jp_loop.sh` advanced the JP checkpoint from page 220 to page 221 immediately.
