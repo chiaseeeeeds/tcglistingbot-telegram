@@ -16,6 +16,7 @@ from handlers.admin import register_admin_handlers
 from handlers.auctions import register_auction_handlers
 from handlers.claims import register_claim_handlers
 from handlers.listing import register_listing_handlers
+from handlers.payments import register_payment_handlers
 from handlers.seller_tools import register_seller_tool_handlers
 from handlers.setup import register_setup_handlers
 from handlers.start import register_start_handlers
@@ -92,6 +93,7 @@ async def post_init(application: Application) -> None:
             BotCommand('list', 'Start a new fixed-price listing'),
             BotCommand('auction', 'Start a new auction listing'),
             BotCommand('sold', 'Mark a paid listing as sold'),
+            BotCommand('pay', 'Submit payment proof for a claim'),
             BotCommand('inventory', 'Show active and pending listings'),
             BotCommand('sales', 'Show recent transaction history'),
             BotCommand('blacklist', 'Manage blocked buyers'),
@@ -143,6 +145,7 @@ def register_handlers(application: Application) -> None:
         register_listing_handlers,
         register_claim_handlers,
         register_auction_handlers,
+        register_payment_handlers,
         register_transaction_handlers,
         register_seller_tool_handlers,
         register_admin_handlers,

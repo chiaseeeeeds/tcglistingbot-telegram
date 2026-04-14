@@ -33,3 +33,27 @@ def upload_listing_photo(*, local_path: str | Path, seller_id: str, telegram_fil
     except Exception as exc:
         logger.warning('Failed to upload listing photo %s to storage bucket %s: %s', path, bucket, exc)
         return None
+
+
+def upload_payment_proof_photo(
+    *,
+    local_path: str | Path,
+    seller_id: str,
+    claim_id: str,
+    telegram_file_id: str,
+) -> str:
+    """Upload a buyer payment proof image and return the storage object path."""
+
+    path = Path(local_path)
+    if not path.exists():
+        raise FileNotFoundError(f'Payment proof photo not found: {path}')
+
+    bucket = get_config().supabase_storage_bucket
+    object_path = f'payment-proofs/{seller_id}/{claim_id}/{telegram_file_id}{path.suffix.lower() or ".jpg"}'
+    get_client().storage.from_(bucket).upload(
+        object_path,
+        path,
+        {'content-type': 'image/jpeg'},
+    )
+    logger.info('Uploaded payment proof for claim %s to %s.', claim_id, object_path)
+    return object_path

@@ -10,16 +10,22 @@ import string
 from typing import Any
 
 from telegram import Message, Update
+from telegram.error import Forbidden
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
 from config import get_config
 from db.blacklist import get_blacklist_entry
-from db.claims import claim_listing_atomic, get_open_claim_for_buyer, record_auction_bid_atomic
+from db.claims import claim_listing_atomic, get_open_claim_for_buyer, mark_payment_prompt_sent, record_auction_bid_atomic
 from db.idempotency import register_processed_event
 from db.listings import get_listing_by_posted_message
 from db.seller_configs import get_seller_config_by_seller_id
 from db.sellers import get_seller_by_id
 from services.listing_message_editor import edit_listing_messages
+from services.payment_requests import (
+    build_buyer_payment_message,
+    build_seller_claim_notice,
+    ensure_payment_request_for_claim,
+)
 from utils.formatters import format_auction_listing
 
 logger = logging.getLogger(__name__)
@@ -29,6 +35,24 @@ _WHITESPACE_RE = re.compile(r'\s+')
 _BID_RE = re.compile(r'^\s*(?:bid|offer)?\s*[$sSgGdD]*\s*(\d+(?:\.\d{1,2})?)\s*(?:sgd)?\s*$', re.IGNORECASE)
 
 
+
+def _requires_start_dm(exc: Exception) -> bool:
+    if isinstance(exc, Forbidden):
+        return True
+    lowered = str(exc).lower()
+    return ("bot can\'t initiate conversation" in lowered or "forbidden" in lowered or "user is deactivated" in lowered)
+
+
+async def _reply_start_bot_notice(*, message: Message, claim_status: str) -> None:
+    bot_username = get_config().telegram_bot_username
+    status_text = 'claim details' if claim_status == 'confirmed' else 'queue updates'
+    await message.reply_text(
+        (
+            '⚠️ I recorded this action, but I could not DM you yet.\n\n'
+            f'Please open <code>{bot_username}</code> and press <b>Start</b> first so I can send you {status_text}.'
+        ),
+        parse_mode='HTML',
+    )
 
 def _normalize_claim_keyword(value: str) -> str:
     normalized = _WHITESPACE_RE.sub(' ', value.strip().lower())
@@ -163,31 +187,6 @@ def _existing_claim_message(existing_claim: dict[str, Any]) -> str:
 def _queued_claim_public_message(queue_position: int) -> str:
     return '⏳ Your claim has been queued for this listing. ' f'Current queue position: <code>{queue_position}</code>.'
 
-
-
-def _build_seller_claim_notice(
-    *,
-    listing: dict[str, Any],
-    buyer_display_name: str,
-    buyer_username: str | None,
-    deadline_hours: int,
-    queue_position: int | None = None,
-) -> str:
-    is_queued = queue_position is not None and queue_position > 1
-    heading = '<b>Claim queued.</b>' if is_queued else '<b>New claim received.</b>'
-    lines = [
-        heading,
-        '',
-        f'Item: <code>{listing.get("card_name")}</code>',
-        f'Buyer: <code>{buyer_display_name}</code>',
-    ]
-    if buyer_username:
-        lines.append(f'Username: <code>@{buyer_username}</code>')
-    if is_queued:
-        lines.append(f'Queue position: <code>{queue_position}</code>')
-    else:
-        lines.append(f'Payment deadline: <code>{deadline_hours}h</code>')
-    return '\n'.join(lines)
 
 
 async def claims_placeholder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -535,12 +534,15 @@ async def _handle_fixed_claim_comment(
             )
         except Exception as exc:
             logger.info('Could not DM queued buyer %s: %s', user.id, exc)
+            if _requires_start_dm(exc):
+                await _reply_start_bot_notice(message=message, claim_status='queued')
         if seller is not None:
             try:
                 await context.bot.send_message(
                     chat_id=int(seller['telegram_id']),
-                    text=_build_seller_claim_notice(
+                    text=build_seller_claim_notice(
                         listing=listing,
+                        claim=None,
                         buyer_display_name=user.full_name,
                         buyer_username=user.username,
                         deadline_hours=deadline_hours,
@@ -567,27 +569,29 @@ async def _handle_fixed_claim_comment(
         parse_mode='HTML',
     )
 
-    paynow_identifier = (seller_config or {}).get('paynow_identifier') or ''
-    payment_methods = ', '.join((seller_config or {}).get('payment_methods') or ['PayNow'])
-    dm_text = (
-        '<b>You successfully claimed a listing.</b>\n\n'
-        f'Item: <code>{listing.get("card_name")}</code>\n'
-        f'Price: <code>SGD {float(listing.get("price_sgd") or 0):.2f}</code>\n'
-        f'Payment methods: <code>{payment_methods}</code>\n'
-        + (f'PayNow: <code>{paynow_identifier}</code>\n' if paynow_identifier else '')
-        + f'Deadline: <code>{deadline_hours}h</code>'
+    claim = await asyncio.to_thread(ensure_payment_request_for_claim, claim=claim)
+    dm_text = build_buyer_payment_message(
+        listing=listing,
+        claim=claim,
+        seller_config=seller_config,
+        deadline_hours=deadline_hours,
+        intro='You successfully claimed a listing.',
     )
     try:
-        await context.bot.send_message(chat_id=user.id, text=dm_text, parse_mode='HTML')
+        dm_message = await context.bot.send_message(chat_id=user.id, text=dm_text, parse_mode='HTML')
+        await asyncio.to_thread(mark_payment_prompt_sent, claim_id=str(claim['id']), message_id=dm_message.message_id)
     except Exception as exc:
         logger.info('Could not DM buyer %s after claim: %s', user.id, exc)
+        if _requires_start_dm(exc):
+            await _reply_start_bot_notice(message=message, claim_status='confirmed')
 
     if seller is not None:
         try:
             await context.bot.send_message(
                 chat_id=int(seller['telegram_id']),
-                text=_build_seller_claim_notice(
+                text=build_seller_claim_notice(
                     listing=listing,
+                    claim=claim,
                     buyer_display_name=user.full_name,
                     buyer_username=user.username,
                     deadline_hours=deadline_hours,

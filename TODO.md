@@ -206,3 +206,7 @@
 - TODO LATER: wishlist / WTB matching
 - TODO LATER: marketplace payments / escrow
 - TODO LATER: web dashboard
+- payment-proof follow-up:
+  - run live Telegram QA for the new `/pay` screenshot flow with two simultaneous buyer claims against one seller
+  - decide whether seller rejection should capture a canned reason / free-text note and surface that back to the buyer
+  - verify promoted queue buyers and auction winners always receive a usable payment reference + `/pay` path in live chats

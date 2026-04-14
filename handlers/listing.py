@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from time import perf_counter
 from html import escape
 from pathlib import Path
 from tempfile import gettempdir
@@ -369,11 +370,18 @@ async def finalize_photo_batch(update: Update, context: ContextTypes.DEFAULT_TYP
         return PHOTO
 
     try:
+        await update.effective_message.reply_text(
+            'Processing your photo batch now. OCR can take a bit on some images, so please give me a moment.',
+            parse_mode='HTML',
+        )
+        started_at = perf_counter()
+        logger.info('Starting listing photo-batch finalization for seller=%s images=%s.', getattr(update.effective_user, 'id', None), len(photo_entries))
         selection = await asyncio.to_thread(
             classify_listing_images,
             [str(entry['local_path']) for entry in photo_entries],
             preferred_game=str(context.user_data.get('listing_game') or '') or None,
         )
+        logger.info('Completed listing photo-batch finalization for seller=%s in %.2fs.', getattr(update.effective_user, 'id', None), perf_counter() - started_at)
         front_index = selection.front_index if selection.front_index is not None else 0
         back_index = selection.back_index
         ordered_entries = [photo_entries[index] for index in selection.ordered_indices]

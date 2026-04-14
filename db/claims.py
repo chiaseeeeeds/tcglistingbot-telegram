@@ -86,6 +86,79 @@ def get_due_payment_claims(*, now_utc: datetime | None = None, limit: int = 25) 
     return extract_many(response)
 
 
+def list_open_payment_claims_for_buyer(*, buyer_telegram_id: int) -> list[dict[str, Any]]:
+    """Return open winning claims for a buyer ordered by newest confirmation first."""
+
+    response = (
+        get_client()
+        .table('claims')
+        .select('*')
+        .eq('buyer_telegram_id', buyer_telegram_id)
+        .in_('status', list(WINNING_CLAIM_STATUSES))
+        .order('confirmed_at', desc=True)
+        .order('claimed_at', desc=True)
+        .execute()
+    )
+    return extract_many(response)
+
+
+def get_claim_by_payment_reference(*, payment_reference: str) -> dict[str, Any] | None:
+    """Return the claim that owns a payment reference, if any."""
+
+    response = (
+        get_client()
+        .table('claims')
+        .select('*')
+        .eq('payment_reference', payment_reference)
+        .limit(1)
+        .execute()
+    )
+    return extract_single(response)
+
+
+def ensure_payment_reference(*, claim_id: str) -> dict[str, Any]:
+    """Ensure the claim has a payment reference and is marked payment-pending."""
+
+    claim = get_claim_by_id(claim_id)
+    if claim is None:
+        raise RuntimeError(f'Claim not found: {claim_id}')
+
+    payment_reference = str(claim.get('payment_reference') or '').strip()
+    if not payment_reference:
+        normalized_id = claim_id.replace('-', '').upper()
+        payment_reference = f'TCG-{normalized_id[:8]}'
+
+    next_status = 'payment_pending' if str(claim.get('status') or '') in WINNING_CLAIM_STATUSES else claim.get('status')
+    payload = {
+        'payment_reference': payment_reference,
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+    }
+    if next_status == 'payment_pending' and str(claim.get('status') or '') != 'payment_pending':
+        payload['status'] = 'payment_pending'
+
+    response = get_client().table('claims').update(payload).eq('id', claim_id).execute()
+    updated = extract_single(response)
+    if updated is None:
+        refreshed = get_claim_by_id(claim_id)
+        if refreshed is None:
+            raise RuntimeError(f'Failed to refresh claim after payment reference update: {claim_id}')
+        return refreshed
+    return updated
+
+
+def mark_payment_prompt_sent(*, claim_id: str, message_id: int | None) -> dict[str, Any] | None:
+    """Persist that the bot sent payment instructions to the buyer."""
+
+    payload: dict[str, Any] = {
+        'payment_prompt_sent': True,
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+    }
+    if message_id is not None:
+        payload['payment_prompt_message_id'] = message_id
+    response = get_client().table('claims').update(payload).eq('id', claim_id).execute()
+    return extract_single(response)
+
+
 async def claim_listing_atomic(
     *,
     listing_id: str,

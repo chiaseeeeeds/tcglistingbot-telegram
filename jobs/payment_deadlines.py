@@ -10,25 +10,18 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from telegram.ext import Application
 
 from config import get_config
-from db.claims import advance_claim_queue, get_due_payment_claims
+from db.claims import advance_claim_queue, get_due_payment_claims, mark_payment_prompt_sent
 from db.listings import get_listing_by_id
 from db.seller_configs import get_seller_config_by_seller_id
 from db.sellers import get_seller_by_id
+from services.payment_requests import (
+    build_buyer_payment_message,
+    ensure_payment_request_for_claim,
+    paynow_text,
+)
 
 logger = logging.getLogger(__name__)
 PAYMENT_DEADLINE_JOB_ID = 'payment-deadline-worker'
-
-
-
-def _payment_methods_text(seller_config: dict[str, Any] | None) -> str:
-    return ', '.join((seller_config or {}).get('payment_methods') or ['PayNow'])
-
-
-
-def _paynow_text(seller_config: dict[str, Any] | None) -> str:
-    paynow_identifier = (seller_config or {}).get('paynow_identifier') or ''
-    return f'PayNow: <code>{paynow_identifier}</code>\n' if paynow_identifier else ''
-
 
 async def _notify_queue_promoted(
     *,
@@ -40,21 +33,26 @@ async def _notify_queue_promoted(
     failed_claim: dict[str, Any],
     payment_deadline_hours: int,
 ) -> None:
+    promoted_claim = await asyncio.to_thread(ensure_payment_request_for_claim, claim=promoted_claim)
     buyer_telegram_id = promoted_claim.get('buyer_telegram_id')
     if buyer_telegram_id:
-        buyer_message = (
-            '<b>You are now first in line for this listing.</b>\n\n'
-            f'Item: <code>{listing.get("card_name")}</code>\n'
-            f'Price: <code>SGD {float(listing.get("price_sgd") or 0):.2f}</code>\n'
-            f'Payment methods: <code>{_payment_methods_text(seller_config)}</code>\n'
-            f'{_paynow_text(seller_config)}'
-            f'Deadline: <code>{payment_deadline_hours}h</code>'
+        buyer_message = build_buyer_payment_message(
+            listing=listing,
+            claim=promoted_claim,
+            seller_config=seller_config,
+            deadline_hours=payment_deadline_hours,
+            intro='You are now first in line for this listing.',
         )
         try:
-            await application.bot.send_message(
+            dm_message = await application.bot.send_message(
                 chat_id=int(buyer_telegram_id),
                 text=buyer_message,
                 parse_mode='HTML',
+            )
+            await asyncio.to_thread(
+                mark_payment_prompt_sent,
+                claim_id=str(promoted_claim['id']),
+                message_id=dm_message.message_id,
             )
         except Exception as exc:
             logger.info('Could not DM promoted buyer %s: %s', buyer_telegram_id, exc)
@@ -65,6 +63,8 @@ async def _notify_queue_promoted(
             f'Item: <code>{listing.get("card_name")}</code>\n'
             f'Expired buyer: <code>{failed_claim.get("buyer_display_name") or failed_claim.get("buyer_telegram_id")}</code>\n'
             f'Promoted buyer: <code>{promoted_claim.get("buyer_display_name") or promoted_claim.get("buyer_telegram_id")}</code>\n'
+            f'Reference: <code>{promoted_claim.get("payment_reference")}</code>\n'
+            f'{paynow_text(seller_config)}'
             f'New payment deadline: <code>{payment_deadline_hours}h</code>'
         )
         try:

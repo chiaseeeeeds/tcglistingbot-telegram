@@ -10,11 +10,16 @@ from telegram.ext import Application
 
 from config import get_config
 from db.claims import close_auction_atomic
+from db.claims import mark_payment_prompt_sent
 from db.idempotency import register_processed_event
 from db.listings import get_live_auction_listings
 from db.seller_configs import get_seller_config_by_seller_id
 from db.sellers import get_seller_by_id
 from services.listing_message_editor import edit_listing_messages
+from services.payment_requests import (
+    build_buyer_payment_message,
+    ensure_payment_request_for_claim,
+)
 from utils.formatters import auction_refresh_marker, format_auction_listing
 
 logger = logging.getLogger(__name__)
@@ -30,24 +35,27 @@ async def _notify_auction_award(
     seller_config: dict | None,
     payment_deadline_hours: int,
 ) -> None:
+    winning_claim = await asyncio.to_thread(ensure_payment_request_for_claim, claim=winning_claim)
     buyer_telegram_id = winning_claim.get('buyer_telegram_id')
-    paynow_identifier = (seller_config or {}).get('paynow_identifier') or ''
-    payment_methods = ', '.join((seller_config or {}).get('payment_methods') or ['PayNow'])
 
     if buyer_telegram_id:
-        buyer_message = (
-            '<b>You won the auction.</b>\n\n'
-            f'Item: <code>{listing.get("card_name")}</code>\n'
-            f'Winning bid: <code>SGD {float(listing.get("price_sgd") or listing.get("current_bid_sgd") or 0):.2f}</code>\n'
-            f'Payment methods: <code>{payment_methods}</code>\n'
-            + (f'PayNow: <code>{paynow_identifier}</code>\n' if paynow_identifier else '')
-            + f'Deadline: <code>{payment_deadline_hours}h</code>'
+        buyer_message = build_buyer_payment_message(
+            listing=listing,
+            claim=winning_claim,
+            seller_config=seller_config,
+            deadline_hours=payment_deadline_hours,
+            intro='You won the auction.',
         )
         try:
-            await application.bot.send_message(
+            dm_message = await application.bot.send_message(
                 chat_id=int(buyer_telegram_id),
                 text=buyer_message,
                 parse_mode='HTML',
+            )
+            await asyncio.to_thread(
+                mark_payment_prompt_sent,
+                claim_id=str(winning_claim['id']),
+                message_id=dm_message.message_id,
             )
         except Exception as exc:
             logger.info('Could not DM auction winner %s: %s', buyer_telegram_id, exc)
@@ -58,6 +66,7 @@ async def _notify_auction_award(
             f'Item: <code>{listing.get("card_name")}</code>\n'
             f'Winner: <code>{winning_claim.get("buyer_display_name") or winning_claim.get("buyer_telegram_id")}</code>\n'
             f'Winning bid: <code>SGD {float(listing.get("price_sgd") or listing.get("current_bid_sgd") or 0):.2f}</code>\n'
+            f'Reference: <code>{winning_claim.get("payment_reference")}</code>\n'
             f'Payment deadline: <code>{payment_deadline_hours}h</code>'
         )
         try:
