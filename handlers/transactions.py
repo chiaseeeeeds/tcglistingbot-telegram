@@ -13,6 +13,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 from db.claims import get_current_winning_claim
 from db.idempotency import register_processed_event
 from db.listings import get_claim_pending_listings_for_seller
+from db.payment_proofs import set_submitted_payment_proofs_status_for_claim
 from db.seller_configs import get_seller_config_by_seller_id
 from db.sellers import get_seller_by_telegram_id
 from db.transactions import complete_transaction_atomic
@@ -118,6 +119,14 @@ async def complete_sale_for_listing(
     paid_claim = result.get('paid_claim') or winning_claim
     latest_listing = result.get('listing') or listing
     seller_config = await asyncio.to_thread(get_seller_config_by_seller_id, str(seller['id']))
+
+    if str(result.get('action') or '') != 'already_completed':
+        await asyncio.to_thread(
+            set_submitted_payment_proofs_status_for_claim,
+            claim_id=str(paid_claim['id']),
+            status='approved',
+            reviewed_by_telegram_id=int(seller['telegram_id']),
+        )
 
     await _edit_listing_messages_to_sold(
         application=context.application,

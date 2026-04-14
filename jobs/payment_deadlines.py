@@ -12,16 +12,43 @@ from telegram.ext import Application
 from config import get_config
 from db.claims import advance_claim_queue, get_due_payment_claims, mark_payment_prompt_sent
 from db.listings import get_listing_by_id
+from db.payment_proofs import set_submitted_payment_proofs_status_for_claim
 from db.seller_configs import get_seller_config_by_seller_id
 from db.sellers import get_seller_by_id
-from services.payment_requests import (
-    build_buyer_payment_message,
-    ensure_payment_request_for_claim,
-    paynow_text,
-)
+from services.payment_requests import build_buyer_payment_message, ensure_payment_request_for_claim, paynow_text
 
 logger = logging.getLogger(__name__)
 PAYMENT_DEADLINE_JOB_ID = 'payment-deadline-worker'
+
+
+async def _notify_failed_buyer(
+    *,
+    application: Application,
+    listing: dict[str, Any],
+    failed_claim: dict[str, Any],
+    action: str,
+) -> None:
+    buyer_telegram_id = failed_claim.get('buyer_telegram_id')
+    if not buyer_telegram_id:
+        return
+
+    if action == 'promoted':
+        text = (
+            '<b>Your payment window expired.</b>\n\n'
+            f'Item: <code>{listing.get("card_name")}</code>\n'
+            'Your claim was released and the next buyer has been promoted.'
+        )
+    else:
+        text = (
+            '<b>Your payment window expired.</b>\n\n'
+            f'Item: <code>{listing.get("card_name")}</code>\n'
+            'Your claim was released, and the listing is no longer reserved for you.'
+        )
+    try:
+        await application.bot.send_message(chat_id=int(buyer_telegram_id), text=text, parse_mode='HTML')
+    except Exception as exc:
+        logger.info('Could not DM expired buyer %s: %s', buyer_telegram_id, exc)
+
 
 async def _notify_queue_promoted(
     *,
@@ -135,6 +162,18 @@ async def run_payment_deadline_cycle(application: Application) -> None:
 
         action = str(result.get('action') or 'noop')
         failed_claim = result.get('failed_claim') or due_claim
+        await asyncio.to_thread(
+            set_submitted_payment_proofs_status_for_claim,
+            claim_id=str(failed_claim['id']),
+            status='expired',
+        )
+        await _notify_failed_buyer(
+            application=application,
+            listing=listing,
+            failed_claim=failed_claim,
+            action=action,
+        )
+
         if action == 'promoted':
             promoted_claim = result.get('promoted_claim') or {}
             logger.info(

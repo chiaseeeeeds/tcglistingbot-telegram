@@ -210,3 +210,9 @@
   - run live Telegram QA for the new `/pay` screenshot flow with two simultaneous buyer claims against one seller
   - decide whether seller rejection should capture a canned reason / free-text note and surface that back to the buyer
   - verify promoted queue buyers and auction winners always receive a usable payment reference + `/pay` path in live chats
+- withdrawal-flow follow-up:
+  - live-test `/unclaim` for queued fixed-price claims, winning fixed-price claims, and awarded auction winners
+  - decide whether to add inline withdraw buttons to queued/claim-confirmation DMs in addition to the new `/unclaim` command
+  - consider bidder-withdrawal rules for pre-close auction `bid_active` rows if that becomes product scope
+- privacy follow-up:
+  - consider making other buyer-sensitive commands private-only by default if more buyer self-service is added later

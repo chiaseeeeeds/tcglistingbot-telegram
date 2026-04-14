@@ -45,7 +45,8 @@ def build_buyer_payment_message(
         f'Reference: <code>{claim.get("payment_reference")}</code>\n'
         f'Deadline: <code>{deadline_hours}h</code>\n\n'
         'After payment, send your screenshot here in this bot chat.\n'
-        'If you have multiple pending purchases, run <code>/pay</code> first and choose the correct reference.'
+        'If you have multiple pending purchases, run <code>/pay</code> first and choose the correct reference.\n'
+        'If you need to back out, run <code>/unclaim</code> before the seller marks payment received.'
     )
 
 

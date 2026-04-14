@@ -8,6 +8,17 @@ from typing import Any
 from db.client import extract_many, extract_single, get_client
 
 
+VALID_PROOF_STATUSES = {
+    'submitted',
+    'approved',
+    'rejected',
+    'replaced',
+    'withdrawn',
+    'expired',
+    'stale',
+}
+
+
 def create_payment_proof(
     *,
     claim_id: str,
@@ -49,11 +60,13 @@ def create_payment_proof(
     return proof
 
 
+
 def get_payment_proof_by_id(proof_id: str) -> dict[str, Any] | None:
     """Fetch a payment proof by primary key."""
 
     response = get_client().table('claim_payment_proofs').select('*').eq('id', proof_id).limit(1).execute()
     return extract_single(response)
+
 
 
 def get_latest_payment_proof_for_claim(*, claim_id: str) -> dict[str, Any] | None:
@@ -71,6 +84,7 @@ def get_latest_payment_proof_for_claim(*, claim_id: str) -> dict[str, Any] | Non
     return extract_single(response)
 
 
+
 def list_submitted_payment_proofs_for_buyer(*, buyer_telegram_id: int) -> list[dict[str, Any]]:
     """Return still-pending payment proofs for a buyer."""
 
@@ -84,6 +98,68 @@ def list_submitted_payment_proofs_for_buyer(*, buyer_telegram_id: int) -> list[d
         .execute()
     )
     return extract_many(response)
+
+
+
+def set_payment_proof_status_by_id(
+    *,
+    proof_id: str,
+    status: str,
+    seller_note: str | None = None,
+    reviewed_by_telegram_id: int | None = None,
+) -> dict[str, Any] | None:
+    """Update a single payment proof to a new terminal state."""
+
+    if status not in VALID_PROOF_STATUSES:
+        raise ValueError(f'Unsupported proof status: {status}')
+
+    payload: dict[str, Any] = {
+        'status': status,
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+    }
+    if seller_note is not None:
+        payload['seller_note'] = seller_note
+    if reviewed_by_telegram_id is not None:
+        payload['reviewed_by_telegram_id'] = reviewed_by_telegram_id
+        payload['reviewed_at'] = datetime.now(timezone.utc).isoformat()
+
+    response = get_client().table('claim_payment_proofs').update(payload).eq('id', proof_id).execute()
+    return extract_single(response)
+
+
+
+def set_submitted_payment_proofs_status_for_claim(
+    *,
+    claim_id: str,
+    status: str,
+    seller_note: str | None = None,
+    reviewed_by_telegram_id: int | None = None,
+) -> list[dict[str, Any]]:
+    """Resolve any still-submitted payment proofs for a claim to the provided status."""
+
+    if status not in VALID_PROOF_STATUSES:
+        raise ValueError(f'Unsupported proof status: {status}')
+
+    payload: dict[str, Any] = {
+        'status': status,
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+    }
+    if seller_note is not None:
+        payload['seller_note'] = seller_note
+    if reviewed_by_telegram_id is not None:
+        payload['reviewed_by_telegram_id'] = reviewed_by_telegram_id
+        payload['reviewed_at'] = datetime.now(timezone.utc).isoformat()
+
+    response = (
+        get_client()
+        .table('claim_payment_proofs')
+        .update(payload)
+        .eq('claim_id', claim_id)
+        .eq('status', 'submitted')
+        .execute()
+    )
+    return extract_many(response)
+
 
 
 def review_payment_proof(

@@ -94,6 +94,7 @@ async def post_init(application: Application) -> None:
             BotCommand('auction', 'Start a new auction listing'),
             BotCommand('sold', 'Mark a paid listing as sold'),
             BotCommand('pay', 'Submit payment proof for a claim'),
+            BotCommand('unclaim', 'Withdraw a queued or active claim'),
             BotCommand('inventory', 'Show active and pending listings'),
             BotCommand('sales', 'Show recent transaction history'),
             BotCommand('blacklist', 'Manage blocked buyers'),

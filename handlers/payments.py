@@ -1,4 +1,4 @@
-"""Buyer payment submission and seller proof-review handlers."""
+"""Buyer payment submission and claim-withdrawal handlers."""
 
 from __future__ import annotations
 
@@ -11,15 +11,26 @@ from pathlib import Path
 from typing import Any
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.constants import ChatType
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, filters
 
+from config import get_config
 from db.claims import (
+    WINNING_CLAIM_STATUSES,
     get_claim_by_id,
     get_claim_by_payment_reference,
     list_open_payment_claims_for_buyer,
+    list_withdrawable_claims_for_buyer,
+    mark_payment_prompt_sent,
+    withdraw_claim_atomic,
 )
 from db.listings import get_listing_by_id
-from db.payment_proofs import create_payment_proof, get_payment_proof_by_id, review_payment_proof
+from db.payment_proofs import (
+    create_payment_proof,
+    get_payment_proof_by_id,
+    set_payment_proof_status_by_id,
+    set_submitted_payment_proofs_status_for_claim,
+)
 from db.seller_configs import get_seller_config_by_seller_id
 from db.sellers import get_seller_by_id, get_seller_by_telegram_id
 from handlers.transactions import complete_sale_for_listing
@@ -29,6 +40,25 @@ from services.payment_requests import build_buyer_payment_message, ensure_paymen
 logger = logging.getLogger(__name__)
 _PAYMENT_REFERENCE_RE = re.compile(r'(TCG-[A-Z0-9]{8})', re.IGNORECASE)
 _PAYMENT_SELECTION_KEY = 'selected_payment_claim_id'
+_WITHDRAW_SELECTION_KEY = 'selected_withdraw_claim_id'
+
+
+def _private_only_message() -> str:
+    return (
+        'For privacy, use this command in a private chat with the bot.\n\n'
+        'Open <code>@TCGlistingbot</code> and run it there instead.'
+    )
+
+
+async def _require_private_chat(update: Update) -> bool:
+    message = update.effective_message
+    chat = update.effective_chat
+    if message is None or chat is None:
+        return False
+    if chat.type == ChatType.PRIVATE:
+        return True
+    await message.reply_text(_private_only_message(), parse_mode='HTML')
+    return False
 
 
 def _normalize_reference(value: str) -> str:
@@ -48,7 +78,23 @@ async def _load_open_claim_contexts(*, buyer_telegram_id: int) -> list[dict[str,
     return contexts
 
 
-def _selection_keyboard(claim_contexts: list[dict[str, Any]]) -> InlineKeyboardMarkup:
+async def _load_withdrawable_claim_contexts(*, buyer_telegram_id: int) -> list[dict[str, Any]]:
+    claims = await asyncio.to_thread(list_withdrawable_claims_for_buyer, buyer_telegram_id=buyer_telegram_id)
+    contexts: list[dict[str, Any]] = []
+    for claim in claims:
+        claim_status = str(claim.get('status') or '')
+        if claim_status in WINNING_CLAIM_STATUSES:
+            claim = await asyncio.to_thread(ensure_payment_request_for_claim, claim=claim)
+        listing = await asyncio.to_thread(get_listing_by_id, str(claim['listing_id']))
+        if listing is None:
+            continue
+        seller_config = await asyncio.to_thread(get_seller_config_by_seller_id, str(listing['seller_id']))
+        contexts.append({'claim': claim, 'listing': listing, 'seller_config': seller_config})
+    return contexts
+
+
+
+def _payment_selection_keyboard(claim_contexts: list[dict[str, Any]]) -> InlineKeyboardMarkup:
     rows = []
     for item in claim_contexts[:10]:
         claim = item['claim']
@@ -56,6 +102,30 @@ def _selection_keyboard(claim_contexts: list[dict[str, Any]]) -> InlineKeyboardM
         label = f'{claim.get("payment_reference") or "Select"} · {listing.get("card_name")}'
         rows.append([InlineKeyboardButton(label[:64], callback_data=f'payment:select:{claim["id"]}')])
     return InlineKeyboardMarkup(rows)
+
+
+
+def _withdrawal_selection_keyboard(claim_contexts: list[dict[str, Any]]) -> InlineKeyboardMarkup:
+    rows = []
+    for item in claim_contexts[:10]:
+        claim = item['claim']
+        listing = item['listing']
+        status = str(claim.get('status') or 'queued')
+        reference = str(claim.get('payment_reference') or status.upper())
+        label = f'{reference} · {listing.get("card_name")}'
+        rows.append([InlineKeyboardButton(label[:64], callback_data=f'claimwithdraw:select:{claim["id"]}')])
+    return InlineKeyboardMarkup(rows)
+
+
+
+def _withdraw_confirm_keyboard(claim_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton('✅ Confirm Withdraw', callback_data=f'claimwithdraw:confirm:{claim_id}')],
+            [InlineKeyboardButton('Keep Claim', callback_data=f'claimwithdraw:cancel:{claim_id}')],
+        ]
+    )
+
 
 
 def _format_claim_pick_list(claim_contexts: list[dict[str, Any]]) -> str:
@@ -70,6 +140,24 @@ def _format_claim_pick_list(claim_contexts: list[dict[str, Any]]) -> str:
         )
     lines.append('')
     lines.append('Then send the payment screenshot here.')
+    return '\n'.join(lines)
+
+
+
+def _format_withdrawable_claims(claim_contexts: list[dict[str, Any]]) -> str:
+    lines = ['<b>Select which claim to withdraw.</b>', '']
+    for item in claim_contexts:
+        claim = item['claim']
+        listing = item['listing']
+        claim_status = str(claim.get('status') or 'queued')
+        reference = str(claim.get('payment_reference') or claim_status.upper())
+        lines.append(
+            f'• <code>{reference}</code> — '
+            f'<code>{listing.get("card_name")}</code> — '
+            f'<code>{claim_status}</code>'
+        )
+    lines.append('')
+    lines.append('Withdrawing a winning claim will immediately free or promote the listing.')
     return '\n'.join(lines)
 
 
@@ -104,10 +192,35 @@ async def _resolve_claim_for_message(
     return None
 
 
+async def _resolve_withdrawable_claim(
+    *,
+    buyer_telegram_id: int,
+    reference: str | None,
+    selected_claim_id: str | None,
+) -> dict[str, Any] | None:
+    claim_contexts = await _load_withdrawable_claim_contexts(buyer_telegram_id=buyer_telegram_id)
+    by_id = {str(item['claim']['id']): item['claim'] for item in claim_contexts}
+
+    if reference:
+        matched_claim = await asyncio.to_thread(get_claim_by_payment_reference, payment_reference=_normalize_reference(reference))
+        if matched_claim is not None and int(matched_claim.get('buyer_telegram_id') or 0) == buyer_telegram_id:
+            return matched_claim
+
+    if selected_claim_id and selected_claim_id in by_id:
+        return by_id[selected_claim_id]
+
+    if len(claim_contexts) == 1:
+        return claim_contexts[0]['claim']
+
+    return None
+
+
 async def pay_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show pending buyer payments and let the buyer pick the proof target claim."""
 
     if update.effective_message is None or update.effective_user is None:
+        return
+    if not await _require_private_chat(update):
         return
 
     claim_contexts = await _load_open_claim_contexts(buyer_telegram_id=update.effective_user.id)
@@ -151,7 +264,51 @@ async def pay_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     await update.effective_message.reply_text(
         _format_claim_pick_list(claim_contexts),
         parse_mode='HTML',
-        reply_markup=_selection_keyboard(claim_contexts),
+        reply_markup=_payment_selection_keyboard(claim_contexts),
+    )
+
+
+async def unclaim_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Let buyers explicitly withdraw queued or active claims."""
+
+    if update.effective_message is None or update.effective_user is None:
+        return
+    if not await _require_private_chat(update):
+        return
+
+    claim_contexts = await _load_withdrawable_claim_contexts(buyer_telegram_id=update.effective_user.id)
+    if not claim_contexts:
+        await update.effective_message.reply_text(
+            'You do not have any queued or active claims to withdraw right now.',
+            parse_mode='HTML',
+        )
+        return
+
+    selected_claim = await _resolve_withdrawable_claim(
+        buyer_telegram_id=update.effective_user.id,
+        reference=' '.join(context.args).strip() if context.args else None,
+        selected_claim_id=str(context.user_data.get(_WITHDRAW_SELECTION_KEY) or ''),
+    )
+    if selected_claim is not None:
+        context.user_data[_WITHDRAW_SELECTION_KEY] = str(selected_claim['id'])
+        listing = next(item['listing'] for item in claim_contexts if str(item['claim']['id']) == str(selected_claim['id']))
+        await update.effective_message.reply_text(
+            (
+                '<b>Confirm claim withdrawal</b>\n\n'
+                f'Item: <code>{listing.get("card_name")}</code>\n'
+                f'Status: <code>{selected_claim.get("status")}</code>\n'
+                f'Reference: <code>{selected_claim.get("payment_reference") or "N/A"}</code>\n\n'
+                'This cannot be undone. If you are the current winning buyer, the next buyer may be promoted immediately.'
+            ),
+            parse_mode='HTML',
+            reply_markup=_withdraw_confirm_keyboard(str(selected_claim['id'])),
+        )
+        return
+
+    await update.effective_message.reply_text(
+        _format_withdrawable_claims(claim_contexts),
+        parse_mode='HTML',
+        reply_markup=_withdrawal_selection_keyboard(claim_contexts),
     )
 
 
@@ -163,8 +320,8 @@ async def payment_select_callback(update: Update, context: ContextTypes.DEFAULT_
         return
     await query.answer()
 
-    seller_claim_id = query.data.rsplit(':', 1)[-1] if query.data else ''
-    claim = await asyncio.to_thread(get_claim_by_id, seller_claim_id)
+    selected_claim_id = query.data.rsplit(':', 1)[-1] if query.data else ''
+    claim = await asyncio.to_thread(get_claim_by_id, selected_claim_id)
     if claim is None or int(claim.get('buyer_telegram_id') or 0) != update.effective_user.id:
         await query.edit_message_text('That payment request is no longer available.')
         return
@@ -177,6 +334,7 @@ async def payment_select_callback(update: Update, context: ContextTypes.DEFAULT_
         await query.edit_message_text('That listing could not be loaded anymore.')
         return
 
+    claim = await asyncio.to_thread(ensure_payment_request_for_claim, claim=claim)
     await query.edit_message_text(
         build_buyer_payment_message(
             listing=listing,
@@ -187,6 +345,183 @@ async def payment_select_callback(update: Update, context: ContextTypes.DEFAULT_
         ),
         parse_mode='HTML',
     )
+
+
+async def claim_withdraw_select_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Show a confirmation prompt before claim withdrawal."""
+
+    query = update.callback_query
+    if query is None or update.effective_user is None or query.data is None:
+        return
+    await query.answer()
+
+    claim_id = query.data.rsplit(':', 1)[-1]
+    claim = await asyncio.to_thread(get_claim_by_id, claim_id)
+    if claim is None or int(claim.get('buyer_telegram_id') or 0) != update.effective_user.id:
+        await query.edit_message_text('That claim is no longer available to withdraw.')
+        return
+
+    listing = await asyncio.to_thread(get_listing_by_id, str(claim['listing_id']))
+    context.user_data[_WITHDRAW_SELECTION_KEY] = str(claim['id'])
+    if listing is None:
+        await query.edit_message_text('That listing could not be loaded anymore.')
+        return
+
+    await query.edit_message_text(
+        (
+            '<b>Confirm claim withdrawal</b>\n\n'
+            f'Item: <code>{listing.get("card_name")}</code>\n'
+            f'Status: <code>{claim.get("status")}</code>\n'
+            f'Reference: <code>{claim.get("payment_reference") or "N/A"}</code>\n\n'
+            'This cannot be undone. If you are the current winning buyer, the next buyer may be promoted immediately.'
+        ),
+        parse_mode='HTML',
+        reply_markup=_withdraw_confirm_keyboard(str(claim['id'])),
+    )
+
+
+async def _notify_promoted_buyer(
+    *,
+    application: Application,
+    listing: dict[str, Any],
+    promoted_claim: dict[str, Any],
+    seller_config: dict[str, Any] | None,
+    payment_deadline_hours: int,
+) -> None:
+    promoted_claim = await asyncio.to_thread(ensure_payment_request_for_claim, claim=promoted_claim)
+    buyer_telegram_id = promoted_claim.get('buyer_telegram_id')
+    if not buyer_telegram_id:
+        return
+    try:
+        dm_message = await application.bot.send_message(
+            chat_id=int(buyer_telegram_id),
+            text=build_buyer_payment_message(
+                listing=listing,
+                claim=promoted_claim,
+                seller_config=seller_config,
+                deadline_hours=payment_deadline_hours,
+                intro='You are now first in line for this listing.',
+            ),
+            parse_mode='HTML',
+        )
+        await asyncio.to_thread(
+            mark_payment_prompt_sent,
+            claim_id=str(promoted_claim['id']),
+            message_id=dm_message.message_id,
+        )
+    except Exception as exc:
+        logger.info('Could not DM promoted buyer %s after withdrawal: %s', buyer_telegram_id, exc)
+
+
+async def claim_withdraw_confirm_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Withdraw a buyer claim and resolve queue promotion side effects."""
+
+    query = update.callback_query
+    if query is None or update.effective_user is None or query.data is None:
+        return
+    await query.answer()
+
+    claim_id = query.data.rsplit(':', 1)[-1]
+    claim = await asyncio.to_thread(get_claim_by_id, claim_id)
+    if claim is None or int(claim.get('buyer_telegram_id') or 0) != update.effective_user.id:
+        await query.edit_message_text('That claim is no longer available to withdraw.')
+        return
+
+    listing = await asyncio.to_thread(get_listing_by_id, str(claim['listing_id']))
+    if listing is None:
+        await query.edit_message_text('That listing could not be loaded anymore.')
+        return
+
+    seller = await asyncio.to_thread(get_seller_by_id, str(listing['seller_id']))
+    seller_config = await asyncio.to_thread(get_seller_config_by_seller_id, str(listing['seller_id']))
+    payment_deadline_hours = int((seller_config or {}).get('payment_deadline_hours') or get_config().default_payment_deadline_hours)
+
+    try:
+        result = await withdraw_claim_atomic(
+            claim_id=str(claim['id']),
+            buyer_telegram_id=update.effective_user.id,
+            payment_deadline_hours=payment_deadline_hours,
+        )
+    except Exception as exc:
+        logger.exception('Failed to withdraw claim %s: %s', claim.get('id'), exc)
+        await query.edit_message_text('I could not withdraw that claim just now. Please try again.')
+        return
+
+    action = str(result.get('action') or 'noop')
+    if action == 'noop':
+        await query.edit_message_text('That claim is no longer withdrawable.')
+        return
+
+    withdrawn_claim = result.get('withdrawn_claim') or claim
+    latest_listing = result.get('listing') or listing
+    promoted_claim = result.get('promoted_claim') or None
+
+    await asyncio.to_thread(
+        set_submitted_payment_proofs_status_for_claim,
+        claim_id=str(withdrawn_claim['id']),
+        status='withdrawn',
+    )
+    context.user_data.pop(_WITHDRAW_SELECTION_KEY, None)
+    if str(context.user_data.get(_PAYMENT_SELECTION_KEY) or '') == str(withdrawn_claim['id']):
+        context.user_data.pop(_PAYMENT_SELECTION_KEY, None)
+
+    buyer_message = (
+        '<b>Claim withdrawn.</b>\n\n'
+        f'Item: <code>{latest_listing.get("card_name")}</code>\n'
+        f'Previous status: <code>{claim.get("status")}</code>'
+    )
+    if action == 'promoted':
+        buyer_message += '\nThe next buyer has been promoted.'
+    elif action == 'auction_closed':
+        buyer_message += '\nThe auction is now closed because no other eligible bidder remained.'
+    elif action == 'reactivated':
+        buyer_message += '\nThe listing is no longer reserved and is active again.'
+    await query.edit_message_text(buyer_message, parse_mode='HTML')
+
+    if seller is not None:
+        seller_lines = [
+            '<b>Buyer withdrew their claim.</b>',
+            '',
+            f'Item: <code>{latest_listing.get("card_name")}</code>',
+            f'Buyer: <code>{withdrawn_claim.get("buyer_display_name") or withdrawn_claim.get("buyer_telegram_id")}</code>',
+        ]
+        if promoted_claim is not None:
+            seller_lines.append(
+                f'Promoted buyer: <code>{promoted_claim.get("buyer_display_name") or promoted_claim.get("buyer_telegram_id")}</code>'
+            )
+        elif action == 'auction_closed':
+            seller_lines.append('No eligible bidder remained, so the auction is now closed.')
+        elif action == 'reactivated':
+            seller_lines.append('No replacement buyer remained, so the listing is open again.')
+        else:
+            seller_lines.append('The active winning claim is unchanged. Only the queue was updated.')
+        try:
+            await context.bot.send_message(
+                chat_id=int(seller['telegram_id']),
+                text='\n'.join(seller_lines),
+                parse_mode='HTML',
+            )
+        except Exception as exc:
+            logger.info('Could not DM seller %s after withdrawal: %s', seller.get('telegram_id'), exc)
+
+    if promoted_claim is not None:
+        await _notify_promoted_buyer(
+            application=context.application,
+            listing=latest_listing,
+            promoted_claim=promoted_claim,
+            seller_config=seller_config,
+            payment_deadline_hours=payment_deadline_hours,
+        )
+
+
+async def claim_withdraw_cancel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Dismiss the withdraw confirmation prompt."""
+
+    query = update.callback_query
+    if query is None:
+        return
+    await query.answer()
+    await query.edit_message_text('Withdrawal cancelled.')
 
 
 async def handle_payment_proof_upload(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -208,7 +543,7 @@ async def handle_payment_proof_upload(update: Update, context: ContextTypes.DEFA
             await message.reply_text(
                 _format_claim_pick_list(claim_contexts),
                 parse_mode='HTML',
-                reply_markup=_selection_keyboard(claim_contexts),
+                reply_markup=_payment_selection_keyboard(claim_contexts),
             )
             return
         await message.reply_text(
@@ -334,20 +669,39 @@ async def payment_proof_review_callback(update: Update, context: ContextTypes.DE
         await query.message.reply_text('That payment proof is no longer available.', parse_mode='HTML')
         return
 
-    listing = await asyncio.to_thread(get_listing_by_id, str(proof['listing_id']))
     claim = await asyncio.to_thread(get_claim_by_id, str(proof['claim_id']))
-    if listing is None or claim is None:
+    listing = await asyncio.to_thread(get_listing_by_id, str(proof['listing_id']))
+    if claim is None or listing is None:
+        await asyncio.to_thread(set_payment_proof_status_by_id, proof_id=proof_id, status='stale')
         await query.edit_message_reply_markup(reply_markup=None)
-        await query.message.reply_text('The linked listing or claim could not be loaded.', parse_mode='HTML')
+        await query.message.reply_text('The linked listing or claim no longer exists.', parse_mode='HTML')
+        return
+
+    current_claim_status = str(claim.get('status') or '')
+    if current_claim_status not in {'confirmed', 'payment_pending'}:
+        replacement_status = 'withdrawn' if current_claim_status == 'withdrawn' else 'expired' if current_claim_status == 'failed' else 'stale'
+        await asyncio.to_thread(set_payment_proof_status_by_id, proof_id=proof_id, status=replacement_status)
+        await query.edit_message_reply_markup(reply_markup=None)
+        await query.message.reply_text(
+            f'This proof can no longer be reviewed because the claim is now <code>{html.escape(current_claim_status or "inactive")}</code>.',
+            parse_mode='HTML',
+        )
+        return
+
+    if str(proof.get('status') or '') != 'submitted':
+        await query.edit_message_reply_markup(reply_markup=None)
+        await query.message.reply_text(
+            f'This proof was already resolved as <code>{html.escape(str(proof.get("status") or "unknown"))}</code>.',
+            parse_mode='HTML',
+        )
         return
 
     if action == 'reject':
         reviewed = await asyncio.to_thread(
-            review_payment_proof,
+            set_payment_proof_status_by_id,
             proof_id=proof_id,
-            seller_id=str(seller['id']),
-            reviewed_by_telegram_id=update.effective_user.id,
             status='rejected',
+            reviewed_by_telegram_id=update.effective_user.id,
         )
         if reviewed is None:
             await query.message.reply_text('That proof was already reviewed earlier.', parse_mode='HTML')
@@ -387,16 +741,6 @@ async def payment_proof_review_callback(update: Update, context: ContextTypes.DE
         )
         return
 
-    reviewed = await asyncio.to_thread(
-        review_payment_proof,
-        proof_id=proof_id,
-        seller_id=str(seller['id']),
-        reviewed_by_telegram_id=update.effective_user.id,
-        status='approved',
-    )
-    if reviewed is None:
-        logger.info('Payment proof %s approval review was already processed.', proof_id)
-
     await query.edit_message_reply_markup(reply_markup=None)
     await query.message.reply_text(
         (
@@ -408,11 +752,16 @@ async def payment_proof_review_callback(update: Update, context: ContextTypes.DE
     )
 
 
+
 def register_payment_handlers(application: Application) -> None:
-    """Register buyer payment and seller proof-review handlers."""
+    """Register buyer payment, claim withdrawal, and seller proof-review handlers."""
 
     application.add_handler(CommandHandler('pay', pay_command))
+    application.add_handler(CommandHandler('unclaim', unclaim_command))
     application.add_handler(CallbackQueryHandler(payment_select_callback, pattern=r'^payment:select:'))
+    application.add_handler(CallbackQueryHandler(claim_withdraw_select_callback, pattern=r'^claimwithdraw:select:'))
+    application.add_handler(CallbackQueryHandler(claim_withdraw_confirm_callback, pattern=r'^claimwithdraw:confirm:'))
+    application.add_handler(CallbackQueryHandler(claim_withdraw_cancel_callback, pattern=r'^claimwithdraw:cancel:'))
     application.add_handler(CallbackQueryHandler(payment_proof_review_callback, pattern=r'^paymentproof:(?:approve|reject):'))
     application.add_handler(
         MessageHandler(

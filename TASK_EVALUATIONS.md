@@ -665,3 +665,15 @@ Use this log after meaningful implementation tasks.
 - validation: `.venv/bin/python -m py_compile db/claims.py db/payment_proofs.py services/payment_requests.py services/image_storage.py handlers/claims.py handlers/payments.py jobs/payment_deadlines.py jobs/auction_close.py main.py` passed; `.venv/bin/python - <<'PY' ... main.build_application() ... PY` built the PTB app successfully; the migration was applied successfully over the pooler connection and verified that `claims.payment_reference` and `claim_payment_proofs` now exist
 - what was weak: this still needs live Telegram QA with real buyer/seller chats, and seller rejection currently uses a generic retry message instead of a structured rejection reason
 - follow-up: run a full live claim -> `/pay` -> screenshot -> seller approve/reject test, then harden runtime startup so those flows can be verified repeatedly without local process flakiness
+- date: 2026-04-14
+- goal: harden claim/payment edge cases around buyer cancellation, stale proofs, and queue promotion races
+- outcome: added `claims.withdrawn_at` plus the `withdraw_claim_atomic(...)` RPC, introduced `/unclaim`, invalidated submitted proofs on withdrawal/expiry, auto-approved submitted proofs on manual sold completion, and blocked seller proof approval when the underlying claim is already withdrawn/expired/otherwise inactive
+- validation: `.venv/bin/python -m py_compile db/claims.py db/payment_proofs.py services/payment_requests.py handlers/claims.py handlers/payments.py handlers/transactions.py jobs/payment_deadlines.py main.py` passed; `main.build_application()` still succeeds; the migration was applied successfully over the Supabase pooler and verified that `claims.withdrawn_at` and `withdraw_claim_atomic` now exist; the bot was restarted successfully and reached `Application started`
+- what was weak: Telegram comment deletion still cannot be treated as a reliable cancellation trigger because the Bot API does not give a clean deleted-comment workflow here, so explicit `/unclaim` remains the supported path
+- follow-up: run live QA for queued withdrawal, winning-claim withdrawal, auction-winner withdrawal, stale seller proof buttons, and deadline-expiry proof invalidation
+- date: 2026-04-14
+- goal: close the privacy leak where `/unclaim` and `/pay` could reveal buyer claim data in public comment/group contexts
+- outcome: `handlers/payments.py` now blocks those commands outside private chat and responds with a redirect message instead of rendering claim lists publicly
+- validation: `.venv/bin/python -m py_compile handlers/payments.py` passed
+- what was weak: command discovery is still global in Telegram, so users can still type the command publicly; the bot just no longer reveals any sensitive claim data there
+- follow-up: keep new buyer self-service commands DM-only by default unless there is a strong product reason otherwise

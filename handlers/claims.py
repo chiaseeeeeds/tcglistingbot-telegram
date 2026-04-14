@@ -528,7 +528,8 @@ async def _handle_fixed_claim_comment(
                 text=(
                     '<b>Your claim is queued.</b>\n\n'
                     f'Item: <code>{listing.get("card_name")}</code>\n'
-                    f'Queue position: <code>{queue_position}</code>'
+                    f'Queue position: <code>{queue_position}</code>\n\n'
+                    'If you no longer want this queue spot, run <code>/unclaim</code> in the bot chat.'
                 ),
                 parse_mode='HTML',
             )

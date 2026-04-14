@@ -10,7 +10,7 @@ from db.rpc import call_rpc
 
 OPEN_CLAIM_STATUSES: tuple[str, ...] = ('queued', 'confirmed', 'payment_pending')
 WINNING_CLAIM_STATUSES: tuple[str, ...] = ('confirmed', 'payment_pending')
-
+WITHDRAWABLE_CLAIM_STATUSES: tuple[str, ...] = ('queued', 'confirmed', 'payment_pending')
 
 
 def get_claims_for_listing(listing_id: str) -> list[dict[str, Any]]:
@@ -86,6 +86,7 @@ def get_due_payment_claims(*, now_utc: datetime | None = None, limit: int = 25) 
     return extract_many(response)
 
 
+
 def list_open_payment_claims_for_buyer(*, buyer_telegram_id: int) -> list[dict[str, Any]]:
     """Return open winning claims for a buyer ordered by newest confirmation first."""
 
@@ -102,6 +103,23 @@ def list_open_payment_claims_for_buyer(*, buyer_telegram_id: int) -> list[dict[s
     return extract_many(response)
 
 
+
+def list_withdrawable_claims_for_buyer(*, buyer_telegram_id: int) -> list[dict[str, Any]]:
+    """Return queued or active claims a buyer can still withdraw."""
+
+    response = (
+        get_client()
+        .table('claims')
+        .select('*')
+        .eq('buyer_telegram_id', buyer_telegram_id)
+        .in_('status', list(WITHDRAWABLE_CLAIM_STATUSES))
+        .order('claimed_at', desc=True)
+        .execute()
+    )
+    return extract_many(response)
+
+
+
 def get_claim_by_payment_reference(*, payment_reference: str) -> dict[str, Any] | None:
     """Return the claim that owns a payment reference, if any."""
 
@@ -114,6 +132,7 @@ def get_claim_by_payment_reference(*, payment_reference: str) -> dict[str, Any] 
         .execute()
     )
     return extract_single(response)
+
 
 
 def ensure_payment_reference(*, claim_id: str) -> dict[str, Any]:
@@ -144,6 +163,7 @@ def ensure_payment_reference(*, claim_id: str) -> dict[str, Any]:
             raise RuntimeError(f'Failed to refresh claim after payment reference update: {claim_id}')
         return refreshed
     return updated
+
 
 
 def mark_payment_prompt_sent(*, claim_id: str, message_id: int | None) -> dict[str, Any] | None:
@@ -183,8 +203,6 @@ async def claim_listing_atomic(
     if isinstance(data, dict):
         return data
     raise RuntimeError('Atomic claim RPC returned no claim payload.')
-
-
 
 
 async def record_auction_bid_atomic(
@@ -231,6 +249,7 @@ async def close_auction_atomic(*, listing_id: str, payment_deadline_hours: int) 
         return data
     raise RuntimeError('Close auction RPC returned no payload.')
 
+
 async def advance_claim_queue(*, claim_id: str, payment_deadline_hours: int) -> dict[str, Any]:
     """Expire the current winning claim and promote the next queued claim when available."""
 
@@ -247,3 +266,22 @@ async def advance_claim_queue(*, claim_id: str, payment_deadline_hours: int) -> 
     if isinstance(data, dict):
         return data
     raise RuntimeError('Advance claim queue RPC returned no payload.')
+
+
+async def withdraw_claim_atomic(*, claim_id: str, buyer_telegram_id: int, payment_deadline_hours: int) -> dict[str, Any]:
+    """Withdraw a queued or active claim and promote the next buyer atomically when needed."""
+
+    next_payment_deadline = datetime.now(timezone.utc) + timedelta(hours=payment_deadline_hours)
+    data = await call_rpc(
+        'withdraw_claim_atomic',
+        {
+            'p_claim_id': claim_id,
+            'p_buyer_telegram_id': buyer_telegram_id,
+            'p_next_payment_deadline': next_payment_deadline.isoformat(),
+        },
+    )
+    if isinstance(data, list):
+        return data[0]
+    if isinstance(data, dict):
+        return data
+    raise RuntimeError('Withdraw claim RPC returned no payload.')
