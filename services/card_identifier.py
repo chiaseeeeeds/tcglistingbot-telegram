@@ -714,6 +714,9 @@ def _maybe_modern_ratio_match(*, raw_text: str, game: str, detected: dict[str, s
 def identify_card_from_text(*, raw_text: str, game: str, structured: OCRStructuredResult | None = None) -> CardIdentificationResult:
     """Match OCR text against the seeded local catalog for one game."""
 
+
+    logger.info('Raw text: %s', raw_text)
+
     detected = _extract_identifiers_from_structured(structured, raw_text=raw_text, game=game) if structured is not None else _extract_identifiers(raw_text, game=game)
     detected_print_number = detected.get('detected_print_number', '')
     detected_left_number = detected_print_number.split('/')[0].lstrip('0') if detected_print_number else ''

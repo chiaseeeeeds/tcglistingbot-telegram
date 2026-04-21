@@ -19,6 +19,7 @@ from db.claims import (
     WINNING_CLAIM_STATUSES,
     get_claim_by_id,
     get_claim_by_payment_reference,
+    get_open_claim_for_buyer,
     list_open_payment_claims_for_buyer,
     list_withdrawable_claims_for_buyer,
     mark_payment_prompt_sent,
@@ -33,6 +34,7 @@ from db.payment_proofs import (
 )
 from db.seller_configs import get_seller_config_by_seller_id
 from db.sellers import get_seller_by_id, get_seller_by_telegram_id
+from handlers.claims import _resolve_listing_from_reply
 from handlers.transactions import complete_sale_for_listing
 from services.image_storage import upload_payment_proof_photo
 from services.payment_requests import build_buyer_payment_message, ensure_payment_request_for_claim
@@ -59,6 +61,143 @@ async def _require_private_chat(update: Update) -> bool:
         return True
     await message.reply_text(_private_only_message(), parse_mode='HTML')
     return False
+
+
+def _is_private_chat(update: Update) -> bool:
+    chat = update.effective_chat
+    return chat is not None and chat.type == ChatType.PRIVATE
+
+
+async def _resolve_public_unclaim_claim(update: Update) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    message = update.effective_message
+    user = update.effective_user
+    if message is None or user is None or message.reply_to_message is None:
+        return None, None
+
+    listing, _ = await _resolve_listing_from_reply(message.reply_to_message)
+    if listing is None:
+        return None, None
+
+    claim = await asyncio.to_thread(
+        get_open_claim_for_buyer,
+        listing_id=str(listing['id']),
+        buyer_telegram_id=user.id,
+    )
+    return claim, listing
+
+
+async def _execute_claim_withdrawal(
+    *,
+    context: ContextTypes.DEFAULT_TYPE,
+    buyer_telegram_id: int,
+    claim: dict[str, Any],
+    listing: dict[str, Any],
+    response_target: Any,
+    edit: bool,
+    public_scope: bool = False,
+) -> None:
+    seller = await asyncio.to_thread(get_seller_by_id, str(listing['seller_id']))
+    seller_config = await asyncio.to_thread(get_seller_config_by_seller_id, str(listing['seller_id']))
+    payment_deadline_hours = int((seller_config or {}).get('payment_deadline_hours') or get_config().default_payment_deadline_hours)
+
+    try:
+        result = await withdraw_claim_atomic(
+            claim_id=str(claim['id']),
+            buyer_telegram_id=buyer_telegram_id,
+            payment_deadline_hours=payment_deadline_hours,
+        )
+    except Exception as exc:
+        logger.exception('Failed to withdraw claim %s: %s', claim.get('id'), exc)
+        reply_text = 'I could not withdraw that claim just now. Please try again.'
+        if edit:
+            await response_target.edit_message_text(reply_text)
+        else:
+            await response_target.reply_text(reply_text, parse_mode='HTML')
+        return
+
+    action = str(result.get('action') or 'noop')
+    if action == 'noop':
+        reply_text = 'That claim is no longer withdrawable.'
+        if edit:
+            await response_target.edit_message_text(reply_text)
+        else:
+            await response_target.reply_text(reply_text, parse_mode='HTML')
+        return
+
+    withdrawn_claim = result.get('withdrawn_claim') or claim
+    latest_listing = result.get('listing') or listing
+    promoted_claim = result.get('promoted_claim') or None
+
+    await asyncio.to_thread(
+        set_submitted_payment_proofs_status_for_claim,
+        claim_id=str(withdrawn_claim['id']),
+        status='withdrawn',
+    )
+
+    if edit:
+        buyer_message = (
+            '<b>Claim withdrawn.</b>\n\n'
+            f'Item: <code>{latest_listing.get("card_name")}</code>\n'
+            f'Previous status: <code>{claim.get("status")}</code>'
+        )
+        if action == 'promoted':
+            buyer_message += '\nThe next buyer has been promoted.'
+        elif action == 'auction_closed':
+            buyer_message += '\nThe auction is now closed because no other eligible bidder remained.'
+        elif action == 'reactivated':
+            buyer_message += '\nThe listing is no longer reserved and is active again.'
+        await response_target.edit_message_text(buyer_message, parse_mode='HTML')
+    else:
+        buyer_message = '✅ Your claim for this listing has been withdrawn.'
+        if not public_scope:
+            buyer_message = (
+                '<b>Claim withdrawn.</b>\n\n'
+                f'Item: <code>{latest_listing.get("card_name")}</code>\n'
+                f'Previous status: <code>{claim.get("status")}</code>'
+            )
+            if action == 'promoted':
+                buyer_message += '\nThe next buyer has been promoted.'
+            elif action == 'auction_closed':
+                buyer_message += '\nThe auction is now closed because no other eligible bidder remained.'
+            elif action == 'reactivated':
+                buyer_message += '\nThe listing is no longer reserved and is active again.'
+        await response_target.reply_text(buyer_message, parse_mode='HTML')
+
+
+    if seller is not None:
+        seller_lines = [
+            '<b>Buyer withdrew their claim.</b>',
+            '',
+            f'Item: <code>{latest_listing.get("card_name")}</code>',
+            f'Buyer: <code>{withdrawn_claim.get("buyer_display_name") or withdrawn_claim.get("buyer_telegram_id")}</code>',
+        ]
+        if promoted_claim is not None:
+            seller_lines.append(
+                f'Promoted buyer: <code>{promoted_claim.get("buyer_display_name") or promoted_claim.get("buyer_telegram_id")}</code>'
+            )
+        elif action == 'auction_closed':
+            seller_lines.append('No eligible bidder remained, so the auction is now closed.')
+        elif action == 'reactivated':
+            seller_lines.append('No replacement buyer remained, so the listing is open again.')
+        else:
+            seller_lines.append('The active winning claim is unchanged. Only the queue was updated.')
+        try:
+            await context.bot.send_message(
+                chat_id=int(seller['telegram_id']),
+                text='\n'.join(seller_lines),
+                parse_mode='HTML',
+            )
+        except Exception as exc:
+            logger.info('Could not DM seller %s after withdrawal: %s', seller.get('telegram_id'), exc)
+
+    if promoted_claim is not None:
+        await _notify_promoted_buyer(
+            application=context.application,
+            listing=latest_listing,
+            promoted_claim=promoted_claim,
+            seller_config=seller_config,
+            payment_deadline_hours=payment_deadline_hours,
+        )
 
 
 def _normalize_reference(value: str) -> str:
