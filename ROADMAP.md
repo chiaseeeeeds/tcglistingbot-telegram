@@ -322,3 +322,5 @@ Minimal Phase 1 GA is reached when Milestones 1 through 6 are complete for the P
 - April 14, 2026 sequencing update: the buyer payment-reference + screenshot + seller-review loop is now implemented, so the remaining Phase 1 execution gap shifts from missing payment-proof product code to live Telegram QA, runtime stability, and catalog/data completeness
 - April 14, 2026 execution update: voluntary claim cancellation is now DB-backed and race-safe via `/unclaim`, so the remaining Phase 1 gaps are less about claim-state mechanics and more about end-to-end Telegram QA, runtime reliability, and catalog completeness
 - April 14, 2026 privacy hardening: buyer self-service claim/payment commands now require DM context, which closes the accidental public claim-leak path from discussion comments
+- OCR backend sequencing changed: hosted OpenAI OCR is now the primary extraction path, with local Tesseract retained as the safety fallback rather than the default engine
+- near-term OCR hardening should focus on prompt/ROI tuning, latency/cost observation, and real-photo regression coverage instead of adding more Tesseract-only heuristics first

@@ -323,7 +323,7 @@ async def finalize_auction_photo_batch(update: Update, context: ContextTypes.DEF
             warning_lines.extend(_photo_quality_warning_lines(label='Selected back photo quality', quality=selection.analyses[back_index].photo_quality))
         warning_lines.extend(f'• {warning}' for warning in ocr_result.warnings)
         warning_block = '\n'.join(warning_lines) + f'\n• Build: {OCR_BUILD_MARKER}.\n\n'
-        admin_debug = _admin_debug_line(update=update, identification=identification, candidate_options=candidate_options)
+        admin_debug = _admin_debug_line(update=update, identification=identification, candidate_options=candidate_options, ocr_result=ocr_result)
 
         if identification.matched and identification.confidence >= 0.6:
             context.user_data['auction_detection_mode'] = 'matched'

@@ -194,3 +194,10 @@
 - April 14, 2026 withdrawal hardening: buyers can now explicitly back out with `/unclaim`; this uses the new atomic `withdraw_claim_atomic(...)` RPC plus `claims.withdrawn_at`, promotes the next fixed-price queue buyer or next eligible auction bidder when needed, expires submitted proof rows on timeout, and marks proof rows withdrawn/stale when the underlying claim is no longer valid
 - Telegram deleted-comment caveat: the bot still cannot reliably infer "delete comment = withdraw claim" from Bot API updates, so explicit `/unclaim` is now the supported source of truth for claim cancellation
 - April 14, 2026 privacy fix: `/pay` and `/unclaim` are now private-chat-only; when invoked from channel comments or group threads, the bot no longer lists claim data publicly and instead redirects the user to DM the bot
+- date: 2026-04-21
+- OCR primary provider is now `openai_gpt4o_mini` via the OpenAI Responses API with base64 ROI images and strict JSON-schema outputs in `services/openai_ocr.py`
+- `services/ocr.py` now batches one OpenAI OCR request per card candidate, preserves the existing crop/candidate logic, and falls back to Tesseract on request errors, schema failures, empty outputs, or missing usable identifier/name signals
+- `services/game_detection.py` now probes OpenAI first when `OCR_PROVIDER=openai_gpt4o_mini`, trusts strong `pokemon` / `onepiece` results, and falls back to the existing Tesseract token heuristic before the final Pokémon default
+- `config.py` now validates `OPENAI_API_KEY`, `OPENAI_OCR_MODEL`, and `OPENAI_OCR_TIMEOUT_SECONDS` for the new OpenAI OCR provider while keeping `tesseract` and `google_vision` valid
+- added unit coverage for config validation, OpenAI success/fallback behavior in OCR, OpenAI-first game detection, and listing-image classification continuity
+- remaining tuning gaps: real-photo prompt tuning for low-quality / glare-heavy crops, live API latency/cost monitoring, and manual smoke on Pokémon EN, Pokémon JP, One Piece, and known bad images before calling the OCR path production-ready

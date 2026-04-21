@@ -216,3 +216,8 @@
   - consider bidder-withdrawal rules for pre-close auction `bid_active` rows if that becomes product scope
 - privacy follow-up:
   - consider making other buyer-sensitive commands private-only by default if more buyer self-service is added later
+- DONE: OpenAI `gpt-4o-mini` is now the primary OCR backend via the Responses API with schema-constrained ROI extraction
+- DONE: Tesseract fallback still covers OCR request/schema/timeout/empty-signal failures
+- DONE: game detection now supports OpenAI-first probing with fallback to the current Tesseract heuristic
+- TODO: replace the placeholder `OPENAI_API_KEY` in `.env` before live hosted OCR testing
+- TODO: run live manual OCR smoke on Pokémon EN, Pokémon JP, One Piece, and one bad-quality image to tune prompts/warnings

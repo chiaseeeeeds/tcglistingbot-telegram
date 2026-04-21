@@ -7,9 +7,10 @@ import logging
 import re
 from collections import Counter
 from functools import lru_cache
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from tempfile import gettempdir
+from time import perf_counter
 
 import pytesseract
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps
@@ -17,6 +18,14 @@ from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 from config import get_config
 from db.cards import list_cards_for_game
 from services.card_detection import CardImageCandidate, extract_card_candidates
+from services.openai_ocr import (
+    OpenAIOCRBatchResult,
+    OpenAIOCRError,
+    OpenAIOCRRequestError,
+    OpenAIOCRSchemaError,
+    OpenAIOCRRegion,
+    extract_card_text_from_regions,
+)
 from services.ocr_signals import OCRSignal, OCRStructuredResult, render_legacy_ocr_text
 
 logger = logging.getLogger(__name__)
@@ -72,6 +81,10 @@ class OCRNotConfiguredError(RuntimeError):
 class OCRResult:
     text: str
     provider: str
+    model: str
+    requested_provider: str
+    used_fallback: bool
+    latency_ms: int
     warnings: list[str]
     structured: OCRStructuredResult
 
@@ -79,6 +92,8 @@ class OCRResult:
 @dataclass(frozen=True)
 class _CandidateOCR:
     source: str
+    provider: str
+    model: str
     confidence: float
     text: str
     score: int
@@ -88,6 +103,16 @@ class _CandidateOCR:
     roi_images: list[Image.Image]
     roi_labels: list[str]
     identifier_layout_family: str
+    warnings: list[str]
+
+
+@dataclass(frozen=True)
+class _PreparedCandidateBatch:
+    candidate_image: Image.Image
+    roi_images: list[Image.Image]
+    roi_labels: list[str]
+    identifier_regions: list[tuple[str, Image.Image]]
+    name_regions: list[tuple[str, Image.Image]]
 
 
 def get_ocr_provider_name() -> str:
@@ -137,6 +162,57 @@ def _name_windows_for_game(game: str | None) -> list[tuple[float, float, float, 
     if game == 'pokemon':
         return _POKEMON_NAME_WINDOWS
     return []
+
+
+def _prepare_legacy_ratio_roi(image: Image.Image) -> Image.Image:
+    return ImageOps.autocontrast(ImageOps.grayscale(image))
+
+
+def _prepare_candidate_batch(*, candidate: CardImageCandidate, game: str | None) -> _PreparedCandidateBatch:
+    roi_images: list[Image.Image] = []
+    roi_labels: list[str] = []
+    identifier_regions: list[tuple[str, Image.Image]] = []
+    name_regions: list[tuple[str, Image.Image]] = []
+
+    for index, window in enumerate(_identifier_windows_for_game(game), start=1):
+        roi = _prepare_identifier_roi(_crop_relative(candidate.image, window))
+        label = f'identifier_window_{index}'
+        roi_images.append(roi)
+        roi_labels.append(label)
+        identifier_regions.append((label, roi))
+
+    if game == 'pokemon':
+        for index, legacy_window in enumerate(_POKEMON_LEGACY_RATIO_WINDOWS, start=1):
+            roi = _prepare_legacy_ratio_roi(_crop_relative(candidate.image, legacy_window))
+            label = f'legacy_ratio_window_{index}'
+            roi_images.append(roi)
+            roi_labels.append(label)
+            identifier_regions.append((label, roi))
+
+    for index, window in enumerate(_name_windows_for_game(game), start=1):
+        roi = _prepare_name_roi(_crop_relative(candidate.image, window))
+        label = f'name_window_{index}'
+        roi_images.append(roi)
+        roi_labels.append(label)
+        name_regions.append((label, roi))
+
+    return _PreparedCandidateBatch(
+        candidate_image=candidate.image,
+        roi_images=roi_images,
+        roi_labels=roi_labels,
+        identifier_regions=identifier_regions,
+        name_regions=name_regions,
+    )
+
+
+def _prepare_openai_candidate_batch(*, candidate: CardImageCandidate) -> _PreparedCandidateBatch:
+    return _PreparedCandidateBatch(
+        candidate_image=candidate.image,
+        roi_images=[candidate.image],
+        roi_labels=['full_card'],
+        identifier_regions=[('full_card', candidate.image)],
+        name_regions=[],
+    )
 
 
 def _normalize_text(text: str) -> str:
@@ -190,13 +266,43 @@ def _build_structured_result(
         if printed_ratio:
             signals.append(OCRSignal(kind='printed_ratio', value=printed_ratio, confidence=identifier_conf, source=candidate.source, region='identifier'))
 
-    if best_name:
+    best_name_en, best_name_en_score = _select_best_name_for_prefix(all_name_chunks, prefix='NAME_EN')
+    best_name_jp, best_name_jp_score = _select_best_name_for_prefix(all_name_chunks, prefix='NAME_JP')
+    selected_name_values: list[tuple[str, str, int]] = []
+    if best_name_en:
+        selected_name_values.append(('name_en', best_name_en, best_name_en_score))
+    if best_name_jp:
+        selected_name_values.append(('name_jp', best_name_jp, best_name_jp_score))
+    elif best_name:
         prefix, _, body = best_name.partition(':')
         kind = 'name_jp' if prefix.strip().upper() == 'NAME_JP' else 'name_en'
         body_text = body.strip() if body else best_name.strip()
-        signals.append(OCRSignal(kind=kind, value=body_text, confidence=name_conf, source=candidate.source, region='name'))
+        selected_name_values.append((kind, body_text, name_score))
+
+    for kind, body_text, score_value in selected_name_values:
+        body_text = body_text.strip()
+        if not body_text:
+            continue
+        signal_confidence = _signal_confidence(score_value, cap=80)
+        signals.append(
+            OCRSignal(
+                kind=kind,
+                value=body_text,
+                confidence=signal_confidence or name_conf,
+                source=candidate.source,
+                region='name',
+            )
+        )
         for token in _extract_variant_tokens(body_text):
-            signals.append(OCRSignal(kind='variant_token', value=token, confidence=name_conf, source=candidate.source, region='name'))
+            signals.append(
+                OCRSignal(
+                    kind='variant_token',
+                    value=token,
+                    confidence=signal_confidence or name_conf,
+                    source=candidate.source,
+                    region='name',
+                )
+            )
 
     raw_regions = [
         {'source': candidate.source, 'label': label}
@@ -362,6 +468,74 @@ def _ocr_name_passes(image: Image.Image) -> list[str]:
     return _ocr_name_passes_tesseract(image)
 
 
+def _combine_identifier_parts(*, set_code: str, ratio_text: str) -> str:
+    set_code = _normalize_text(set_code).upper()
+    ratio_text = _normalize_text(ratio_text).upper()
+    if set_code and ratio_text:
+        return f'{set_code} {ratio_text}'
+    return set_code or ratio_text
+
+
+def _best_guess_label(result: OpenAIOCRBatchResult) -> str:
+    return result.best_guess.label.strip().lower()
+
+
+def _layout_family_from_openai(*, game: str | None, result: OpenAIOCRBatchResult) -> str:
+    if game != 'pokemon':
+        return 'generic_identifier_zone'
+    label = _best_guess_label(result)
+    if label.startswith('legacy_ratio_window_'):
+        return 'pokemon_legacy_bottom_right'
+    if label.startswith('identifier_window_'):
+        return 'pokemon_modern_identifier_zone'
+    return 'pokemon_card_generic'
+
+
+def _region_identifier_candidates(region: OpenAIOCRRegion) -> list[str]:
+    candidates: list[str] = []
+    identifier_text = _normalize_text(region.identifier_text).upper()
+    combined_identifier = _combine_identifier_parts(
+        set_code=region.set_code,
+        ratio_text=region.ratio_text,
+    )
+    ratio_text = _normalize_text(region.ratio_text).upper()
+    raw_text = _normalize_text(region.raw_text).upper()
+    for value in (identifier_text, combined_identifier, ratio_text, raw_text):
+        if value:
+            candidates.append(value)
+    return candidates
+
+
+def _region_name_candidates(region: OpenAIOCRRegion) -> list[str]:
+    candidates: list[str] = []
+    name_en = _normalize_text(region.name_en)
+    name_jp = _normalize_text(region.name_jp)
+    if name_en:
+        candidates.append(f'NAME_EN: {name_en}')
+    if name_jp:
+        candidates.append(f'NAME_JP: {name_jp}')
+    return candidates
+
+
+def _chunks_from_openai_result(result: OpenAIOCRBatchResult) -> tuple[list[str], list[str]]:
+    identifier_chunks: list[str] = []
+    name_chunks: list[str] = []
+
+    for region in result.regions:
+        identifier_chunks.extend(_region_identifier_candidates(region))
+        name_chunks.extend(_region_name_candidates(region))
+
+    identifier_chunks.extend(_region_identifier_candidates(result.best_guess))
+    name_chunks.extend(_region_name_candidates(result.best_guess))
+    return identifier_chunks, name_chunks
+
+
+def _has_usable_openai_signals(identifier_chunks: list[str], name_chunks: list[str], *, game: str | None) -> bool:
+    best_identifier, _ = _select_best_identifier(identifier_chunks, game=game)
+    best_name, _ = _select_best_name(name_chunks)
+    return bool(best_identifier or best_name)
+
+
 def _candidate_set_codes(chunks: list[str], *, game: str | None) -> Counter[str]:
     scores: Counter[str] = Counter()
     known_codes = _known_set_codes(game)
@@ -506,15 +680,27 @@ def _select_best_name(chunks: list[str]) -> tuple[str, int]:
     best_score = -1
     for chunk in chunks:
         body = chunk.split(':', 1)[1].strip() if ':' in chunk else chunk.strip()
-        tokens = re.findall(r'[A-Za-z]{2,}', body)
+        prefix = chunk.split(':', 1)[0].strip() if ':' in chunk else 'NAME_EN'
+        if prefix.upper() == 'NAME_JP':
+            tokens = [body] if body else []
+        else:
+            tokens = re.findall(r'[A-Za-z]{2,}', body)
         if not tokens:
             continue
-        prefix = chunk.split(':', 1)[0].strip() if ':' in chunk else 'NAME_EN'
         score, candidate = _score_name_window(tokens, prefix)
         if score > best_score:
             best_score = score
             best_chunk = candidate
     return best_chunk.strip(), max(best_score, 0)
+
+
+def _select_best_name_for_prefix(chunks: list[str], *, prefix: str) -> tuple[str, int]:
+    filtered_chunks = [chunk for chunk in chunks if chunk.split(':', 1)[0].strip().upper() == prefix]
+    best_chunk, best_score = _select_best_name(filtered_chunks)
+    if not best_chunk:
+        return '', 0
+    _, _, body = best_chunk.partition(':')
+    return body.strip() if body else best_chunk.strip(), best_score
 
 
 def _dedupe_text_chunks(chunks: list[str]) -> str:
@@ -539,7 +725,7 @@ def _write_debug_artifacts(*, source_path: Path, candidate: _CandidateOCR) -> No
         roi.save(debug_root / f'roi_{index}_{safe_label}.png')
     (debug_root / 'ocr_outputs.txt').write_text('\n'.join(candidate.identifier_chunks + candidate.name_chunks))
     (debug_root / 'summary.txt').write_text(
-        f'source={candidate.source}\nconfidence={candidate.confidence}\nscore={candidate.score}\ntext={candidate.text}\n'
+        f'source={candidate.source}\nprovider={candidate.provider}\nmodel={candidate.model}\nconfidence={candidate.confidence}\nscore={candidate.score}\ntext={candidate.text}\n'
     )
 
 
@@ -583,60 +769,19 @@ def _decisive_candidate(candidate: _CandidateOCR) -> bool:
     return has_identifier and has_name and candidate.score >= 180
 
 
-def _score_candidate(*, candidate: CardImageCandidate, game: str | None) -> _CandidateOCR:
-    roi_images: list[Image.Image] = []
-    roi_labels: list[str] = []
-    identifier_chunks: list[str] = []
-    best_identifier = ''
-    identifier_score = 0
-    identifier_layout_family = 'generic_identifier_zone'
-    best_region_identifier_score = 0
-    for index, window in enumerate(_identifier_windows_for_game(game), start=1):
-        roi = _prepare_identifier_roi(_crop_relative(candidate.image, window))
-        roi_images.append(roi)
-        roi_labels.append(f'identifier_window_{index}')
-        region_chunks = _ocr_identifier_passes(roi)
-        identifier_chunks.extend(region_chunks)
-        region_best_identifier, region_identifier_score = _select_best_identifier(region_chunks, game=game)
-        if region_best_identifier and region_identifier_score > best_region_identifier_score:
-            best_region_identifier_score = region_identifier_score
-            identifier_layout_family = 'pokemon_modern_identifier_zone' if game == 'pokemon' else 'generic_identifier_zone'
-        best_identifier, identifier_score = _select_best_identifier(identifier_chunks, game=game)
-        if best_identifier and identifier_score >= 120:
-            break
-
-    if game == 'pokemon' and (not best_identifier or identifier_score < 120):
-        for index, legacy_window in enumerate(_POKEMON_LEGACY_RATIO_WINDOWS, start=1):
-            legacy_ratio_roi = _crop_relative(candidate.image, legacy_window)
-            roi_images.append(legacy_ratio_roi)
-            roi_labels.append(f'legacy_ratio_window_{index}')
-            legacy_chunks = _ocr_legacy_ratio_pass(legacy_ratio_roi)
-            identifier_chunks.extend(legacy_chunks)
-            legacy_best_identifier, legacy_identifier_score = _select_best_identifier(legacy_chunks, game=game)
-            if legacy_best_identifier and legacy_identifier_score > best_region_identifier_score:
-                best_region_identifier_score = legacy_identifier_score
-                identifier_layout_family = 'pokemon_legacy_bottom_right'
-        best_identifier, identifier_score = _select_best_identifier(identifier_chunks, game=game)
-
-    name_chunks: list[str] = []
-    best_name = ''
-    name_score = 0
-    for index, window in enumerate(_name_windows_for_game(game), start=1):
-        roi = _prepare_name_roi(_crop_relative(candidate.image, window))
-        roi_images.append(roi)
-        roi_labels.append(f'name_window_{index}')
-        name_chunks.extend(_ocr_name_passes(roi))
-        best_name, name_score = _select_best_name(name_chunks)
-        if best_name and name_score >= 42:
-            break
-
-    signals = OCRStructuredResult(
-        layout_family=identifier_layout_family if game == 'pokemon' else 'generic_card',
-        selected_source=candidate.source,
-        signals=[],
-        raw_regions=[],
-        raw_chunks={},
-    )
+def _finalize_candidate_ocr(
+    *,
+    candidate: CardImageCandidate,
+    provider: str,
+    batch: _PreparedCandidateBatch,
+    identifier_chunks: list[str],
+    name_chunks: list[str],
+    identifier_layout_family: str,
+    game: str | None,
+    warnings: list[str] | None = None,
+) -> _CandidateOCR:
+    best_identifier, identifier_score = _select_best_identifier(identifier_chunks, game=game)
+    best_name, name_score = _select_best_name(name_chunks)
     text = _dedupe_text_chunks([f'IDENTIFIER: {best_identifier}' if best_identifier else '', best_name])
     score = int(identifier_score * 3 + name_score + candidate.confidence * 20)
     if candidate.source.startswith('detected_'):
@@ -645,12 +790,174 @@ def _score_candidate(*, candidate: CardImageCandidate, game: str | None) -> _Can
         score += 40
     elif best_identifier:
         score += 25
-    return _CandidateOCR(candidate.source, candidate.confidence, text, score, identifier_chunks, name_chunks, candidate.image, roi_images, roi_labels, identifier_layout_family)
+    return _CandidateOCR(
+        source=candidate.source,
+        provider=provider,
+        model=get_config().openai_ocr_model if provider == 'openai_gpt4o_mini' else provider,
+        confidence=candidate.confidence,
+        text=text,
+        score=score,
+        identifier_chunks=identifier_chunks,
+        name_chunks=name_chunks,
+        card_image=batch.candidate_image,
+        roi_images=batch.roi_images,
+        roi_labels=batch.roi_labels,
+        identifier_layout_family=identifier_layout_family,
+        warnings=list(warnings or []),
+    )
+
+
+def _score_candidate_with_tesseract(
+    *,
+    candidate: CardImageCandidate,
+    batch: _PreparedCandidateBatch,
+    game: str | None,
+    warnings: list[str] | None = None,
+) -> _CandidateOCR:
+    identifier_chunks: list[str] = []
+    best_identifier = ''
+    identifier_score = 0
+    identifier_layout_family = 'generic_identifier_zone'
+    best_region_identifier_score = 0
+
+    for label, roi in batch.identifier_regions:
+        if label.startswith('legacy_ratio_window_'):
+            region_chunks = _ocr_legacy_ratio_pass(roi)
+        else:
+            region_chunks = _ocr_identifier_passes_tesseract(roi)
+        identifier_chunks.extend(region_chunks)
+        region_best_identifier, region_identifier_score = _select_best_identifier(region_chunks, game=game)
+        if region_best_identifier and region_identifier_score > best_region_identifier_score:
+            best_region_identifier_score = region_identifier_score
+            if game == 'pokemon' and label.startswith('legacy_ratio_window_'):
+                identifier_layout_family = 'pokemon_legacy_bottom_right'
+            elif game == 'pokemon':
+                identifier_layout_family = 'pokemon_modern_identifier_zone'
+        best_identifier, identifier_score = _select_best_identifier(identifier_chunks, game=game)
+        if best_identifier and identifier_score >= 120 and not label.startswith('legacy_ratio_window_'):
+            break
+
+    name_chunks: list[str] = []
+    best_name = ''
+    name_score = 0
+    for _, roi in batch.name_regions:
+        name_chunks.extend(_ocr_name_passes_tesseract(roi))
+        best_name, name_score = _select_best_name(name_chunks)
+        if best_name and name_score >= 42:
+            break
+
+    return _finalize_candidate_ocr(
+        candidate=candidate,
+        provider='tesseract',
+        batch=batch,
+        identifier_chunks=identifier_chunks,
+        name_chunks=name_chunks,
+        identifier_layout_family=identifier_layout_family,
+        game=game,
+        warnings=warnings,
+    )
+
+
+def _score_candidate_with_current_provider(
+    *,
+    candidate: CardImageCandidate,
+    batch: _PreparedCandidateBatch,
+    game: str | None,
+) -> _CandidateOCR:
+    identifier_chunks: list[str] = []
+    best_identifier = ''
+    identifier_score = 0
+    identifier_layout_family = 'generic_identifier_zone'
+    best_region_identifier_score = 0
+
+    for label, roi in batch.identifier_regions:
+        if label.startswith('legacy_ratio_window_'):
+            region_chunks = _ocr_legacy_ratio_pass(roi)
+        else:
+            region_chunks = _ocr_identifier_passes(roi)
+        identifier_chunks.extend(region_chunks)
+        region_best_identifier, region_identifier_score = _select_best_identifier(region_chunks, game=game)
+        if region_best_identifier and region_identifier_score > best_region_identifier_score:
+            best_region_identifier_score = region_identifier_score
+            if game == 'pokemon' and label.startswith('legacy_ratio_window_'):
+                identifier_layout_family = 'pokemon_legacy_bottom_right'
+            elif game == 'pokemon':
+                identifier_layout_family = 'pokemon_modern_identifier_zone'
+        best_identifier, identifier_score = _select_best_identifier(identifier_chunks, game=game)
+        if best_identifier and identifier_score >= 120 and not label.startswith('legacy_ratio_window_'):
+            break
+
+    name_chunks: list[str] = []
+    best_name = ''
+    name_score = 0
+    for _, roi in batch.name_regions:
+        name_chunks.extend(_ocr_name_passes(roi))
+        best_name, name_score = _select_best_name(name_chunks)
+        if best_name and name_score >= 42:
+            break
+
+    return _finalize_candidate_ocr(
+        candidate=candidate,
+        provider=get_ocr_provider_name(),
+        batch=batch,
+        identifier_chunks=identifier_chunks,
+        name_chunks=name_chunks,
+        identifier_layout_family=identifier_layout_family,
+        game=game,
+    )
+
+
+def _score_candidate_with_openai(
+    *,
+    candidate: CardImageCandidate,
+    batch: _PreparedCandidateBatch,
+    game: str | None,
+) -> _CandidateOCR:
+    openai_result = extract_card_text_from_regions([('full_card', batch.candidate_image)])
+    if not openai_result.regions:
+        raise OpenAIOCRSchemaError('OpenAI OCR returned an empty regions array.')
+    identifier_chunks, name_chunks = _chunks_from_openai_result(openai_result)
+    if not _has_usable_openai_signals(identifier_chunks, name_chunks, game=game):
+        raise OpenAIOCRSchemaError('OpenAI OCR returned no usable identifier or name signals.')
+    return _finalize_candidate_ocr(
+        candidate=candidate,
+        provider='openai_gpt4o_mini',
+        batch=batch,
+        identifier_chunks=identifier_chunks,
+        name_chunks=name_chunks,
+        identifier_layout_family=_layout_family_from_openai(game=game, result=openai_result),
+        game=game,
+        warnings=openai_result.warnings,
+    )
+
+
+def _score_candidate(*, source_path: Path, candidate: CardImageCandidate, game: str | None) -> _CandidateOCR:
+    provider = get_ocr_provider_name()
+    if provider == 'openai_gpt4o_mini':
+        batch = _prepare_openai_candidate_batch(candidate=candidate)
+        try:
+            return _score_candidate_with_openai(candidate=candidate, batch=batch, game=game)
+        except (OpenAIOCRError, OCRNotConfiguredError) as exc:
+            logger.warning(
+                'Falling back to Tesseract OCR for image=%s provider=%s candidate=%s reason=%s',
+                source_path.name,
+                provider,
+                candidate.source,
+                exc,
+            )
+            fallback = _score_candidate_with_tesseract(candidate=candidate, batch=batch, game=game)
+            fallback_warning = (
+                'Hosted OCR was unavailable, so I used fallback OCR instead.'
+            )
+            return replace(fallback, warnings=fallback.warnings + [fallback_warning])
+    batch = _prepare_candidate_batch(candidate=candidate, game=game)
+    return _score_candidate_with_current_provider(candidate=candidate, batch=batch, game=game)
 
 
 def extract_text_from_image(image_path: str | Path, *, game: str | None = None) -> OCRResult:
+    started_at = perf_counter()
     provider = get_ocr_provider_name()
-    if provider not in {'tesseract', 'google_vision'}:
+    if provider not in {'openai_gpt4o_mini', 'tesseract', 'google_vision'}:
         raise OCRNotConfiguredError(f"OCR provider '{provider}' is not implemented yet in this environment.")
     path = Path(image_path)
     if not path.exists():
@@ -658,9 +965,11 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
     try:
         candidates = extract_card_candidates(path)
         finalists = _select_finalists(candidates)
+        if provider == 'openai_gpt4o_mini':
+            finalists = finalists[:1]
         scored_candidates: list[_CandidateOCR] = []
         for candidate in finalists:
-            scored = _score_candidate(candidate=candidate, game=game)
+            scored = _score_candidate(source_path=path, candidate=candidate, game=game)
             scored_candidates.append(scored)
             if _decisive_candidate(scored):
                 break
@@ -683,10 +992,11 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
         for candidate in scored_candidates:
             _write_debug_artifacts(source_path=path, candidate=candidate)
         logger.info(
-            'OCR selected candidate %s for %s with score=%s text=%s aggregated=%s layout=%s',
+            'OCR selected candidate %s for %s with score=%s provider=%s text=%s aggregated=%s layout=%s',
             best_candidate.source,
             path.name,
             best_candidate.score,
+            best_candidate.provider,
             best_candidate.text,
             aggregated_text,
             structured_result.layout_family,
@@ -697,6 +1007,8 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
         logger.exception('OCR failed for image %s: %s', path, exc)
         raise RuntimeError(f'OCR failed for image {path.name}.') from exc
     warnings: list[str] = []
+    for candidate in scored_candidates:
+        warnings.extend(candidate.warnings)
     detected_sources = [candidate for candidate in scored_candidates if candidate.source.startswith('detected_')]
     if not detected_sources:
         warnings.append('I could not isolate the card perfectly, so I used fallback card crops as well.')
@@ -706,4 +1018,15 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
         warnings.append('OCR returned very little text. A clearer photo may help.')
     if 'IDENTIFIER:' not in aggregated_text:
         warnings.append('Printed identifier was not detected clearly. Manual code input may still help.')
-    return OCRResult(text=aggregated_text, provider=provider, warnings=warnings, structured=structured_result)
+    deduped_warnings = list(dict.fromkeys(warnings))
+    latency_ms = int((perf_counter() - started_at) * 1000)
+    return OCRResult(
+        text=aggregated_text,
+        provider=best_candidate.provider,
+        model=best_candidate.model,
+        requested_provider=provider,
+        used_fallback=best_candidate.provider != provider,
+        latency_ms=latency_ms,
+        warnings=deduped_warnings,
+        structured=structured_result,
+    )

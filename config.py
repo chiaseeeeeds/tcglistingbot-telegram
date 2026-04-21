@@ -24,6 +24,9 @@ class Config:
     database_url: str
     supabase_storage_bucket: str
     ocr_provider: str
+    openai_api_key: str
+    openai_ocr_model: str
+    openai_ocr_timeout_seconds: int
     google_application_credentials: str
     primary_channel_username: str
     comments_via_discussion_group: bool
@@ -108,9 +111,15 @@ def get_config() -> Config:
         )
 
     ocr_provider = optional("OCR_PROVIDER", default="tesseract").strip().lower()
-    if ocr_provider not in {"tesseract", "google_vision"}:
+    if ocr_provider not in {"openai_gpt4o_mini", "tesseract", "google_vision"}:
         raise ConfigurationError(
-            "OCR_PROVIDER must be one of: 'tesseract', 'google_vision'."
+            "OCR_PROVIDER must be one of: 'openai_gpt4o_mini', 'tesseract', 'google_vision'."
+        )
+
+    openai_api_key = optional("OPENAI_API_KEY")
+    if ocr_provider == "openai_gpt4o_mini" and not openai_api_key:
+        raise ConfigurationError(
+            "OPENAI_API_KEY is required when OCR_PROVIDER=openai_gpt4o_mini."
         )
 
     google_application_credentials = optional("GOOGLE_APPLICATION_CREDENTIALS")
@@ -132,6 +141,11 @@ def get_config() -> Config:
             "SUPABASE_STORAGE_BUCKET", default="tcg-listing-bot-images"
         ),
         ocr_provider=ocr_provider,
+        openai_api_key=openai_api_key,
+        openai_ocr_model=require("OPENAI_OCR_MODEL", default="gpt-4o-mini"),
+        openai_ocr_timeout_seconds=parse_int(
+            "OPENAI_OCR_TIMEOUT_SECONDS", default="20"
+        ),
         google_application_credentials=google_application_credentials,
         primary_channel_username=optional("PRIMARY_CHANNEL_USERNAME"),
         comments_via_discussion_group=parse_bool(

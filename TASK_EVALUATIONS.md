@@ -677,3 +677,14 @@ Use this log after meaningful implementation tasks.
 - validation: `.venv/bin/python -m py_compile handlers/payments.py` passed
 - what was weak: command discovery is still global in Telegram, so users can still type the command publicly; the bot just no longer reveals any sensitive claim data there
 - follow-up: keep new buyer self-service commands DM-only by default unless there is a strong product reason otherwise
+
+## 2026-04-21 — OpenAI OCR Primary With Tesseract Fallback
+- date: 2026-04-21
+- task: replace the primary OCR path with OpenAI `gpt-4o-mini` while keeping Tesseract as the production fallback
+- goal: improve OCR quality without changing the listing flow, database shape, or current candidate-generation pipeline
+- outcome: added `services/openai_ocr.py`, switched main OCR and game detection to OpenAI-first behavior behind `OCR_PROVIDER=openai_gpt4o_mini`, preserved Tesseract fallback on API/schema/empty-signal failures, and added focused unit coverage for success + fallback paths
+- validation: `.venv/bin/python -m py_compile config.py services/openai_ocr.py services/ocr.py services/game_detection.py services/listing_image_classifier.py tests/test_config.py tests/test_ocr.py tests/test_game_detection.py tests/test_listing_image_classifier.py`; `.venv/bin/python -m unittest discover -s tests -v`
+- what went well: the swap stayed surgical because the repo already separated candidate crops from identifier scoring, so the backend could change without disturbing listing flow shape
+- what was weak: real OpenAI prompt tuning and live-image latency still need seller-photo QA, and the placeholder `.env` key must be replaced before hosted OCR can work outside tests
+- follow-up: run manual Telegram smoke on Pokémon EN / JP / One Piece fronts plus one intentionally poor photo, then tune prompt wording or ROI inclusion if the OpenAI path still hallucinates or under-reads
+- confidence: medium-high

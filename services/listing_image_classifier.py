@@ -46,6 +46,10 @@ def _empty_ocr_result(*, warning: str) -> OCRResult:
     return OCRResult(
         text='',
         provider='none',
+        model='none',
+        requested_provider='none',
+        used_fallback=False,
+        latency_ms=0,
         warnings=[warning],
         structured=OCRStructuredResult(layout_family='unknown', selected_source='none', signals=[]),
     )

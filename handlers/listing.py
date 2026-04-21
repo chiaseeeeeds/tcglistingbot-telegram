@@ -179,7 +179,7 @@ def _format_price_reference_block(price_refs: list[PriceReference]) -> str:
 
 
 
-def _admin_debug_line(*, update: Update | None, identification, candidate_options: list[dict]) -> str:
+def _admin_debug_line(*, update: Update | None, identification, candidate_options: list[dict], ocr_result=None) -> str:
     if update is None or update.effective_user is None:
         return ''
     admin_ids = set(get_config().bot_admin_telegram_ids)
@@ -195,10 +195,20 @@ def _admin_debug_line(*, update: Update | None, identification, candidate_option
     catalog_size = str(metadata.get('catalog_size') or 'unknown')
     number_candidate_count = str(metadata.get('number_candidate_count') or 'unknown')
     number_candidate_preview = str(metadata.get('number_candidate_preview') or 'unknown')
+    ocr_provider = str(getattr(ocr_result, 'provider', 'unknown') or 'unknown')
+    ocr_model = str(getattr(ocr_result, 'model', 'unknown') or 'unknown')
+    requested_provider = str(getattr(ocr_result, 'requested_provider', 'unknown') or 'unknown')
+    used_fallback = bool(getattr(ocr_result, 'used_fallback', False))
+    latency_ms = int(getattr(ocr_result, 'latency_ms', 0) or 0)
     return (
         '<b>Debug</b>\n'
         f"resolver=<code>{escape(resolver[:60])}</code> "
         f"svc=<code>{escape(service_build[:40])}</code>\n"
+        f"ocr=<code>{escape(ocr_provider[:24])}</code> "
+        f"model=<code>{escape(ocr_model[:32])}</code>\n"
+        f"requested=<code>{escape(requested_provider[:24])}</code> "
+        f"fallback=<code>{used_fallback}</code> "
+        f"latency=<code>{latency_ms}ms</code>\n"
         f"matched=<code>{identification.matched}</code> "
         f"conf=<code>{identification.confidence:.2f}</code> "
         f"catalog=<code>{escape(catalog_size[:12])}</code>\n"
@@ -444,7 +454,7 @@ async def finalize_photo_batch(update: Update, context: ContextTypes.DEFAULT_TYP
             warning_lines.extend(_photo_quality_warning_lines(label='Selected back photo quality', quality=selection.analyses[back_index].photo_quality))
         warning_lines.extend(f'• {warning}' for warning in ocr_result.warnings)
         warning_block = '\n'.join(warning_lines) + f'\n• Build: {OCR_BUILD_MARKER}.\n\n'
-        admin_debug = _admin_debug_line(update=update, identification=identification, candidate_options=candidate_options)
+        admin_debug = _admin_debug_line(update=update, identification=identification, candidate_options=candidate_options, ocr_result=ocr_result)
         raw_text = str(ocr_result.text or '')
 
         if identification.matched and identification.confidence >= 0.6:

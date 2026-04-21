@@ -2,35 +2,12 @@
   conversation = ConversationHandler(
 /Users/chiawei/orchids-projects/telegram-bot-api/handlers/auctions.py:755: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
   conversation = ConversationHandler(
-2026-04-21 11:26:27,803 INFO __main__ Starting bot process.
-2026-04-21 11:26:28,455 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
-2026-04-21 11:26:28,455 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
-2026-04-21 11:26:28,455 INFO apscheduler.scheduler Added job "run_payment_deadline_cycle" to job store "default"
-2026-04-21 11:26:28,455 INFO apscheduler.scheduler Added job "refresh_auction_listing_messages" to job store "default"
-2026-04-21 11:26:28,455 INFO apscheduler.scheduler Scheduler started
-2026-04-21 11:26:28,519 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
-2026-04-21 11:26:28,584 INFO apscheduler.scheduler Scheduler started
-2026-04-21 11:26:28,584 INFO telegram.ext.Application Application started
-2026-04-21 11:27:28,455 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-04-21 16:28:28 +08)" (scheduled at 2026-04-21 16:27:28.454990+08:00)
-2026-04-21 11:27:28,455 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-04-21 16:28:28 +08)" (scheduled at 2026-04-21 16:27:28.455314+08:00)
-2026-04-21 11:27:30,101 INFO jobs.payment_deadlines Payment deadline worker processing 1 due claim(s).
-2026-04-21 11:27:30,115 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-04-21 16:28:28 +08)" executed successfully
-2026-04-21 11:27:31,980 INFO jobs.payment_deadlines Could not DM expired buyer 1087968824: Forbidden: bots can't send messages to bots
-2026-04-21 11:27:31,980 INFO jobs.payment_deadlines Reactivated listing 5cc3dd63-b120-4df5-9ca0-c0ae79048996 after expired claim 1f65a3b8-709f-400b-9a10-35e5fa91abcb with no queued buyer.
-2026-04-21 11:27:32,238 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-04-21 16:28:28 +08)" executed successfully
-2026-04-21 11:28:28,456 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-04-21 16:29:28 +08)" (scheduled at 2026-04-21 16:28:28.454990+08:00)
-2026-04-21 11:28:28,456 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-04-21 16:29:28 +08)" (scheduled at 2026-04-21 16:28:28.455314+08:00)
-2026-04-21 11:28:28,812 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-04-21 16:29:28 +08)" executed successfully
-2026-04-21 11:28:28,812 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-04-21 16:29:28 +08)" executed successfully
-2026-04-21 11:29:28,456 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-04-21 16:30:28 +08)" (scheduled at 2026-04-21 16:29:28.454990+08:00)
-2026-04-21 11:29:28,457 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-04-21 16:30:28 +08)" (scheduled at 2026-04-21 16:29:28.455314+08:00)
-2026-04-21 11:29:29,502 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-04-21 16:30:28 +08)" executed successfully
-2026-04-21 11:29:29,502 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-04-21 16:30:28 +08)" executed successfully
-2026-04-21 11:30:28,455 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-04-21 16:31:28 +08)" (scheduled at 2026-04-21 16:30:28.454990+08:00)
-2026-04-21 11:30:28,457 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-04-21 16:31:28 +08)" (scheduled at 2026-04-21 16:30:28.455314+08:00)
-2026-04-21 11:30:28,783 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-04-21 16:31:28 +08)" executed successfully
-2026-04-21 11:30:28,787 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-04-21 16:31:28 +08)" executed successfully
-2026-04-21 11:31:28,456 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-04-21 16:32:28 +08)" (scheduled at 2026-04-21 16:31:28.454990+08:00)
-2026-04-21 11:31:28,456 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-04-21 16:32:28 +08)" (scheduled at 2026-04-21 16:31:28.455314+08:00)
-2026-04-21 11:31:29,058 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-04-21 16:32:28 +08)" executed successfully
-2026-04-21 11:31:29,058 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-04-21 16:32:28 +08)" executed successfully
+2026-04-21 11:44:54,943 INFO __main__ Starting bot process.
+2026-04-21 11:44:55,439 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-04-21 11:44:55,440 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-04-21 11:44:55,440 INFO apscheduler.scheduler Added job "run_payment_deadline_cycle" to job store "default"
+2026-04-21 11:44:55,440 INFO apscheduler.scheduler Added job "refresh_auction_listing_messages" to job store "default"
+2026-04-21 11:44:55,440 INFO apscheduler.scheduler Scheduler started
+2026-04-21 11:44:55,504 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-04-21 11:44:55,570 INFO apscheduler.scheduler Scheduler started
+2026-04-21 11:44:55,571 INFO telegram.ext.Application Application started
