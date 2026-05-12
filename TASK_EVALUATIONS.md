@@ -826,3 +826,58 @@ Use this log after meaningful implementation tasks.
 - what was weak: we still need a live Telegram retest to confirm the running bot now emits `print=233/182` on the real sample photo
 - follow-up: restart the bot and retry the exact `/list` and `/auction` seller photo that previously produced `print=3/182`
 - user_response: frustrated
+
+## 2026-05-12 — Local Bot KeepAlive Hardening
+- date: 2026-05-12
+- task: stop requiring manual bot restarts during local Telegram testing
+- goal: keep the polling bot running continuously and auto-restart it after silent exits
+- outcome: added `scripts/run_bot_service.sh`, `scripts/install_launch_agent.sh`, updated `.orchids/orchids.json` startup, installed a `launchd` agent with `KeepAlive`, and verified that killing the bot process causes an automatic restart with a new PID
+- validation: `launchctl print gui/$(id -u)/app.orchids.tcg-listing-bot`; manual kill of PID `97930` followed by confirmed restart as PID `98238`
+- what went well: this fixes the operational pain directly instead of only reviving the bot one crash at a time
+- what was weak: this is still a local-machine solution; production should still move to a webhook-friendly host with first-class process supervision
+- follow-up: if the bot still appears “dead” while the process is running, debug Telegram polling/network behavior rather than only process lifetime
+- user_response: frustrated
+
+## 2026-05-12 — Photo Batch Rejection Fix For Missing Tesseract
+- date: 2026-05-12
+- task: stop clear seller photos from being rejected by the generic photo-batch failure path
+- goal: make listing and auction photo batches survive local environments where the Python `pytesseract` package exists but the Tesseract binary is not installed
+- outcome: patched `services/game_detection.py` so heuristic game detection catches `TesseractNotFoundError`, logs a warning, and falls back to tokenless default detection instead of aborting the entire photo batch
+- validation: `.venv/bin/python -m unittest discover -s tests -p 'test_game_detection.py'`; `.venv/bin/python -m unittest discover -s tests -p 'test_listing_image_classifier.py'`; live bot restarted via `launchctl kickstart -k`
+- what went well: this fixes the actual rejection root cause and explains why the same clear photo suddenly started failing without any change in image quality
+- what was weak: local runtime still emits occasional Supabase/httpx `ReadError` noise in background jobs, which is separate from this photo-batch failure and still worth hardening later
+- follow-up: retry the same clear photo in `/list` or `/auction`; if it still fails, inspect the next traceback because it will be a different failure than the Tesseract crash
+- user_response: frustrated
+
+## 2026-05-12 — Seller Auction Ops Hardening
+- date: 2026-05-12
+- task: flesh out the seller-side auction process beyond raw creation and bid intake
+- goal: let sellers understand and control active auctions from the Telegram dashboard instead of relying on manual DB inspection or waiting for the close worker
+- outcome: added live auction counts to seller stats, auction-aware inventory/detail rendering, bid-aware queue screens, seller-side auction extension controls, and seller-side immediate auction close controls that reuse the existing close/award flow and post-edit logic
+- validation: `.venv/bin/python -m py_compile handlers/seller_tools.py db/listings.py jobs/auction_close.py handlers/auctions.py handlers/claims.py`; `.venv/bin/python -m unittest discover -s tests -p 'test_*.py'`
+- what went well: this adds meaningful auction operations without introducing new schema churn, and it reuses the existing atomic close logic instead of creating a second inconsistent close path
+- what was weak: auction seller ops are still dashboard-first rather than command-rich, and we do not yet have a dedicated auction history or bidder-management surface
+- follow-up: live-test extend/end controls on a real auction post and consider whether sellers also need pause/cancel/relist shortcuts
+- user_response: requested broader auction hardening
+
+## 2026-05-12 — Auction Creation Prompt Hardening
+- date: 2026-05-12
+- task: make `/auction` ask the seller for the actual auction terms they care about
+- goal: capture owner-defined rules and a real end date/time instead of forcing a bare duration-only flow
+- outcome: added explicit seller prompts for auction rules, expanded end-time input to accept exact local date/time or quick-hour presets, updated preview content, and updated the rendered auction post to show both the absolute end time and the rule block
+- validation: `.venv/bin/python -m py_compile handlers/auctions.py utils/formatters.py tests/test_auctions.py`; `.venv/bin/python -m unittest discover -s tests -p 'test_*.py'`
+- what went well: this matches the user’s real ask and makes the auction flow feel owner-driven instead of mechanically minimal
+- what was weak: the exact date/time parser is still intentionally strict; if sellers later want natural language like “tomorrow 9pm”, that would need another pass
+- follow-up: live-test `/auction` once and verify the seller prompt order feels right in chat
+- user_response: clarified that the missing gap was owner-facing auction prompts
+
+## 2026-05-12 — Auction Anti-Snipe Flow Hardening
+- date: 2026-05-12
+- task: expose anti-snipe as a real seller-facing auction setting instead of a hidden default
+- goal: close the gap between the documented auction flow and the actual `/auction` creation path
+- outcome: added seller-side anti-snipe input, stored it on auction listings, rendered it on auction posts, and threaded it through bid refresh / close edit paths so the live listing always reflects the configured anti-snipe behavior
+- validation: `.venv/bin/python -m py_compile handlers/auctions.py utils/formatters.py db/listings.py handlers/claims.py jobs/auction_close.py handlers/seller_tools.py tests/test_auctions.py`; `.venv/bin/python -m unittest discover -s tests -p 'test_*.py'`
+- what went well: this uses an existing schema/RPC capability that was already present but hidden from sellers, so it materially improves the auction flow without migration churn
+- what was weak: reserve prices and per-auction payment deadlines are still not first-class backend features yet
+- follow-up: decide whether to add reserve-price enforcement and per-auction payment-deadline overrides as new listing fields plus RPC logic
+- user_response: wants the full auction flow thought through without hand-holding

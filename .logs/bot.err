@@ -1,0 +1,484 @@
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py:851: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/auctions.py:771: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+2026-05-12 18:42:19,261 INFO __main__ Starting bot process.
+2026-05-12 18:42:20,782 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 18:42:20,783 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 18:42:20,783 INFO apscheduler.scheduler Added job "run_payment_deadline_cycle" to job store "default"
+2026-05-12 18:42:20,783 INFO apscheduler.scheduler Added job "refresh_auction_listing_messages" to job store "default"
+2026-05-12 18:42:20,783 INFO apscheduler.scheduler Scheduler started
+2026-05-12 18:42:20,958 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-05-12 18:42:21,142 INFO apscheduler.scheduler Scheduler started
+2026-05-12 18:42:21,143 INFO telegram.ext.Application Application started
+2026-05-12 18:42:45,901 INFO telegram.ext.Application Application is stopping. This might take a moment.
+2026-05-12 18:42:45,902 INFO apscheduler.scheduler Scheduler has been shut down
+2026-05-12 18:42:45,913 INFO telegram.ext.Application Application.stop() complete
+2026-05-12 18:42:45,917 INFO apscheduler.scheduler Scheduler has been shut down
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py:851: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/auctions.py:771: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+2026-05-12 18:42:46,679 INFO __main__ Starting bot process.
+2026-05-12 18:42:47,734 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 18:42:47,734 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 18:42:47,734 INFO apscheduler.scheduler Added job "run_payment_deadline_cycle" to job store "default"
+2026-05-12 18:42:47,735 INFO apscheduler.scheduler Added job "refresh_auction_listing_messages" to job store "default"
+2026-05-12 18:42:47,735 INFO apscheduler.scheduler Scheduler started
+2026-05-12 18:42:47,907 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-05-12 18:42:48,092 INFO apscheduler.scheduler Scheduler started
+2026-05-12 18:42:48,092 INFO telegram.ext.Application Application started
+2026-05-12 18:43:47,735 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:44:47 +08)" (scheduled at 2026-05-12 18:43:47.733973+08:00)
+2026-05-12 18:43:47,736 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:44:47 +08)" (scheduled at 2026-05-12 18:43:47.734496+08:00)
+2026-05-12 18:43:48,926 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:44:47 +08)" executed successfully
+2026-05-12 18:43:48,927 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:44:47 +08)" executed successfully
+2026-05-12 18:44:47,735 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:45:47 +08)" (scheduled at 2026-05-12 18:44:47.733973+08:00)
+2026-05-12 18:44:47,736 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:45:47 +08)" (scheduled at 2026-05-12 18:44:47.734496+08:00)
+2026-05-12 18:44:47,877 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:45:47 +08)" executed successfully
+2026-05-12 18:44:47,878 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:45:47 +08)" executed successfully
+2026-05-12 18:45:15,473 WARNING services.image_storage Failed to upload listing photo /var/folders/x9/ffgkn9zj5f96zsngx6n5pqm00000gn/T/tcg-listing-bot/59b8782d-3639-40ad-a61b-ba44216ba8c4.jpg to storage bucket tcg-listing-bot-images: {'statusCode': 404, 'error': Bucket not found, 'message': Bucket not found}
+2026-05-12 18:45:16,362 INFO handlers.listing Starting listing photo-batch finalization for seller=450516240 images=1.
+2026-05-12 18:45:16,550 INFO services.game_detection Skipping hosted game detection for 59b8782d-3639-40ad-a61b-ba44216ba8c4.jpg and using heuristic-only mode for lower latency.
+2026-05-12 18:45:16,582 ERROR handlers.listing Failed to finalize listing photo batch: tesseract is not installed or it's not in your PATH. See README file for more information.
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/pytesseract/pytesseract.py", line 275, in run_tesseract
+    proc = subprocess.Popen(cmd_args, **subprocess_args())
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 951, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 1821, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+FileNotFoundError: [Errno 2] No such file or directory: 'tesseract'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py", line 408, in finalize_photo_batch
+    selection = await asyncio.to_thread(
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/services/listing_image_classifier.py", line 127, in classify_listing_images
+    game_detection = detect_game_from_image(image_path)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/services/game_detection.py", line 105, in detect_game_from_image
+    return _heuristic_game_detection(regions)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/services/game_detection.py", line 72, in _heuristic_game_detection
+    probe_text, tokens_seen = _tesseract_probe(regions)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/services/game_detection.py", line 58, in _tesseract_probe
+    text = pytesseract.image_to_string(roi, lang='eng', config='--psm 6')
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/pytesseract/pytesseract.py", line 486, in image_to_string
+    return {
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/pytesseract/pytesseract.py", line 489, in <lambda>
+    Output.STRING: lambda: run_and_get_output(*args),
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/pytesseract/pytesseract.py", line 352, in run_and_get_output
+    run_tesseract(**kwargs)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/pytesseract/pytesseract.py", line 280, in run_tesseract
+    raise TesseractNotFoundError()
+pytesseract.pytesseract.TesseractNotFoundError: tesseract is not installed or it's not in your PATH. See README file for more information.
+2026-05-12 18:45:39,920 WARNING services.image_storage Failed to upload listing photo /var/folders/x9/ffgkn9zj5f96zsngx6n5pqm00000gn/T/tcg-listing-bot/98b07311-9b36-43c4-a697-eb0c44029357.jpg to storage bucket tcg-listing-bot-images: {'statusCode': 404, 'error': Bucket not found, 'message': Bucket not found}
+2026-05-12 18:45:42,413 INFO handlers.listing Starting listing photo-batch finalization for seller=450516240 images=1.
+2026-05-12 18:45:42,552 INFO services.game_detection Skipping hosted game detection for 98b07311-9b36-43c4-a697-eb0c44029357.jpg and using heuristic-only mode for lower latency.
+2026-05-12 18:45:42,581 ERROR handlers.listing Failed to finalize listing photo batch: tesseract is not installed or it's not in your PATH. See README file for more information.
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/pytesseract/pytesseract.py", line 275, in run_tesseract
+    proc = subprocess.Popen(cmd_args, **subprocess_args())
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 951, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 1821, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+FileNotFoundError: [Errno 2] No such file or directory: 'tesseract'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py", line 408, in finalize_photo_batch
+    selection = await asyncio.to_thread(
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/services/listing_image_classifier.py", line 127, in classify_listing_images
+    game_detection = detect_game_from_image(image_path)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/services/game_detection.py", line 105, in detect_game_from_image
+    return _heuristic_game_detection(regions)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/services/game_detection.py", line 72, in _heuristic_game_detection
+    probe_text, tokens_seen = _tesseract_probe(regions)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/services/game_detection.py", line 58, in _tesseract_probe
+    text = pytesseract.image_to_string(roi, lang='eng', config='--psm 6')
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/pytesseract/pytesseract.py", line 486, in image_to_string
+    return {
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/pytesseract/pytesseract.py", line 489, in <lambda>
+    Output.STRING: lambda: run_and_get_output(*args),
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/pytesseract/pytesseract.py", line 352, in run_and_get_output
+    run_tesseract(**kwargs)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/pytesseract/pytesseract.py", line 280, in run_tesseract
+    raise TesseractNotFoundError()
+pytesseract.pytesseract.TesseractNotFoundError: tesseract is not installed or it's not in your PATH. See README file for more information.
+2026-05-12 18:45:47,735 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:46:47 +08)" (scheduled at 2026-05-12 18:45:47.733973+08:00)
+2026-05-12 18:45:47,737 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:46:47 +08)" (scheduled at 2026-05-12 18:45:47.734496+08:00)
+2026-05-12 18:45:47,824 ERROR apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:46:47 +08)" raised an exception
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_transports/default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/connection.py", line 103, in handle_request
+    return self._connection.handle_request(request)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 187, in handle_request
+    raise exc
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 150, in handle_request
+    status, headers = self._receive_response(
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 294, in _receive_response
+    event = self._receive_stream_event(request, stream_id)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 336, in _receive_stream_event
+    self._receive_events(request, stream_id)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 364, in _receive_events
+    events = self._read_incoming_data(request)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 438, in _read_incoming_data
+    raise self._read_exception  # pragma: nocover
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_transports/default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/connection.py", line 103, in handle_request
+    return self._connection.handle_request(request)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 187, in handle_request
+    raise exc
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 150, in handle_request
+    status, headers = self._receive_response(
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 294, in _receive_response
+    event = self._receive_stream_event(request, stream_id)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 336, in _receive_stream_event
+    self._receive_events(request, stream_id)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 364, in _receive_events
+    events = self._read_incoming_data(request)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 455, in _read_incoming_data
+    raise exc
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 441, in _read_incoming_data
+    data = self._network_stream.read(self.READ_NUM_BYTES, timeout)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_backends/sync.py", line 128, in read
+    return self._sock.recv(max_bytes)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 135, in __exit__
+    self.gen.throw(type, value, traceback)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ReadError: [Errno 35] Resource temporarily unavailable
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/apscheduler/executors/base.py", line 181, in run_coroutine_job
+    retval = await job.func(*job.args, **job.kwargs)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/jobs/payment_deadlines.py", line 135, in run_payment_deadline_cycle
+    due_claims = await asyncio.to_thread(get_due_payment_claims)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/db/claims.py", line 77, in get_due_payment_claims
+    get_client()
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/postgrest/_sync/request_builder.py", line 57, in execute
+    r = self.session.request(
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_client.py", line 825, in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_client.py", line 914, in send
+    response = self._send_handling_auth(
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_transports/default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 135, in __exit__
+    self.gen.throw(type, value, traceback)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ReadError: [Errno 35] Resource temporarily unavailable
+2026-05-12 18:45:47,845 ERROR apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:46:47 +08)" raised an exception
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_transports/default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/connection.py", line 103, in handle_request
+    return self._connection.handle_request(request)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 187, in handle_request
+    raise exc
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 150, in handle_request
+    status, headers = self._receive_response(
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 294, in _receive_response
+    event = self._receive_stream_event(request, stream_id)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 336, in _receive_stream_event
+    self._receive_events(request, stream_id)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 364, in _receive_events
+    events = self._read_incoming_data(request)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 438, in _read_incoming_data
+    raise self._read_exception  # pragma: nocover
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_transports/default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/connection.py", line 103, in handle_request
+    return self._connection.handle_request(request)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 187, in handle_request
+    raise exc
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 150, in handle_request
+    status, headers = self._receive_response(
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 294, in _receive_response
+    event = self._receive_stream_event(request, stream_id)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 336, in _receive_stream_event
+    self._receive_events(request, stream_id)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 364, in _receive_events
+    events = self._read_incoming_data(request)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 455, in _read_incoming_data
+    raise exc
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_sync/http2.py", line 441, in _read_incoming_data
+    data = self._network_stream.read(self.READ_NUM_BYTES, timeout)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_backends/sync.py", line 128, in read
+    return self._sock.recv(max_bytes)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 135, in __exit__
+    self.gen.throw(type, value, traceback)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ReadError: [Errno 35] Resource temporarily unavailable
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/apscheduler/executors/base.py", line 181, in run_coroutine_job
+    retval = await job.func(*job.args, **job.kwargs)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py", line 107, in refresh_auction_listing_messages
+    listings = await asyncio.to_thread(get_live_auction_listings)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/db/listings.py", line 148, in get_live_auction_listings
+    get_client()
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/postgrest/_sync/request_builder.py", line 57, in execute
+    r = self.session.request(
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_client.py", line 825, in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_client.py", line 914, in send
+    response = self._send_handling_auth(
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_transports/default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 135, in __exit__
+    self.gen.throw(type, value, traceback)
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/.venv/lib/python3.9/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ReadError: [Errno 35] Resource temporarily unavailable
+2026-05-12 18:46:47,734 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:47:47 +08)" (scheduled at 2026-05-12 18:46:47.733973+08:00)
+2026-05-12 18:46:47,736 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:47:47 +08)" (scheduled at 2026-05-12 18:46:47.734496+08:00)
+2026-05-12 18:46:48,316 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:47:47 +08)" executed successfully
+2026-05-12 18:46:48,317 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:47:47 +08)" executed successfully
+2026-05-12 18:47:47,735 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:48:47 +08)" (scheduled at 2026-05-12 18:47:47.733973+08:00)
+2026-05-12 18:47:47,736 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:48:47 +08)" (scheduled at 2026-05-12 18:47:47.734496+08:00)
+2026-05-12 18:47:48,020 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:48:47 +08)" executed successfully
+2026-05-12 18:47:48,021 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:48:47 +08)" executed successfully
+2026-05-12 18:47:50,040 INFO telegram.ext.Application Application is stopping. This might take a moment.
+2026-05-12 18:47:50,041 INFO apscheduler.scheduler Scheduler has been shut down
+2026-05-12 18:47:50,052 INFO telegram.ext.Application Application.stop() complete
+2026-05-12 18:47:50,054 INFO apscheduler.scheduler Scheduler has been shut down
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py:851: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/auctions.py:771: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+2026-05-12 18:47:51,027 INFO __main__ Starting bot process.
+2026-05-12 18:47:52,057 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 18:47:52,058 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 18:47:52,058 INFO apscheduler.scheduler Added job "run_payment_deadline_cycle" to job store "default"
+2026-05-12 18:47:52,058 INFO apscheduler.scheduler Added job "refresh_auction_listing_messages" to job store "default"
+2026-05-12 18:47:52,058 INFO apscheduler.scheduler Scheduler started
+2026-05-12 18:47:52,232 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-05-12 18:47:52,403 INFO apscheduler.scheduler Scheduler started
+2026-05-12 18:47:52,403 INFO telegram.ext.Application Application started
+2026-05-12 18:48:52,059 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:49:52 +08)" (scheduled at 2026-05-12 18:48:52.057587+08:00)
+2026-05-12 18:48:52,059 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:49:52 +08)" (scheduled at 2026-05-12 18:48:52.058249+08:00)
+2026-05-12 18:48:52,675 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:49:52 +08)" executed successfully
+2026-05-12 18:48:52,694 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:49:52 +08)" executed successfully
+2026-05-12 18:49:44,536 WARNING services.image_storage Failed to upload listing photo /var/folders/x9/ffgkn9zj5f96zsngx6n5pqm00000gn/T/tcg-listing-bot/b4e30640-386d-495d-a6ed-f716df3f1da8.jpg to storage bucket tcg-listing-bot-images: {'statusCode': 404, 'error': Bucket not found, 'message': Bucket not found}
+2026-05-12 18:49:45,912 INFO handlers.listing Starting listing photo-batch finalization for seller=450516240 images=1.
+2026-05-12 18:49:46,070 INFO services.game_detection Skipping hosted game detection for b4e30640-386d-495d-a6ed-f716df3f1da8.jpg and using heuristic-only mode for lower latency.
+2026-05-12 18:49:46,099 WARNING services.game_detection Tesseract binary is unavailable during game detection; defaulting to tokenless heuristic mode.
+2026-05-12 18:49:51,972 WARNING services.openai_ocr OpenAI OCR output was not valid JSON: {"regions":[{"label":"raw_photo","identifier_text":"","ratio_text":"","set_code":"D","name_en":"Team Rocket's Nidoking EX","name_jp":"","raw_text":"Stage 2\\nEvolves from Team Rocket's Nidorino\\nHP -330\\nTainted Horn\\nYour opponent's Active Pokémon is now Poisoned. During Pokémon Checkup, put 8 d
+2026-05-12 18:49:52,059 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:50:52 +08)" (scheduled at 2026-05-12 18:49:52.057587+08:00)
+2026-05-12 18:49:52,063 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:50:52 +08)" (scheduled at 2026-05-12 18:49:52.058249+08:00)
+2026-05-12 18:49:52,195 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:50:52 +08)" executed successfully
+2026-05-12 18:49:52,195 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:50:52 +08)" executed successfully
+2026-05-12 18:49:57,804 INFO services.ocr OCR selected candidate raw_photo for b4e30640-386d-495d-a6ed-f716df3f1da8.jpg with score=1398 provider=openai_gpt4o_mini text=IDENTIFIER: 233/182 | NAME_EN: Team Rocket Nidoking EX aggregated=IDENTIFIER: 233/182 | NAME_EN: Team Rocket Nidoking EX layout=pokemon_card_generic
+2026-05-12 18:49:57,805 INFO services.card_identifier Raw text: IDENTIFIER: 233/182 | NAME_EN: Team Rocket Nidoking EX
+2026-05-12 18:50:18,494 INFO handlers.listing Completed listing photo-batch finalization for seller=450516240 in 32.58s.
+2026-05-12 18:50:50,459 INFO services.pricecharting Skipping PriceCharting scrape fallback because no API token is configured and scrape fallback is disabled.
+2026-05-12 18:50:52,058 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:51:52 +08)" (scheduled at 2026-05-12 18:50:52.057587+08:00)
+2026-05-12 18:50:52,063 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:51:52 +08)" (scheduled at 2026-05-12 18:50:52.058249+08:00)
+2026-05-12 18:50:52,101 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:51:52 +08)" executed successfully
+2026-05-12 18:50:52,106 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:51:52 +08)" executed successfully
+2026-05-12 18:51:01,895 INFO handlers.listing Posted listing 0c632948-52e3-4a27-b340-5ac82275d8e5 to channel -1003790220044.
+2026-05-12 18:51:52,058 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:52:52 +08)" (scheduled at 2026-05-12 18:51:52.057587+08:00)
+2026-05-12 18:51:52,059 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:52:52 +08)" (scheduled at 2026-05-12 18:51:52.058249+08:00)
+2026-05-12 18:51:52,727 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:52:52 +08)" executed successfully
+2026-05-12 18:51:52,728 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:52:52 +08)" executed successfully
+2026-05-12 18:52:52,115 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:53:52 +08)" (scheduled at 2026-05-12 18:52:52.057587+08:00)
+2026-05-12 18:52:52,116 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:53:52 +08)" (scheduled at 2026-05-12 18:52:52.058249+08:00)
+2026-05-12 18:52:52,744 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:53:52 +08)" executed successfully
+2026-05-12 18:52:52,744 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:53:52 +08)" executed successfully
+2026-05-12 18:53:52,058 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:54:52 +08)" (scheduled at 2026-05-12 18:53:52.057587+08:00)
+2026-05-12 18:53:52,061 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:54:52 +08)" (scheduled at 2026-05-12 18:53:52.058249+08:00)
+2026-05-12 18:53:52,783 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:54:52 +08)" executed successfully
+2026-05-12 18:53:52,784 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:54:52 +08)" executed successfully
+2026-05-12 18:54:52,059 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:55:52 +08)" (scheduled at 2026-05-12 18:54:52.057587+08:00)
+2026-05-12 18:54:52,060 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:55:52 +08)" (scheduled at 2026-05-12 18:54:52.058249+08:00)
+2026-05-12 18:54:52,627 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:55:52 +08)" executed successfully
+2026-05-12 18:54:52,627 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:55:52 +08)" executed successfully
+2026-05-12 18:55:39,635 INFO telegram.ext.Application Application is stopping. This might take a moment.
+2026-05-12 18:55:39,637 INFO apscheduler.scheduler Scheduler has been shut down
+2026-05-12 18:55:39,647 INFO telegram.ext.Application Application.stop() complete
+2026-05-12 18:55:39,649 INFO apscheduler.scheduler Scheduler has been shut down
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py:851: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/auctions.py:771: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+2026-05-12 18:55:40,671 INFO __main__ Starting bot process.
+2026-05-12 18:55:43,039 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 18:55:43,039 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 18:55:43,039 INFO apscheduler.scheduler Added job "run_payment_deadline_cycle" to job store "default"
+2026-05-12 18:55:43,039 INFO apscheduler.scheduler Added job "refresh_auction_listing_messages" to job store "default"
+2026-05-12 18:55:43,040 INFO apscheduler.scheduler Scheduler started
+2026-05-12 18:55:43,211 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-05-12 18:55:43,395 INFO apscheduler.scheduler Scheduler started
+2026-05-12 18:55:43,395 INFO telegram.ext.Application Application started
+2026-05-12 18:56:43,040 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:57:43 +08)" (scheduled at 2026-05-12 18:56:43.038833+08:00)
+2026-05-12 18:56:43,041 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:57:43 +08)" (scheduled at 2026-05-12 18:56:43.039407+08:00)
+2026-05-12 18:56:43,853 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:57:43 +08)" executed successfully
+2026-05-12 18:56:43,858 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:57:43 +08)" executed successfully
+2026-05-12 18:57:43,040 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:58:43 +08)" (scheduled at 2026-05-12 18:57:43.038833+08:00)
+2026-05-12 18:57:43,040 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:58:43 +08)" (scheduled at 2026-05-12 18:57:43.039407+08:00)
+2026-05-12 18:57:43,302 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:58:43 +08)" executed successfully
+2026-05-12 18:57:43,304 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:58:43 +08)" executed successfully
+2026-05-12 18:58:43,040 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:59:43 +08)" (scheduled at 2026-05-12 18:58:43.038833+08:00)
+2026-05-12 18:58:43,041 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:59:43 +08)" (scheduled at 2026-05-12 18:58:43.039407+08:00)
+2026-05-12 18:58:43,566 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 18:59:43 +08)" executed successfully
+2026-05-12 18:58:43,566 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 18:59:43 +08)" executed successfully
+2026-05-12 18:59:43,040 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:00:43 +08)" (scheduled at 2026-05-12 18:59:43.038833+08:00)
+2026-05-12 18:59:43,041 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:00:43 +08)" (scheduled at 2026-05-12 18:59:43.039407+08:00)
+2026-05-12 18:59:43,154 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:00:43 +08)" executed successfully
+2026-05-12 18:59:43,155 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:00:43 +08)" executed successfully
+2026-05-12 19:00:43,040 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:01:43 +08)" (scheduled at 2026-05-12 19:00:43.038833+08:00)
+2026-05-12 19:00:43,041 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:01:43 +08)" (scheduled at 2026-05-12 19:00:43.039407+08:00)
+2026-05-12 19:00:43,647 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:01:43 +08)" executed successfully
+2026-05-12 19:00:43,648 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:01:43 +08)" executed successfully
+2026-05-12 19:01:18,744 INFO telegram.ext.Application Application is stopping. This might take a moment.
+2026-05-12 19:01:18,745 INFO apscheduler.scheduler Scheduler has been shut down
+2026-05-12 19:01:18,756 INFO telegram.ext.Application Application.stop() complete
+2026-05-12 19:01:18,758 INFO apscheduler.scheduler Scheduler has been shut down
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py:851: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/auctions.py:829: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+2026-05-12 19:01:19,671 INFO __main__ Starting bot process.
+2026-05-12 19:01:20,706 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 19:01:20,707 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 19:01:20,707 INFO apscheduler.scheduler Added job "run_payment_deadline_cycle" to job store "default"
+2026-05-12 19:01:20,707 INFO apscheduler.scheduler Added job "refresh_auction_listing_messages" to job store "default"
+2026-05-12 19:01:20,707 INFO apscheduler.scheduler Scheduler started
+2026-05-12 19:01:20,875 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-05-12 19:01:21,051 INFO apscheduler.scheduler Scheduler started
+2026-05-12 19:01:21,051 INFO telegram.ext.Application Application started
+2026-05-12 19:02:20,707 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:03:20 +08)" (scheduled at 2026-05-12 19:02:20.706301+08:00)
+2026-05-12 19:02:20,708 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:03:20 +08)" (scheduled at 2026-05-12 19:02:20.706903+08:00)
+2026-05-12 19:02:21,328 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:03:20 +08)" executed successfully
+2026-05-12 19:02:21,328 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:03:20 +08)" executed successfully
+2026-05-12 19:03:20,707 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:04:20 +08)" (scheduled at 2026-05-12 19:03:20.706301+08:00)
+2026-05-12 19:03:20,709 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:04:20 +08)" (scheduled at 2026-05-12 19:03:20.706903+08:00)
+2026-05-12 19:03:21,543 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:04:20 +08)" executed successfully
+2026-05-12 19:03:21,552 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:04:20 +08)" executed successfully
+2026-05-12 19:04:20,708 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:05:20 +08)" (scheduled at 2026-05-12 19:04:20.706301+08:00)
+2026-05-12 19:04:20,709 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:05:20 +08)" (scheduled at 2026-05-12 19:04:20.706903+08:00)
+2026-05-12 19:04:21,297 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:05:20 +08)" executed successfully
+2026-05-12 19:04:21,298 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:05:20 +08)" executed successfully
+2026-05-12 19:05:20,588 INFO telegram.ext.Application Application is stopping. This might take a moment.
+2026-05-12 19:05:20,589 INFO apscheduler.scheduler Scheduler has been shut down
+2026-05-12 19:05:20,600 INFO telegram.ext.Application Application.stop() complete
+2026-05-12 19:05:20,602 INFO apscheduler.scheduler Scheduler has been shut down
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py:851: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/auctions.py:863: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+2026-05-12 19:05:21,542 INFO __main__ Starting bot process.
+2026-05-12 19:05:22,573 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 19:05:22,574 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 19:05:22,574 INFO apscheduler.scheduler Added job "run_payment_deadline_cycle" to job store "default"
+2026-05-12 19:05:22,575 INFO apscheduler.scheduler Added job "refresh_auction_listing_messages" to job store "default"
+2026-05-12 19:05:22,575 INFO apscheduler.scheduler Scheduler started
+2026-05-12 19:05:22,743 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-05-12 19:05:22,917 INFO apscheduler.scheduler Scheduler started
+2026-05-12 19:05:22,917 INFO telegram.ext.Application Application started
+2026-05-12 19:06:22,574 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:07:22 +08)" (scheduled at 2026-05-12 19:06:22.573620+08:00)
+2026-05-12 19:06:22,577 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:07:22 +08)" (scheduled at 2026-05-12 19:06:22.574225+08:00)
+2026-05-12 19:06:23,491 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:07:22 +08)" executed successfully
+2026-05-12 19:06:23,491 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:07:22 +08)" executed successfully
+2026-05-12 19:07:22,574 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:08:22 +08)" (scheduled at 2026-05-12 19:07:22.573620+08:00)
+2026-05-12 19:07:22,578 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:08:22 +08)" (scheduled at 2026-05-12 19:07:22.574225+08:00)
+2026-05-12 19:07:22,875 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:08:22 +08)" executed successfully
+2026-05-12 19:07:22,876 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:08:22 +08)" executed successfully
+2026-05-12 19:08:22,575 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:09:22 +08)" (scheduled at 2026-05-12 19:08:22.573620+08:00)
+2026-05-12 19:08:22,576 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:09:22 +08)" (scheduled at 2026-05-12 19:08:22.574225+08:00)
+2026-05-12 19:08:23,127 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:09:22 +08)" executed successfully
+2026-05-12 19:08:23,128 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:09:22 +08)" executed successfully
+2026-05-12 19:09:22,575 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:10:22 +08)" (scheduled at 2026-05-12 19:09:22.573620+08:00)
+2026-05-12 19:09:22,575 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:10:22 +08)" (scheduled at 2026-05-12 19:09:22.574225+08:00)
+2026-05-12 19:09:22,744 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:10:22 +08)" executed successfully
+2026-05-12 19:09:22,745 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:10:22 +08)" executed successfully
+2026-05-12 19:10:22,575 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:11:22 +08)" (scheduled at 2026-05-12 19:10:22.573620+08:00)
+2026-05-12 19:10:22,575 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:11:22 +08)" (scheduled at 2026-05-12 19:10:22.574225+08:00)
+2026-05-12 19:10:23,337 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:11:22 +08)" executed successfully
+2026-05-12 19:10:23,337 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:11:22 +08)" executed successfully
+2026-05-12 19:11:22,574 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:12:22 +08)" (scheduled at 2026-05-12 19:11:22.573620+08:00)
+2026-05-12 19:11:22,577 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:12:22 +08)" (scheduled at 2026-05-12 19:11:22.574225+08:00)
+2026-05-12 19:11:23,043 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:12:22 +08)" executed successfully
+2026-05-12 19:11:23,044 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:12:22 +08)" executed successfully
+2026-05-12 19:12:22,575 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:13:22 +08)" (scheduled at 2026-05-12 19:12:22.573620+08:00)
+2026-05-12 19:12:22,576 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:13:22 +08)" (scheduled at 2026-05-12 19:12:22.574225+08:00)
+2026-05-12 19:12:23,263 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:13:22 +08)" executed successfully
+2026-05-12 19:12:23,263 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:13:22 +08)" executed successfully
+2026-05-12 19:13:22,575 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:14:22 +08)" (scheduled at 2026-05-12 19:13:22.573620+08:00)
+2026-05-12 19:13:22,576 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:14:22 +08)" (scheduled at 2026-05-12 19:13:22.574225+08:00)
+2026-05-12 19:13:22,726 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:14:22 +08)" executed successfully
+2026-05-12 19:13:22,727 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:14:22 +08)" executed successfully
+2026-05-12 19:14:22,574 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:15:22 +08)" (scheduled at 2026-05-12 19:14:22.573620+08:00)
+2026-05-12 19:14:22,576 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:15:22 +08)" (scheduled at 2026-05-12 19:14:22.574225+08:00)
+2026-05-12 19:14:23,182 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:15:22 +08)" executed successfully
+2026-05-12 19:14:23,186 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:15:22 +08)" executed successfully
+2026-05-12 19:15:22,575 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:16:22 +08)" (scheduled at 2026-05-12 19:15:22.573620+08:00)
+2026-05-12 19:15:22,576 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:16:22 +08)" (scheduled at 2026-05-12 19:15:22.574225+08:00)
+2026-05-12 19:15:22,697 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:16:22 +08)" executed successfully
+2026-05-12 19:15:22,697 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:16:22 +08)" executed successfully
+2026-05-12 19:16:22,575 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:17:22 +08)" (scheduled at 2026-05-12 19:16:22.573620+08:00)
+2026-05-12 19:16:22,576 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:17:22 +08)" (scheduled at 2026-05-12 19:16:22.574225+08:00)
+2026-05-12 19:16:23,149 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:17:22 +08)" executed successfully
+2026-05-12 19:16:23,149 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:17:22 +08)" executed successfully

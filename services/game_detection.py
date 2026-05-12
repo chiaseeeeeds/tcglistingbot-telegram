@@ -56,6 +56,9 @@ def _tesseract_probe(regions: list[tuple[str, Image.Image]]) -> tuple[str, list[
     for _, roi in regions:
         try:
             text = pytesseract.image_to_string(roi, lang='eng', config='--psm 6')
+        except pytesseract.TesseractNotFoundError:
+            logger.warning('Tesseract binary is unavailable during game detection; defaulting to tokenless heuristic mode.')
+            return '', []
         except pytesseract.TesseractError:
             continue
         normalized = ' '.join(text.split()).upper()

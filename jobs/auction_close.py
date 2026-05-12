@@ -146,6 +146,9 @@ async def refresh_auction_listing_messages(application: Application) -> None:
                     bid_increment_sgd=(
                         float(latest_listing.get('bid_increment_sgd')) if latest_listing.get('bid_increment_sgd') is not None else None
                     ),
+                    anti_snipe_minutes=(
+                        int(latest_listing.get('anti_snipe_minutes')) if latest_listing.get('anti_snipe_minutes') is not None else None
+                    ),
                     condition_notes=str(latest_listing.get('condition_notes') or ''),
                     custom_description=str(latest_listing.get('custom_description') or ''),
                     seller_display_name=(seller_config or {}).get('seller_display_name') or 'Seller',
@@ -174,6 +177,9 @@ async def refresh_auction_listing_messages(application: Application) -> None:
                     ),
                     bid_increment_sgd=(
                         float(latest_listing.get('bid_increment_sgd')) if latest_listing.get('bid_increment_sgd') is not None else None
+                    ),
+                    anti_snipe_minutes=(
+                        int(latest_listing.get('anti_snipe_minutes')) if latest_listing.get('anti_snipe_minutes') is not None else None
                     ),
                     condition_notes=str(latest_listing.get('condition_notes') or ''),
                     custom_description=str(latest_listing.get('custom_description') or ''),
@@ -212,6 +218,7 @@ async def refresh_auction_listing_messages(application: Application) -> None:
             starting_bid_sgd=float(listing.get('starting_bid_sgd') or 0),
             current_bid_sgd=(float(listing.get('current_bid_sgd')) if listing.get('current_bid_sgd') is not None else None),
             bid_increment_sgd=(float(listing.get('bid_increment_sgd')) if listing.get('bid_increment_sgd') is not None else None),
+            anti_snipe_minutes=(int(listing.get('anti_snipe_minutes')) if listing.get('anti_snipe_minutes') is not None else None),
             condition_notes=str(listing.get('condition_notes') or ''),
             custom_description=str(listing.get('custom_description') or ''),
             seller_display_name=(seller_config or {}).get('seller_display_name') or 'Seller',

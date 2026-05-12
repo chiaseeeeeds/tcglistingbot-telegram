@@ -29,6 +29,7 @@ def create_listing(
     current_bid_sgd: float | None = None,
     bid_increment_sgd: float | None = None,
     auction_end_time: str | None = None,
+    anti_snipe_minutes: int | None = None,
 ) -> dict[str, Any]:
     """Insert a posted listing row and return the created record."""
 
@@ -53,6 +54,7 @@ def create_listing(
         'current_bid_sgd': round(current_bid_sgd, 2) if current_bid_sgd is not None else None,
         'bid_increment_sgd': round(bid_increment_sgd, 2) if bid_increment_sgd is not None else None,
         'auction_end_time': auction_end_time,
+        'anti_snipe_minutes': int(anti_snipe_minutes) if anti_snipe_minutes is not None else None,
     }
     response = get_client().table('listings').insert(payload).execute()
     listing = extract_single(response)
@@ -141,6 +143,21 @@ def count_active_listings_for_seller(seller_id: str) -> int:
     return int(response.count or 0)
 
 
+def count_active_auctions_for_seller(seller_id: str) -> int:
+    """Return the number of live auctions for a seller."""
+
+    response = (
+        get_client()
+        .table('listings')
+        .select('id', count='exact')
+        .eq('seller_id', seller_id)
+        .eq('listing_type', 'auction')
+        .eq('status', 'auction_active')
+        .execute()
+    )
+    return int(response.count or 0)
+
+
 def get_live_auction_listings(*, limit: int = 25) -> list[dict[str, Any]]:
     """Return active auctions that may need message refreshes or closeout."""
 
@@ -161,6 +178,21 @@ def update_listing_status(*, listing_id: str, status: str) -> dict[str, Any] | N
     """Update a listing status and return the updated row."""
 
     response = get_client().table('listings').update({'status': status}).eq('id', listing_id).execute()
+    return extract_single(response)
+
+
+def update_listing_auction_end_time(*, listing_id: str, auction_end_time: str) -> dict[str, Any] | None:
+    """Update the auction end time for a live auction listing."""
+
+    response = (
+        get_client()
+        .table('listings')
+        .update({'auction_end_time': auction_end_time})
+        .eq('id', listing_id)
+        .eq('listing_type', 'auction')
+        .eq('status', 'auction_active')
+        .execute()
+    )
     return extract_single(response)
 
 

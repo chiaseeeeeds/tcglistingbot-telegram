@@ -6,6 +6,17 @@ import html
 from datetime import datetime, timezone
 
 
+def _format_auction_end_absolute(auction_end_time: str | None) -> str:
+    if not auction_end_time:
+        return 'Unknown'
+    try:
+        normalized = str(auction_end_time).replace('Z', '+00:00')
+        end_time = datetime.fromisoformat(normalized)
+    except ValueError:
+        return 'Unknown'
+    return end_time.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
+
+
 def format_fixed_price_listing(
     *,
     card_name: str,
@@ -121,6 +132,7 @@ def format_auction_listing(
     starting_bid_sgd: float,
     current_bid_sgd: float | None,
     bid_increment_sgd: float | None = None,
+    anti_snipe_minutes: int | None = None,
     condition_notes: str,
     custom_description: str,
     seller_display_name: str,
@@ -134,6 +146,7 @@ def format_auction_listing(
     safe_description = html.escape(custom_description) if custom_description else ''
     current_bid = current_bid_sgd if current_bid_sgd is not None else starting_bid_sgd
     time_left = _format_auction_time_remaining(auction_end_time)
+    end_absolute = _format_auction_end_absolute(auction_end_time)
 
     lines = [
         f'🔨 <b>{safe_name}</b>',
@@ -141,12 +154,14 @@ def format_auction_listing(
         f'💰 Current bid: <b>SGD {current_bid:.2f}</b>',
         f'🏁 Starting bid: <b>SGD {starting_bid_sgd:.2f}</b>',
         f'📈 Min increment: <b>SGD {bid_increment_sgd:.2f}</b>' if bid_increment_sgd is not None else '📈 Min increment: <b>Ask seller</b>',
+        f'🛡️ Anti-snipe: <b>{anti_snipe_minutes}m extension</b>' if anti_snipe_minutes and anti_snipe_minutes > 0 else '🛡️ Anti-snipe: <b>Off</b>',
+        f'🗓️ Ends: <b>{html.escape(end_absolute)}</b>',
         f'⏳ Time left: <b>{html.escape(time_left)}</b>',
         f'✅ Seller: <b>{safe_seller}</b>',
         f'📝 Condition: {safe_condition}',
     ]
     if safe_description:
-        lines.append(f'📌 Notes: {safe_description}')
+        lines.append(f'📜 Rules: {safe_description}')
     lines.append('')
     if status == 'auction_closed':
         lines.append('Auction has ended.')

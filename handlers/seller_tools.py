@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import html
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -18,16 +19,40 @@ from db.blacklist import (
 from db.claims import get_claims_for_listing, get_current_winning_claim
 from db.idempotency import register_processed_event
 from db.listings import (
+    count_active_auctions_for_seller,
     count_active_listings_for_seller,
     count_claim_pending_listings_for_seller,
     get_listing_by_id,
     get_open_listings_for_seller,
+    update_listing_auction_end_time,
 )
+from db.seller_configs import get_seller_config_by_seller_id
 from db.sellers import get_seller_by_telegram_id, set_vacation_mode
 from db.transactions import get_transactions_for_seller
 from handlers.transactions import complete_sale_for_listing
+from db.claims import close_auction_atomic
+from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids
+from services.listing_message_editor import edit_listing_messages
+from utils.formatters import format_auction_listing
 
 PAGE_SIZE = 5
+
+
+def _auction_time_summary(auction_end_time: str | None) -> str:
+    if not auction_end_time:
+        return 'Unknown'
+    try:
+        end_time = datetime.fromisoformat(str(auction_end_time).replace('Z', '+00:00'))
+    except ValueError:
+        return 'Unknown'
+    remaining = int((end_time - datetime.now(timezone.utc)).total_seconds())
+    if remaining <= 0:
+        return 'Ended'
+    if remaining >= 86400:
+        return f'{remaining // 86400}d {(remaining % 86400) // 3600}h'
+    if remaining >= 3600:
+        return f'{remaining // 3600}h {(remaining % 3600) // 60}m'
+    return f'{max(1, remaining // 60)}m'
 
 
 def _command_event_key(update: Update, action: str) -> str | None:
@@ -106,6 +131,14 @@ def _detail_keyboard(*, page: int, listing_id: str, status: str, has_claims: boo
     rows: list[list[InlineKeyboardButton]] = []
     if status == 'claim_pending':
         rows.append([InlineKeyboardButton('Mark Paid', callback_data=f'seller:paid_confirm:{page}:{listing_id}')])
+    if status == 'auction_active':
+        rows.append(
+            [
+                InlineKeyboardButton('+1h', callback_data=f'seller:auction_extend:{page}:{listing_id}:1'),
+                InlineKeyboardButton('+6h', callback_data=f'seller:auction_extend:{page}:{listing_id}:6'),
+            ]
+        )
+        rows.append([InlineKeyboardButton('End Auction Now', callback_data=f'seller:auction_end_confirm:{page}:{listing_id}')])
     if has_claims:
         rows.append([InlineKeyboardButton('View Queue', callback_data=f'seller:queue:{page}:{listing_id}')])
     rows.append(
@@ -131,6 +164,18 @@ def _confirm_paid_keyboard(*, page: int, listing_id: str) -> InlineKeyboardMarku
     )
 
 
+def _confirm_auction_end_keyboard(*, page: int, listing_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton('🛑 Confirm End Auction', callback_data=f'seller:auction_end_exec:{page}:{listing_id}')],
+            [
+                InlineKeyboardButton('Back', callback_data=f'seller:detail:{page}:{listing_id}'),
+                InlineKeyboardButton('Home', callback_data='seller:home'),
+            ],
+        ]
+    )
+
+
 
 def _vacation_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
@@ -146,8 +191,9 @@ def _vacation_keyboard() -> InlineKeyboardMarkup:
 
 
 async def _dashboard_home_screen(seller: dict[str, Any]) -> tuple[str, InlineKeyboardMarkup]:
-    active_count, pending_count, blacklist_count, recent_transactions = await asyncio.gather(
+    active_count, auction_count, pending_count, blacklist_count, recent_transactions = await asyncio.gather(
         asyncio.to_thread(count_active_listings_for_seller, str(seller['id'])),
+        asyncio.to_thread(count_active_auctions_for_seller, str(seller['id'])),
         asyncio.to_thread(count_claim_pending_listings_for_seller, str(seller['id'])),
         asyncio.to_thread(count_blacklist_entries, seller_id=str(seller['id'])),
         asyncio.to_thread(get_transactions_for_seller, str(seller['id']), limit=3),
@@ -156,7 +202,8 @@ async def _dashboard_home_screen(seller: dict[str, Any]) -> tuple[str, InlineKey
         '<b>Seller Dashboard</b>',
         '',
         f'Seller: <code>{html.escape(str(seller.get("telegram_display_name") or "Seller"))}</code>',
-        f'Active listings: <code>{active_count}</code>',
+        f'Active fixed-price listings: <code>{active_count}</code>',
+        f'Active auctions: <code>{auction_count}</code>',
         f'Claim-pending listings: <code>{pending_count}</code>',
         f'Verified sales total: <code>SGD {float(seller.get("total_sales_sgd") or 0):.2f}</code>',
         f'Blacklist entries: <code>{blacklist_count}</code>',
@@ -188,22 +235,35 @@ async def _inventory_screen(seller: dict[str, Any], *, page: int) -> tuple[str, 
     rows: list[list[InlineKeyboardButton]] = []
     for listing in page_rows:
         status = str(listing.get('status') or 'active')
+        listing_type = str(listing.get('listing_type') or 'fixed')
         label = f'{listing.get("posted_message_id")} · {listing.get("card_name")}'
         if len(label) > 36:
             label = label[:33] + '...'
+        if listing_type == 'auction':
+            button_prefix = '🔨'
+        else:
+            button_prefix = '🟡' if status == 'claim_pending' else '🟢'
         rows.append(
             [
                 InlineKeyboardButton(
-                    f'{"🟡" if status == "claim_pending" else "🟢"} {label}',
+                    f'{button_prefix} {label}',
                     callback_data=f'seller:detail:{page}:{listing.get("id")}',
                 )
             ]
         )
-        lines.append(
-            f'• <code>{listing.get("posted_message_id")}</code> — '
-            f'{html.escape(str(listing.get("card_name") or "Card"))} '
-            f'(<code>{status}</code>, <code>SGD {float(listing.get("price_sgd") or 0):.2f}</code>)'
-        )
+        if listing_type == 'auction':
+            current_bid = float(listing.get('current_bid_sgd') or listing.get('starting_bid_sgd') or 0)
+            lines.append(
+                f'• <code>{listing.get("posted_message_id")}</code> — '
+                f'{html.escape(str(listing.get("card_name") or "Card"))} '
+                f'(<code>{status}</code>, <code>bid SGD {current_bid:.2f}</code>, <code>{_auction_time_summary(listing.get("auction_end_time"))}</code>)'
+            )
+        else:
+            lines.append(
+                f'• <code>{listing.get("posted_message_id")}</code> — '
+                f'{html.escape(str(listing.get("card_name") or "Card"))} '
+                f'(<code>{status}</code>, <code>SGD {float(listing.get("price_sgd") or 0):.2f}</code>)'
+            )
 
     rows.extend(_inventory_nav_keyboard(page=page, has_prev=has_prev, has_next=has_next).inline_keyboard)
     return '\n'.join(lines), InlineKeyboardMarkup(rows)
@@ -225,20 +285,36 @@ async def _listing_detail_screen(
         None,
     )
     queue_count = len([claim for claim in claims if str(claim.get('status') or '') in {'queued', 'confirmed', 'payment_pending'}])
+    listing_type = str(listing.get('listing_type') or 'fixed')
     lines = [
         '<b>Listing Detail</b>',
         '',
         f'Card: <code>{html.escape(str(listing.get("card_name") or "Card"))}</code>',
-        f'Price: <code>SGD {float(listing.get("price_sgd") or 0):.2f}</code>',
+        f'Type: <code>{listing_type}</code>',
         f'Status: <code>{listing.get("status")}</code>',
         f'Message ID: <code>{listing.get("posted_message_id")}</code>',
         f'Game: <code>{listing.get("game")}</code>',
-        f'Queue size: <code>{queue_count}</code>',
     ]
-    if winning_claim is not None:
-        lines.append(
-            f'Current winner: <code>{html.escape(str(winning_claim.get("buyer_display_name") or winning_claim.get("buyer_telegram_id")))}</code>'
+    if listing_type == 'auction':
+        lines.extend(
+            [
+                f'Starting bid: <code>SGD {float(listing.get("starting_bid_sgd") or 0):.2f}</code>',
+                f'Current bid: <code>SGD {float(listing.get("current_bid_sgd") or listing.get("starting_bid_sgd") or 0):.2f}</code>',
+                f'Min increment: <code>SGD {float(listing.get("bid_increment_sgd") or 0):.2f}</code>',
+                f'Ends in: <code>{_auction_time_summary(listing.get("auction_end_time"))}</code>',
+                f'Bid count: <code>{queue_count}</code>',
+            ]
         )
+    else:
+        lines.extend(
+            [
+                f'Price: <code>SGD {float(listing.get("price_sgd") or 0):.2f}</code>',
+                f'Queue size: <code>{queue_count}</code>',
+            ]
+        )
+    if winning_claim is not None:
+        label = 'High bidder' if listing_type == 'auction' else 'Current winner'
+        lines.append(f'{label}: <code>{html.escape(str(winning_claim.get("buyer_display_name") or winning_claim.get("buyer_telegram_id")))}</code>')
         if winning_claim.get('payment_deadline'):
             lines.append(f'Deadline: <code>{winning_claim.get("payment_deadline")}</code>')
     return '\n'.join(lines), _detail_keyboard(
@@ -255,15 +331,20 @@ async def _queue_screen(seller: dict[str, Any], *, listing_id: str, page: int) -
         return 'Listing not found for this seller.', _back_home_keyboard()
 
     claims = await asyncio.to_thread(get_claims_for_listing, str(listing['id']))
-    lines = ['<b>Claim Queue</b>', '', f'Item: <code>{html.escape(str(listing.get("card_name") or "Card"))}</code>']
+    listing_type = str(listing.get('listing_type') or 'fixed')
+    title = 'Bid Queue' if listing_type == 'auction' else 'Claim Queue'
+    lines = [f'<b>{title}</b>', '', f'Item: <code>{html.escape(str(listing.get("card_name") or "Card"))}</code>']
     if not claims:
-        lines.append('No claims recorded yet.')
+        lines.append('No bids recorded yet.' if listing_type == 'auction' else 'No claims recorded yet.')
     else:
         for claim in claims:
+            extra = ''
+            if listing_type == 'auction' and claim.get('offered_price_sgd') is not None:
+                extra = f' — <code>SGD {float(claim.get("offered_price_sgd") or 0):.2f}</code>'
             lines.append(
                 f'• <code>#{claim.get("queue_position")}</code> — '
                 f'{html.escape(str(claim.get("buyer_display_name") or claim.get("buyer_telegram_id")))} '
-                f'(<code>{claim.get("status")}</code>)'
+                f'(<code>{claim.get("status")}</code>){extra}'
             )
     keyboard = InlineKeyboardMarkup(
         [
@@ -596,6 +677,145 @@ async def seller_dashboard_callback(update: Update, context: ContextTypes.DEFAUL
             'Only confirm after you have actually received payment.'
         )
         await _render_dashboard_message(update, text=text, reply_markup=_confirm_paid_keyboard(page=page, listing_id=listing_id))
+        return
+
+    if action == 'auction_extend' and len(parts) >= 5:
+        event_key = _callback_event_key(query.id, 'auction-extend-callback')
+        first_seen = await asyncio.to_thread(
+            register_processed_event,
+            source='seller_callback',
+            event_key=event_key,
+            metadata={'seller_id': str(seller['id']), 'listing_id': parts[3], 'hours': parts[4]},
+        )
+        if not first_seen:
+            return
+        page = int(parts[2]) if parts[2].isdigit() else 0
+        listing_id = parts[3]
+        extend_hours = int(parts[4]) if parts[4].isdigit() else 0
+        listing = await asyncio.to_thread(get_listing_by_id, listing_id)
+        if listing is None or str(listing.get('seller_id')) != str(seller['id']) or str(listing.get('status') or '') != 'auction_active':
+            await _render_dashboard_message(update, text='Live auction not found for this seller.', reply_markup=_back_home_keyboard())
+            return
+        base_end = listing.get('auction_end_time')
+        try:
+            end_time = datetime.fromisoformat(str(base_end).replace('Z', '+00:00')) if base_end else datetime.now(timezone.utc)
+        except ValueError:
+            end_time = datetime.now(timezone.utc)
+        next_end = max(end_time, datetime.now(timezone.utc)) + timedelta(hours=max(extend_hours, 1))
+        updated = await asyncio.to_thread(update_listing_auction_end_time, listing_id=listing_id, auction_end_time=next_end.isoformat())
+        latest_listing = updated or listing
+        seller_config = await asyncio.to_thread(get_seller_config_by_seller_id, str(seller['id']))
+        text = format_auction_listing(
+            card_name=str(latest_listing.get('card_name') or 'Card'),
+            game=str(latest_listing.get('game') or 'pokemon'),
+            starting_bid_sgd=float(latest_listing.get('starting_bid_sgd') or 0),
+            current_bid_sgd=(float(latest_listing.get('current_bid_sgd')) if latest_listing.get('current_bid_sgd') is not None else None),
+            bid_increment_sgd=(float(latest_listing.get('bid_increment_sgd')) if latest_listing.get('bid_increment_sgd') is not None else None),
+            anti_snipe_minutes=(int(latest_listing.get('anti_snipe_minutes')) if latest_listing.get('anti_snipe_minutes') is not None else None),
+            condition_notes=str(latest_listing.get('condition_notes') or ''),
+            custom_description=str(latest_listing.get('custom_description') or ''),
+            seller_display_name=(seller_config or {}).get('seller_display_name') or 'Seller',
+            auction_end_time=latest_listing.get('auction_end_time'),
+            status='auction_active',
+        )
+        await edit_listing_messages(application=context.application, listing=latest_listing, text=text)
+        detail_text, keyboard = await _listing_detail_screen(seller, listing_id=listing_id, page=page)
+        detail_text += f'\n\n✅ Auction extended by <code>{extend_hours}</code> hour(s).'
+        await _render_dashboard_message(update, text=detail_text, reply_markup=keyboard)
+        return
+
+    if action == 'auction_end_confirm' and len(parts) >= 4:
+        page = int(parts[2]) if parts[2].isdigit() else 0
+        listing_id = parts[3]
+        listing = await asyncio.to_thread(get_listing_by_id, listing_id)
+        if listing is None or str(listing.get('seller_id')) != str(seller['id']) or str(listing.get('status') or '') != 'auction_active':
+            await _render_dashboard_message(update, text='Live auction not found for this seller.', reply_markup=_back_home_keyboard())
+            return
+        text = (
+            '<b>Confirm End Auction</b>\n\n'
+            f'Item: <code>{html.escape(str(listing.get("card_name") or "Card"))}</code>\n'
+            f'Current bid: <code>SGD {float(listing.get("current_bid_sgd") or listing.get("starting_bid_sgd") or 0):.2f}</code>\n\n'
+            'This will close the auction immediately and award the current high bidder if one exists.'
+        )
+        await _render_dashboard_message(update, text=text, reply_markup=_confirm_auction_end_keyboard(page=page, listing_id=listing_id))
+        return
+
+    if action == 'auction_end_exec' and len(parts) >= 4:
+        event_key = _callback_event_key(query.id, 'auction-end-exec-callback')
+        first_seen = await asyncio.to_thread(
+            register_processed_event,
+            source='seller_callback',
+            event_key=event_key,
+            metadata={'seller_id': str(seller['id']), 'listing_id': parts[3]},
+        )
+        if not first_seen:
+            return
+        page = int(parts[2]) if parts[2].isdigit() else 0
+        listing_id = parts[3]
+        listing = await asyncio.to_thread(get_listing_by_id, listing_id)
+        if listing is None or str(listing.get('seller_id')) != str(seller['id']) or str(listing.get('status') or '') != 'auction_active':
+            await _render_dashboard_message(update, text='Live auction not found for this seller.', reply_markup=_back_home_keyboard())
+            return
+        seller_config = await asyncio.to_thread(get_seller_config_by_seller_id, str(seller['id']))
+        payment_deadline_hours = int((seller_config or {}).get('payment_deadline_hours') or 24)
+        result = await close_auction_atomic(listing_id=listing_id, payment_deadline_hours=payment_deadline_hours)
+        action_result = str(result.get('action') or 'noop')
+        latest_listing = result.get('listing') or listing
+        if action_result == 'awarded':
+            winning_claim = result.get('winning_claim') or {}
+            text = format_auction_listing(
+                card_name=str(latest_listing.get('card_name') or 'Card'),
+                game=str(latest_listing.get('game') or 'pokemon'),
+                starting_bid_sgd=float(latest_listing.get('starting_bid_sgd') or 0),
+                current_bid_sgd=(float(latest_listing.get('current_bid_sgd')) if latest_listing.get('current_bid_sgd') is not None else None),
+                bid_increment_sgd=(float(latest_listing.get('bid_increment_sgd')) if latest_listing.get('bid_increment_sgd') is not None else None),
+                anti_snipe_minutes=(int(latest_listing.get('anti_snipe_minutes')) if latest_listing.get('anti_snipe_minutes') is not None else None),
+                condition_notes=str(latest_listing.get('condition_notes') or ''),
+                custom_description=str(latest_listing.get('custom_description') or ''),
+                seller_display_name=(seller_config or {}).get('seller_display_name') or 'Seller',
+                auction_end_time=latest_listing.get('auction_end_time'),
+                status='auction_closed',
+            )
+            await edit_listing_messages(application=context.application, listing=latest_listing, text=text)
+            await _notify_auction_award(
+                application=context.application,
+                listing=latest_listing,
+                winning_claim=winning_claim,
+                seller=seller,
+                seller_config=seller_config,
+                payment_deadline_hours=payment_deadline_hours,
+            )
+            summary = (
+                '✅ <b>Auction ended.</b>\n\n'
+                f'Winner: <code>{html.escape(str(winning_claim.get("buyer_display_name") or winning_claim.get("buyer_telegram_id")))}</code>\n'
+                f'Winning bid: <code>SGD {float(latest_listing.get("current_bid_sgd") or latest_listing.get("starting_bid_sgd") or 0):.2f}</code>'
+            )
+        elif action_result == 'closed_without_bids':
+            text = format_auction_listing(
+                card_name=str(latest_listing.get('card_name') or 'Card'),
+                game=str(latest_listing.get('game') or 'pokemon'),
+                starting_bid_sgd=float(latest_listing.get('starting_bid_sgd') or 0),
+                current_bid_sgd=(float(latest_listing.get('current_bid_sgd')) if latest_listing.get('current_bid_sgd') is not None else None),
+                bid_increment_sgd=(float(latest_listing.get('bid_increment_sgd')) if latest_listing.get('bid_increment_sgd') is not None else None),
+                anti_snipe_minutes=(int(latest_listing.get('anti_snipe_minutes')) if latest_listing.get('anti_snipe_minutes') is not None else None),
+                condition_notes=str(latest_listing.get('condition_notes') or ''),
+                custom_description=str(latest_listing.get('custom_description') or ''),
+                seller_display_name=(seller_config or {}).get('seller_display_name') or 'Seller',
+                auction_end_time=latest_listing.get('auction_end_time'),
+                status='auction_closed',
+            )
+            await edit_listing_messages(application=context.application, listing=latest_listing, text=text)
+            await _notify_auction_closed_without_bids(application=context.application, listing=latest_listing, seller=seller)
+            summary = '✅ <b>Auction ended with no bids.</b>'
+        else:
+            summary = 'This auction was already closed or could not be ended right now.'
+        keyboard = InlineKeyboardMarkup(
+            [
+                [InlineKeyboardButton('Inventory', callback_data=f'seller:inventory:{page}')],
+                [InlineKeyboardButton('Home', callback_data='seller:home')],
+            ]
+        )
+        await _render_dashboard_message(update, text=summary, reply_markup=keyboard)
         return
 
     if action == 'paid_exec' and len(parts) >= 4:

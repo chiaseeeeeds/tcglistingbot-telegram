@@ -9,6 +9,7 @@ from PIL import Image
 
 from services.game_detection import GameDetectionResult, detect_game_from_image
 from services.openai_ocr import OpenAIGameDetectionResult, OpenAIOCRRequestError
+from pytesseract import TesseractNotFoundError
 
 
 class GameDetectionTests(unittest.TestCase):
@@ -59,6 +60,17 @@ class GameDetectionTests(unittest.TestCase):
             result = detect_game_from_image(image_path)
         self.assertEqual(result.game, 'pokemon')
         self.assertAlmostEqual(result.confidence, 0.35)
+
+    def test_missing_tesseract_does_not_abort_game_detection(self) -> None:
+        image_path = self._image_file()
+        with patch('services.game_detection.get_config') as mock_config, \
+             patch('services.game_detection._prepare_regions', return_value=self._regions()), \
+             patch('services.game_detection.pytesseract.image_to_string', side_effect=TesseractNotFoundError()):
+            mock_config.return_value.ocr_provider = 'openai_gpt4o_mini'
+            result = detect_game_from_image(image_path)
+        self.assertEqual(result.game, 'pokemon')
+        self.assertAlmostEqual(result.confidence, 0.35)
+        self.assertEqual(result.tokens_seen, [])
 
 
 if __name__ == '__main__':

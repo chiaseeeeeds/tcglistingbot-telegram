@@ -2,12 +2,12 @@
   conversation = ConversationHandler(
 /Users/chiawei/orchids-projects/telegram-bot-api/handlers/auctions.py:771: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
   conversation = ConversationHandler(
-2026-05-12 18:30:55,423 INFO __main__ Starting bot process.
-2026-05-12 18:30:56,463 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
-2026-05-12 18:30:56,463 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
-2026-05-12 18:30:56,463 INFO apscheduler.scheduler Added job "run_payment_deadline_cycle" to job store "default"
-2026-05-12 18:30:56,463 INFO apscheduler.scheduler Added job "refresh_auction_listing_messages" to job store "default"
-2026-05-12 18:30:56,463 INFO apscheduler.scheduler Scheduler started
-2026-05-12 18:30:56,635 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
-2026-05-12 18:30:56,809 INFO apscheduler.scheduler Scheduler started
-2026-05-12 18:30:56,809 INFO telegram.ext.Application Application started
+2026-05-12 18:39:03,586 INFO __main__ Starting bot process.
+2026-05-12 18:39:05,094 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 18:39:05,095 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 18:39:05,095 INFO apscheduler.scheduler Added job "run_payment_deadline_cycle" to job store "default"
+2026-05-12 18:39:05,095 INFO apscheduler.scheduler Added job "refresh_auction_listing_messages" to job store "default"
+2026-05-12 18:39:05,095 INFO apscheduler.scheduler Scheduler started
+2026-05-12 18:39:05,267 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-05-12 18:39:05,438 INFO apscheduler.scheduler Scheduler started
+2026-05-12 18:39:05,438 INFO telegram.ext.Application Application started

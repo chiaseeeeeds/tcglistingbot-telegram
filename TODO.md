@@ -246,3 +246,10 @@
 - DONE: resolver now cross-checks structured OCR ratios against the rendered `IDENTIFIER:` text and prefers the more specific explicit ratio, preventing live `233/182` OCR from degrading into `3/182`
 - TODO: live-retest the exact `233/182 Team Rocket's Nidoking ex` photo in both `/list` and `/auction` and confirm debug now reports `print=233/182`
 - TODO: run live JP Telegram OCR tests and continue hardening set detection / candidate ranking for real Japanese photos
+- DONE: local macOS keepalive is now handled by a `launchd` agent so the polling bot auto-restarts instead of requiring manual restarts after each death
+- DONE: missing local Tesseract no longer aborts listing/auction photo batches during heuristic game detection; the bot now falls back to tokenless default game detection instead of rejecting the seller photo batch
+- DONE: seller dashboard now exposes live auction counts plus seller-side extend/end controls for active auctions
+- TODO: add dedicated auction-specific seller history/reporting views (for example past auction outcomes and top-bidder snapshots) if auction volume grows
+- DONE: `/auction` now asks for explicit seller-defined rules and supports exact local end date/time input in addition to quick duration presets
+- DONE: `/auction` now captures anti-snipe minutes explicitly instead of silently relying on the schema default
+- TODO: if we want per-auction payment-deadline overrides or reserve-price enforcement, add first-class listing fields + RPC support rather than faking those settings in chat-only text

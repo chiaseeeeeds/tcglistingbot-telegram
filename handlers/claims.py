@@ -330,6 +330,9 @@ async def _handle_auction_bid_comment(
         bid_increment_sgd=(
             float(latest_listing.get('bid_increment_sgd')) if latest_listing.get('bid_increment_sgd') is not None else None
         ),
+        anti_snipe_minutes=(
+            int(latest_listing.get('anti_snipe_minutes')) if latest_listing.get('anti_snipe_minutes') is not None else None
+        ),
         condition_notes=str(latest_listing.get('condition_notes') or ''),
         custom_description=str(latest_listing.get('custom_description') or ''),
         seller_display_name=(seller_config or {}).get('seller_display_name') or 'Seller',

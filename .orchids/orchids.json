@@ -3,7 +3,7 @@
   "createdAt": 1775726111474,
   "version": "1.0",
   "startupCommands": [
-    "python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt; mkdir -p .logs && nohup .venv/bin/python -u main.py > .logs/bot.out 2>&1 < /dev/null & echo $! > .logs/bot.pid && tail -f .logs/bot.out"
+    "python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt; chmod +x scripts/run_bot_service.sh scripts/install_launch_agent.sh && scripts/install_launch_agent.sh && tail -f .logs/bot.out"
   ],
   "templateId": "auto"
 }

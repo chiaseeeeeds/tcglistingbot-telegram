@@ -48,7 +48,7 @@ from utils.photo_quality import format_quality_summary
 
 logger = logging.getLogger(__name__)
 
-PHOTO, TITLE, STARTING_BID, BID_INCREMENT, DURATION, NOTES, CONFIRM = range(7)
+PHOTO, TITLE, STARTING_BID, BID_INCREMENT, DURATION, ANTI_SNIPE, RULES, NOTES, CONFIRM = range(9)
 
 
 AUCTION_DURATION_OPTIONS_HOURS = (6, 12, 24, 48)
@@ -101,6 +101,8 @@ def _clear_auction_state(context: ContextTypes.DEFAULT_TYPE) -> None:
         'auction_bid_increment_sgd',
         'auction_duration_hours',
         'auction_end_time',
+        'auction_anti_snipe_minutes',
+        'auction_rules',
         'auction_notes',
         'auction_selected_price_source',
     ]:
@@ -109,8 +111,42 @@ def _clear_auction_state(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 def _format_duration_options() -> str:
-    labels = ', '.join(f'<code>{value}</code>h' for value in AUCTION_DURATION_OPTIONS_HOURS)
-    return f'Choose auction duration in hours, for example {labels}, or enter another positive number.'
+    labels = ', '.join(f'<code>{value}h</code>' for value in AUCTION_DURATION_OPTIONS_HOURS)
+    config = get_config()
+    return (
+        'Set the auction end time.\n\n'
+        f'Tap a quick duration like {labels}, or type an exact local date/time in <code>{config.default_timezone}</code>.\n\n'
+        'Example: <code>2026-05-13 21:00</code>'
+    )
+
+
+def _parse_auction_end_input(value: str) -> tuple[str, float] | None:
+    raw_value = value.strip()
+    if not raw_value:
+        return None
+    try:
+        hours = float(raw_value)
+    except ValueError:
+        hours = 0.0
+    if hours > 0:
+        end_time = datetime.now(timezone.utc) + timedelta(hours=hours)
+        return end_time.isoformat(), hours
+
+    config = get_config()
+    local_zone = ZoneInfo(config.default_timezone)
+    normalized = ' '.join(raw_value.split())
+    candidate_formats = ('%Y-%m-%d %H:%M', '%Y/%m/%d %H:%M', '%d/%m/%Y %H:%M', '%d-%m-%Y %H:%M')
+    for fmt in candidate_formats:
+        try:
+            local_dt = datetime.strptime(normalized, fmt).replace(tzinfo=local_zone)
+        except ValueError:
+            continue
+        utc_dt = local_dt.astimezone(timezone.utc)
+        if utc_dt <= datetime.now(timezone.utc):
+            return None
+        duration_hours = max((utc_dt - datetime.now(timezone.utc)).total_seconds() / 3600, 0.0)
+        return utc_dt.isoformat(), duration_hours
+    return None
 
 
 
@@ -121,11 +157,14 @@ def _auction_preview(
     starting_bid_sgd: float,
     bid_increment_sgd: float,
     auction_end_time: str,
+    anti_snipe_minutes: int,
+    rules: str,
     notes: str,
     price_refs: list[PriceReference],
     image_count: int,
     has_back: bool,
 ) -> str:
+    rules_text = rules if rules else 'No special auction rules'
     notes_text = notes if notes else 'No extra notes'
     price_lines = []
     if price_refs:
@@ -150,8 +189,10 @@ def _auction_preview(
         f'Starting bid: <code>SGD {starting_bid_sgd:.2f}</code>\n'
         f'Bid increment: <code>SGD {bid_increment_sgd:.2f}</code>\n'
         f'Ends: <code>{end_text}</code>\n'
+        f'Anti-snipe: <code>{anti_snipe_minutes}m</code>\n'
         f'Photos: <code>{image_count}</code>\n'
         f'Front/back: <code>{"yes" if has_back else "front only"}</code>\n'
+        f'Rules: <code>{rules_text}</code>\n'
         f'Notes: <code>{notes_text}</code>\n'
         'Price refs:\n'
         + '\n'.join(price_lines)
@@ -601,33 +642,80 @@ async def capture_duration(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if update.effective_message is None or update.effective_message.text is None:
         return DURATION
 
-    try:
-        hours = float(update.effective_message.text.strip())
-    except ValueError:
+    parsed = _parse_auction_end_input(update.effective_message.text)
+    if parsed is None:
         await update.effective_message.reply_text(
-            'Please enter the auction duration in hours, such as <code>12</code> or <code>24</code>.',
+            'Please enter a positive number of hours like <code>24</code>, or an exact local date/time like <code>2026-05-13 21:00</code>.',
             parse_mode='HTML',
         )
         return DURATION
 
-    return await _store_auction_duration(hours=hours, update=update, context=context)
+    end_time, duration_hours = parsed
+    return await _store_auction_end_time(end_time=end_time, duration_hours=duration_hours, update=update, context=context)
 
 
 async def _store_auction_duration(*, hours: float, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    end_time = datetime.now(timezone.utc) + timedelta(hours=hours)
+    return await _store_auction_end_time(end_time=end_time.isoformat(), duration_hours=hours, update=update, context=context)
+
+
+async def _store_auction_end_time(*, end_time: str, duration_hours: float, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.effective_message is None:
         return DURATION
-    if hours <= 0:
+    if duration_hours <= 0:
         await update.effective_message.reply_text(
-            'Please enter a positive auction duration in hours.',
+            'Please enter a future auction end time.',
             parse_mode='HTML',
         )
         return DURATION
 
-    end_time = datetime.now(timezone.utc) + timedelta(hours=hours)
-    context.user_data['auction_duration_hours'] = hours
-    context.user_data['auction_end_time'] = end_time.isoformat()
+    context.user_data['auction_duration_hours'] = duration_hours
+    context.user_data['auction_end_time'] = end_time
     await update.effective_message.reply_text(
-        'Enter any notes or condition details, or reply with <code>skip</code>.',
+        'Enter anti-snipe extension minutes, or reply with <code>skip</code> to use the default <code>2</code>. Reply with <code>0</code> to turn anti-snipe off.',
+        parse_mode='HTML',
+        reply_markup=None,
+    )
+    return ANTI_SNIPE
+
+
+async def capture_auction_anti_snipe(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.effective_message is None or update.effective_message.text is None:
+        return ANTI_SNIPE
+
+    text = update.effective_message.text.strip().lower()
+    if text == 'skip':
+        minutes = 2
+    else:
+        try:
+            minutes = int(float(text))
+            if minutes < 0 or minutes > 30:
+                raise ValueError
+        except ValueError:
+            await update.effective_message.reply_text(
+                'Enter anti-snipe minutes between <code>0</code> and <code>30</code>, or reply with <code>skip</code> to use <code>2</code>.',
+                parse_mode='HTML',
+            )
+            return ANTI_SNIPE
+
+    context.user_data['auction_anti_snipe_minutes'] = minutes
+    await update.effective_message.reply_text(
+        'Enter the auction rules/terms, or reply with <code>skip</code>.\n\nExamples: <code>Payment in 24h, no bid retractions, highest bid wins</code>.',
+        parse_mode='HTML',
+        reply_markup=None,
+    )
+    return RULES
+
+
+async def capture_auction_rules(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.effective_message is None or update.effective_message.text is None:
+        return RULES
+
+    text = update.effective_message.text.strip()
+    rules = '' if text.lower() == 'skip' else text
+    context.user_data['auction_rules'] = rules
+    await update.effective_message.reply_text(
+        'Enter any extra notes or condition details, or reply with <code>skip</code>.',
         parse_mode='HTML',
         reply_markup=None,
     )
@@ -648,6 +736,8 @@ async def capture_auction_notes(update: Update, context: ContextTypes.DEFAULT_TY
             starting_bid_sgd=float(context.user_data['auction_starting_bid_sgd']),
             bid_increment_sgd=float(context.user_data['auction_bid_increment_sgd']),
             auction_end_time=str(context.user_data['auction_end_time']),
+            anti_snipe_minutes=int(context.user_data.get('auction_anti_snipe_minutes') or 2),
+            rules=str(context.user_data.get('auction_rules') or ''),
             notes=notes,
             price_refs=list(context.user_data.get('auction_price_refs') or []),
             image_count=len(context.user_data.get('auction_post_image_local_paths') or ([context.user_data.get('auction_photo_path')] if context.user_data.get('auction_photo_path') else [])),
@@ -682,8 +772,9 @@ async def confirm_auction_listing(update: Update, context: ContextTypes.DEFAULT_
         starting_bid_sgd=float(context.user_data['auction_starting_bid_sgd']),
         current_bid_sgd=None,
         bid_increment_sgd=float(context.user_data['auction_bid_increment_sgd']),
+        anti_snipe_minutes=int(context.user_data.get('auction_anti_snipe_minutes') or 2),
         condition_notes=str(context.user_data['auction_notes']),
-        custom_description='',
+        custom_description=str(context.user_data.get('auction_rules') or ''),
         seller_display_name=seller_config.get('seller_display_name') or 'Seller',
         auction_end_time=str(context.user_data['auction_end_time']),
         status='auction_active',
@@ -733,7 +824,7 @@ async def confirm_auction_listing(update: Update, context: ContextTypes.DEFAULT_
         game=context.user_data['auction_game'],
         price_sgd=None,
         condition_notes=context.user_data['auction_notes'],
-        custom_description='',
+        custom_description=context.user_data.get('auction_rules') or '',
         posted_channel_id=sent_message.chat.id,
         posted_message_id=sent_message.message_id,
         primary_image_path=context.user_data.get('auction_storage_path'),
@@ -746,6 +837,7 @@ async def confirm_auction_listing(update: Update, context: ContextTypes.DEFAULT_
         current_bid_sgd=None,
         bid_increment_sgd=float(context.user_data['auction_bid_increment_sgd']),
         auction_end_time=str(context.user_data['auction_end_time']),
+        anti_snipe_minutes=int(context.user_data.get('auction_anti_snipe_minutes') or 2),
     )
     logger.info('Posted auction listing %s to channel %s.', listing['id'], sent_message.chat.id)
     await update.effective_message.reply_text(
@@ -787,6 +879,8 @@ def register_auction_handlers(application: Application) -> None:
                 CallbackQueryHandler(capture_duration_callback, pattern=r'^auction_duration:'),
                 MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_duration),
             ],
+            ANTI_SNIPE: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_auction_anti_snipe)],
+            RULES: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_auction_rules)],
             NOTES: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_auction_notes)],
             CONFIRM: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, confirm_auction_listing)],
         },
