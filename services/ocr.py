@@ -973,11 +973,20 @@ def _score_candidate(*, source_path: Path, candidate: CardImageCandidate, game: 
                 candidate.source,
                 exc,
             )
-            return _empty_openai_candidate(
-                candidate=candidate,
-                batch=batch,
-                warning='Hosted OCR failed before text could be extracted.',
-            )
+            try:
+                fallback_batch = _prepare_candidate_batch(candidate=candidate, game=game)
+                return _score_candidate_with_tesseract(
+                    candidate=candidate,
+                    batch=fallback_batch,
+                    game=game,
+                    warnings=['Hosted OCR failed before text could be extracted. Falling back to local OCR.'],
+                )
+            except pytesseract.TesseractNotFoundError:
+                return _empty_openai_candidate(
+                    candidate=candidate,
+                    batch=batch,
+                    warning='Hosted OCR failed before text could be extracted.',
+                )
     batch = _prepare_candidate_batch(candidate=candidate, game=game)
     return _score_candidate_with_current_provider(candidate=candidate, batch=batch, game=game)
 

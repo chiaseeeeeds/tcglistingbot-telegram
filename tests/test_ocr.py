@@ -83,8 +83,8 @@ class OCRPipelineTests(unittest.TestCase):
              patch('services.ocr._write_debug_artifacts', return_value=None):
             result = extract_text_from_image(image_path, game='pokemon')
 
-        self.assertEqual(result.provider, 'openai_gpt4o_mini')
-        self.assertEqual(result.text, '')
+        self.assertEqual(result.provider, 'tesseract')
+        self.assertTrue(result.used_fallback)
         self.assertTrue(any('Hosted OCR failed before text could be extracted' in warning for warning in result.warnings))
 
     def test_openai_timeout_returns_openai_warning(self) -> None:
@@ -95,9 +95,9 @@ class OCRPipelineTests(unittest.TestCase):
              patch('services.ocr._write_debug_artifacts', return_value=None):
             result = extract_text_from_image(image_path, game='pokemon')
 
-        self.assertEqual(result.provider, 'openai_gpt4o_mini')
+        self.assertEqual(result.provider, 'tesseract')
         self.assertEqual(result.source, 'raw_photo')
-        self.assertEqual(result.text, '')
+        self.assertTrue(result.used_fallback)
         self.assertTrue(any('Hosted OCR failed before text could be extracted' in warning for warning in result.warnings))
 
 
