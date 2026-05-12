@@ -259,6 +259,18 @@ async def finalize_auction_photo_batch(update: Update, context: ContextTypes.DEF
         return PHOTO
 
     try:
+        config = get_config()
+        if config.ocr_provider == 'openai_gpt4o_mini':
+            progress_text = (
+                f'Scanning your auction photo with <code>{escape(config.openai_ocr_model)}</code> now. '
+                'This uses the hosted raw-photo OCR path first and may still need manual correction if the image is weak.'
+            )
+        else:
+            progress_text = (
+                f'Processing your auction photo batch with <code>{escape(config.ocr_provider)}</code> now. '
+                'OCR can take a bit on some images, so please give me a moment.'
+            )
+        await update.effective_message.reply_text(progress_text, parse_mode='HTML')
         selection = await asyncio.to_thread(
             classify_listing_images,
             [str(entry['local_path']) for entry in photo_entries],

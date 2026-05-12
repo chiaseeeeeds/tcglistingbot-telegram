@@ -36,7 +36,7 @@ from utils.photo_quality import format_quality_summary
 
 logger = logging.getLogger(__name__)
 
-OCR_BUILD_MARKER = 'ocr-build-2026-04-13-multi-image-v18'
+OCR_BUILD_MARKER = 'ocr-build-2026-05-12-openai-rawphoto-v21'
 
 PHOTO, TITLE, PRICE, NOTES, CONFIRM = range(5)
 SUPPORTED_GAMES = {'pokemon', 'onepiece'}
@@ -137,8 +137,6 @@ def _listing_preview(*, game: str, title: str, price_sgd: float, notes: str, pri
     )
 
 
-
-
 def _price_ref_button_key(reference: PriceReference) -> str:
     source = reference.source.lower()
     if 'pricecharting' in source:
@@ -162,6 +160,7 @@ def _price_reference_keyboard(price_refs: list[PriceReference]) -> InlineKeyboar
     rows.append([InlineKeyboardButton('Enter custom price', callback_data='listing_price_custom')])
     return InlineKeyboardMarkup(rows)
 
+
 def _format_price_reference_block(price_refs: list[PriceReference]) -> str:
     if not price_refs:
         return (
@@ -175,8 +174,6 @@ def _format_price_reference_block(price_refs: list[PriceReference]) -> str:
             f"• <b>{reference.source}</b>: <code>SGD {reference.amount_sgd:.2f}</code> — {reference.note}"
         )
     return '\n'.join(lines)
-
-
 
 
 def _admin_debug_line(*, update: Update | None, identification, candidate_options: list[dict], ocr_result=None) -> str:
@@ -197,19 +194,27 @@ def _admin_debug_line(*, update: Update | None, identification, candidate_option
     number_candidate_preview = str(metadata.get('number_candidate_preview') or 'unknown')
     ocr_provider = str(getattr(ocr_result, 'provider', 'unknown') or 'unknown')
     ocr_model = str(getattr(ocr_result, 'model', 'unknown') or 'unknown')
+    ocr_source = str(getattr(ocr_result, 'source', 'unknown') or 'unknown')
     requested_provider = str(getattr(ocr_result, 'requested_provider', 'unknown') or 'unknown')
     used_fallback = bool(getattr(ocr_result, 'used_fallback', False))
     latency_ms = int(getattr(ocr_result, 'latency_ms', 0) or 0)
+    ocr_warning = ''
+    if ocr_result is not None:
+        warnings = list(getattr(ocr_result, 'warnings', []) or [])
+        if warnings:
+            ocr_warning = str(warnings[0])
     return (
         '<b>Debug</b>\n'
         f"resolver=<code>{escape(resolver[:60])}</code> "
         f"svc=<code>{escape(service_build[:40])}</code>\n"
         f"ocr=<code>{escape(ocr_provider[:24])}</code> "
         f"model=<code>{escape(ocr_model[:32])}</code>\n"
+        f"source=<code>{escape(ocr_source[:24])}</code> "
         f"requested=<code>{escape(requested_provider[:24])}</code> "
         f"fallback=<code>{used_fallback}</code> "
         f"latency=<code>{latency_ms}ms</code>\n"
-        f"matched=<code>{identification.matched}</code> "
+        + (f"ocr_warn=<code>{escape(ocr_warning[:72])}</code>\n" if ocr_warning else '')
+        + f"matched=<code>{identification.matched}</code> "
         f"conf=<code>{identification.confidence:.2f}</code> "
         f"catalog=<code>{escape(catalog_size[:12])}</code>\n"
         f"detected=<code>{escape(detected_set_code[:16])}</code> "
@@ -220,6 +225,7 @@ def _admin_debug_line(*, update: Update | None, identification, candidate_option
         f"display=<code>{escape(str(identification.display_name)[:80])}</code>\n"
         f"top=<code>{escape(top[:80])}</code>\n\n"
     )
+
 
 def _format_candidate_options(options: list[dict]) -> str:
     if not options:
@@ -380,8 +386,19 @@ async def finalize_photo_batch(update: Update, context: ContextTypes.DEFAULT_TYP
         return PHOTO
 
     try:
+        config = get_config()
+        if config.ocr_provider == 'openai_gpt4o_mini':
+            progress_text = (
+                f'Scanning your front photo with <code>{escape(config.openai_ocr_model)}</code> now. '
+                'This uses the hosted raw-photo OCR path first and may still need manual correction if the image is weak.'
+            )
+        else:
+            progress_text = (
+                f'Processing your photo batch with <code>{escape(config.ocr_provider)}</code> now. '
+                'OCR can take a bit on some images, so please give me a moment.'
+            )
         await update.effective_message.reply_text(
-            'Processing your photo batch now. OCR can take a bit on some images, so please give me a moment.',
+            progress_text,
             parse_mode='HTML',
         )
         started_at = perf_counter()

@@ -8,8 +8,7 @@ from typing import Any
 
 from services.ocr_signals import OCRStructuredResult
 
-_TOKEN_RE = re.compile(r'[A-Za-z0-9]+')
-_NAME_WORD_RE = re.compile(r'[a-z]{4,}')
+_TOKEN_RE = re.compile(r'[A-Za-z0-9]+|[\u3040-\u30ffー]+|[\u4e00-\u9fff]+')
 _NAME_STOPWORDS = {'name', 'identifier', 'pokemon', 'trainer', 'energy', 'stage', 'basic', 'ability'}
 
 
@@ -25,7 +24,9 @@ def _tokenize(value: str) -> set[str]:
     tokens: set[str] = set()
     for token in _TOKEN_RE.findall(value):
         normalized = _normalize_token(token)
-        if normalized.isalpha() and len(normalized) < 2:
+        if not normalized:
+            continue
+        if normalized.isascii() and normalized.isalpha() and len(normalized) < 2:
             continue
         if normalized in _NAME_STOPWORDS:
             continue
@@ -72,7 +73,7 @@ def generate_catalog_candidates(
     search_text = build_search_text(raw_text=raw_text, structured=structured)
     raw_lower = search_text.lower()
     raw_tokens = _tokenize(search_text)
-    raw_words = _NAME_WORD_RE.findall(raw_lower)
+    raw_words = list(dict.fromkeys([token for token in raw_tokens if len(token) >= 2]))
 
     detected_set_code = str(detected.get('detected_set_code') or '').strip().upper()
     detected_print_number = str(detected.get('detected_print_number') or '').strip()

@@ -101,15 +101,5 @@ def detect_game_from_image(image_path: str | Path) -> GameDetectionResult:
     regions = _prepare_regions(image_path)
     provider = get_config().ocr_provider
     if provider == 'openai_gpt4o_mini':
-        try:
-            result = detect_game_from_regions(regions)
-            if result.game in {'pokemon', 'onepiece'} and result.confidence >= 0.6:
-                return GameDetectionResult(
-                    game=result.game,
-                    confidence=result.confidence,
-                    reason=result.reason,
-                    tokens_seen=result.tokens_seen,
-                )
-        except OpenAIOCRError as exc:
-            logger.warning('Game detection OpenAI probe failed for %s: %s', Path(image_path).name, exc)
+        logger.info('Skipping hosted game detection for %s and using heuristic-only mode for lower latency.', Path(image_path).name)
     return _heuristic_game_detection(regions)

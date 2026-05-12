@@ -82,6 +82,7 @@ class OCRResult:
     text: str
     provider: str
     model: str
+    source: str
     requested_provider: str
     used_fallback: bool
     latency_ms: int
@@ -205,12 +206,12 @@ def _prepare_candidate_batch(*, candidate: CardImageCandidate, game: str | None)
     )
 
 
-def _prepare_openai_candidate_batch(*, candidate: CardImageCandidate) -> _PreparedCandidateBatch:
+def _prepare_openai_candidate_batch(*, image: Image.Image) -> _PreparedCandidateBatch:
     return _PreparedCandidateBatch(
-        candidate_image=candidate.image,
-        roi_images=[candidate.image],
-        roi_labels=['full_card'],
-        identifier_regions=[('full_card', candidate.image)],
+        candidate_image=image,
+        roi_images=[image],
+        roi_labels=['raw_photo'],
+        identifier_regions=[('raw_photo', image)],
         name_regions=[],
     )
 
@@ -807,6 +808,25 @@ def _finalize_candidate_ocr(
     )
 
 
+
+def _empty_openai_candidate(
+    *,
+    candidate: CardImageCandidate,
+    batch: _PreparedCandidateBatch,
+    warning: str,
+) -> _CandidateOCR:
+    return _finalize_candidate_ocr(
+        candidate=candidate,
+        provider='openai_gpt4o_mini',
+        batch=batch,
+        identifier_chunks=[],
+        name_chunks=[],
+        identifier_layout_family='generic_identifier_zone',
+        game=None,
+        warnings=[warning],
+    )
+
+
 def _score_candidate_with_tesseract(
     *,
     candidate: CardImageCandidate,
@@ -913,12 +933,20 @@ def _score_candidate_with_openai(
     batch: _PreparedCandidateBatch,
     game: str | None,
 ) -> _CandidateOCR:
-    openai_result = extract_card_text_from_regions([('full_card', batch.candidate_image)])
+    openai_result = extract_card_text_from_regions(batch.identifier_regions)
     if not openai_result.regions:
-        raise OpenAIOCRSchemaError('OpenAI OCR returned an empty regions array.')
+        return _empty_openai_candidate(
+            candidate=candidate,
+            batch=batch,
+            warning='Hosted OCR returned no structured regions.',
+        )
     identifier_chunks, name_chunks = _chunks_from_openai_result(openai_result)
     if not _has_usable_openai_signals(identifier_chunks, name_chunks, game=game):
-        raise OpenAIOCRSchemaError('OpenAI OCR returned no usable identifier or name signals.')
+        return _empty_openai_candidate(
+            candidate=candidate,
+            batch=batch,
+            warning='Hosted OCR could not read enough visible card text from the raw photo.',
+        )
     return _finalize_candidate_ocr(
         candidate=candidate,
         provider='openai_gpt4o_mini',
@@ -934,22 +962,22 @@ def _score_candidate_with_openai(
 def _score_candidate(*, source_path: Path, candidate: CardImageCandidate, game: str | None) -> _CandidateOCR:
     provider = get_ocr_provider_name()
     if provider == 'openai_gpt4o_mini':
-        batch = _prepare_openai_candidate_batch(candidate=candidate)
+        batch = _prepare_openai_candidate_batch(image=candidate.image)
         try:
             return _score_candidate_with_openai(candidate=candidate, batch=batch, game=game)
         except (OpenAIOCRError, OCRNotConfiguredError) as exc:
             logger.warning(
-                'Falling back to Tesseract OCR for image=%s provider=%s candidate=%s reason=%s',
+                'OpenAI OCR failed for image=%s provider=%s candidate=%s reason=%s',
                 source_path.name,
                 provider,
                 candidate.source,
                 exc,
             )
-            fallback = _score_candidate_with_tesseract(candidate=candidate, batch=batch, game=game)
-            fallback_warning = (
-                'Hosted OCR was unavailable, so I used fallback OCR instead.'
+            return _empty_openai_candidate(
+                candidate=candidate,
+                batch=batch,
+                warning='Hosted OCR failed before text could be extracted.',
             )
-            return replace(fallback, warnings=fallback.warnings + [fallback_warning])
     batch = _prepare_candidate_batch(candidate=candidate, game=game)
     return _score_candidate_with_current_provider(candidate=candidate, batch=batch, game=game)
 
@@ -963,10 +991,17 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
     if not path.exists():
         raise FileNotFoundError(f'OCR image not found: {path}')
     try:
-        candidates = extract_card_candidates(path)
-        finalists = _select_finalists(candidates)
         if provider == 'openai_gpt4o_mini':
-            finalists = finalists[:1]
+            with Image.open(path).convert('RGB') as source_image:
+                raw_candidate = CardImageCandidate(
+                    image=source_image.copy(),
+                    source='raw_photo',
+                    confidence=1.0,
+                )
+            finalists = [raw_candidate]
+        else:
+            candidates = extract_card_candidates(path)
+            finalists = _select_finalists(candidates)
         scored_candidates: list[_CandidateOCR] = []
         for candidate in finalists:
             scored = _score_candidate(source_path=path, candidate=candidate, game=game)
@@ -1010,10 +1045,11 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
     for candidate in scored_candidates:
         warnings.extend(candidate.warnings)
     detected_sources = [candidate for candidate in scored_candidates if candidate.source.startswith('detected_')]
-    if not detected_sources:
-        warnings.append('I could not isolate the card perfectly, so I used fallback card crops as well.')
-    elif not best_candidate.source.startswith('detected_'):
-        warnings.append('I used a fallback centered card crop because the direct card detection result looked weaker.')
+    if provider != 'openai_gpt4o_mini':
+        if not detected_sources:
+            warnings.append('I could not isolate the card perfectly, so I used fallback card crops as well.')
+        elif not best_candidate.source.startswith('detected_'):
+            warnings.append('I used a fallback centered card crop because the direct card detection result looked weaker.')
     if len(aggregated_text) < 4:
         warnings.append('OCR returned very little text. A clearer photo may help.')
     if 'IDENTIFIER:' not in aggregated_text:
@@ -1024,6 +1060,7 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
         text=aggregated_text,
         provider=best_candidate.provider,
         model=best_candidate.model,
+        source=best_candidate.source,
         requested_provider=provider,
         used_fallback=best_candidate.provider != provider,
         latency_ms=latency_ms,

@@ -47,6 +47,7 @@ def _empty_ocr_result(*, warning: str) -> OCRResult:
         text='',
         provider='none',
         model='none',
+        source='none',
         requested_provider='none',
         used_fallback=False,
         latency_ms=0,

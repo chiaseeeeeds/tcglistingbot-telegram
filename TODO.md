@@ -216,8 +216,28 @@
   - consider bidder-withdrawal rules for pre-close auction `bid_active` rows if that becomes product scope
 - privacy follow-up:
   - consider making other buyer-sensitive commands private-only by default if more buyer self-service is added later
-- DONE: OpenAI `gpt-4o-mini` is now the primary OCR backend via the Responses API with schema-constrained ROI extraction
-- DONE: Tesseract fallback still covers OCR request/schema/timeout/empty-signal failures
-- DONE: game detection now supports OpenAI-first probing with fallback to the current Tesseract heuristic
+- DONE: OpenAI `gpt-4o-mini` is now the primary OCR backend via the Responses API using the raw uploaded full-card photo first
+- DONE: the hosted OCR fast path now returns directly without waiting on Tesseract fallback, which keeps bad/slow OpenAI attempts from burning another long OCR pass
+- DONE: game detection on the OpenAI OCR path is now heuristic-only to keep latency bounded
 - TODO: replace the placeholder `OPENAI_API_KEY` in `.env` before live hosted OCR testing
 - TODO: run live manual OCR smoke on Pokémon EN, Pokémon JP, One Piece, and one bad-quality image to tune prompts/warnings
+- DONE: OpenAI OCR now uses a single full-card image instead of many ROI images for the primary hosted path
+- DONE: admin Telegram OCR replies now expose provider, model, fallback status, and latency for live QA
+- TODO: verify on real Telegram photos that clean front images stay on the raw-photo OpenAI fast path and remain materially faster than the old multi-ROI pipeline
+- DONE: listing and auction flows now immediately tell the seller when `gpt-4o-mini` is scanning the image
+- DONE: hosted OCR and hosted game detection now fail over faster via internal timeout caps
+- DONE: OpenAI game detection was removed from the live OCR path; keep heuristic detection unless a later benchmark proves hosted game detection is worth reintroducing
+- DONE: fixed the `services/card_identifier.py` logger crash that was causing generic photo-batch failure after OCR completed
+- TODO: retry a real Telegram photo now that the pipeline crash is fixed and confirm whether the remaining issue is only OCR quality/latency
+- DONE: OpenAI OCR now sends the raw uploaded photo first instead of a rectified card image
+- DONE: admin Telegram debug now shows whether OCR ran on `raw_photo` or another source if the pipeline ever leaves the hosted fast path
+- TODO: compare raw-photo-first OCR versus manual-correction outcomes on cluttered real Telegram photos and tune the acceptance threshold if GPT overreads backgrounds
+- DONE: `.env` now overrides stale shell `OPENAI_API_KEY` values during config loading
+- DONE: seller-facing OCR warnings no longer include raw OpenAI provider error bodies
+- DONE: hosted game detection is removed from the OpenAI path to reduce live OCR latency
+- DONE: JP tokenization now supports kana/kanji sequences in the matcher and candidate generator
+- DONE: exact identifier matching now rejects mismatched Pokémon set totals like `TR 3/182` -> `TR 3/82` unless separate strong name evidence exists
+- DONE: admin Telegram debug now includes a sanitized first OCR warning line (`ocr_warn`) for faster live QA when OpenAI returns no usable text
+- DONE: listing and auction OCR progress text no longer claims an automatic fallback that the raw-photo OpenAI path does not currently perform
+- DONE: OpenAI OCR now sends compressed JPEG data URLs and retries one transient hosted request to reduce raw-photo request failures
+- TODO: run live JP Telegram OCR tests and continue hardening set detection / candidate ranking for real Japanese photos

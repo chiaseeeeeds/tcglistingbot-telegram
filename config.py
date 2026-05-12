@@ -53,7 +53,7 @@ class ConfigurationError(RuntimeError):
 def get_config() -> Config:
     """Load environment variables once and return an immutable configuration object."""
 
-    load_dotenv()
+    load_dotenv(override=True)
 
     def require(name: str, *, default: str | None = None) -> str:
         value = os.getenv(name, default)

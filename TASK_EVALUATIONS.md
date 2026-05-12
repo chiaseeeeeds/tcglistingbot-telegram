@@ -688,3 +688,106 @@ Use this log after meaningful implementation tasks.
 - what was weak: real OpenAI prompt tuning and live-image latency still need seller-photo QA, and the placeholder `.env` key must be replaced before hosted OCR can work outside tests
 - follow-up: run manual Telegram smoke on Pokémon EN / JP / One Piece fronts plus one intentionally poor photo, then tune prompt wording or ROI inclusion if the OpenAI path still hallucinates or under-reads
 - confidence: medium-high
+
+## 2026-04-21 — Full-Card OpenAI OCR And Telegram Provider Debug
+- date: 2026-04-21
+- task: switch OpenAI OCR from multi-ROI batching to a single full-card image and expose live provider/model debug in Telegram
+- goal: make hosted OCR faster and make it obvious during live bot testing whether OpenAI or fallback Tesseract handled the image
+- outcome: `services/ocr.py` now sends one full rectified card image to OpenAI, limits OpenAI candidate scoring to the top candidate, preserves ROI-based Tesseract fallback, and `handlers/listing.py` admin debug now shows provider/model/fallback/latency for OCR runs
+- validation: `.venv/bin/python -m unittest discover -s tests -v`
+- what went well: the speed-focused change stayed surgical because the repo already separated candidate generation from OCR backends
+- what was weak: game detection still has its own OpenAI/Tesseract path and live Telegram QA is still needed on real seller photos to confirm the latency improvement
+- follow-up: send a real front-card photo via Telegram and confirm the debug block shows `ocr=openai_gpt4o_mini`, `model=gpt-4o-mini`, and `fallback=False` on a clean image
+- confidence: medium-high
+
+## 2026-04-21 — Faster OpenAI Timeout Caps And Progress Replies
+- date: 2026-04-21
+- task: reduce perceived OCR slowness after moving to full-card OpenAI OCR
+- goal: make the bot either finish sooner or fall back sooner, and tell the seller immediately which OCR path is being attempted
+- outcome: capped full-card OpenAI OCR at 12s, capped OpenAI game-detection probes at 5s, and added immediate Telegram progress replies announcing `gpt-4o-mini` scanning for both listings and auctions
+- validation: `.venv/bin/python -m unittest discover -s tests -v`
+- what went well: this improves responsiveness without changing the matching flow shape or removing the existing Tesseract safety net
+- what was weak: real-photo latency still depends on network and model response time, so the next tuning may still need prompt simplification or skipping hosted game detection entirely
+- follow-up: send a live Telegram photo and confirm the early progress message appears immediately and that slow runs now fall back faster than before
+- confidence: medium-high
+
+## 2026-04-22 — Listing Crash Was Logger Bug, Not OpenAI Auth
+- date: 2026-04-22
+- task: investigate whether hosted OCR auth was broken after Telegram showed the GPT progress message followed by a generic photo-batch failure
+- goal: distinguish OpenAI key/auth problems from downstream pipeline crashes
+- outcome: verified the OpenAI key works with a direct helper call, reproduced the full listing classifier failure locally, traced it to a `NameError` in `services/card_identifier.py`, fixed the missing `logger`, and restarted the bot after clearing duplicate polling conflicts
+- validation: direct `extract_card_text_from_regions(...)` smoke succeeded; `.venv/bin/python -m unittest discover -s tests -v`; local `classify_listing_images(['.tmp/front.jpg'])` completed after the fix
+- what went well: the direct helper smoke separated auth from pipeline logic quickly
+- what was weak: stale/duplicate polling processes made live recovery noisier than the actual code fix
+- follow-up: retry the Telegram photo flow now that the crash is fixed, and if OCR is still weak/slow focus on fallback thresholds rather than auth debugging
+- confidence: high
+
+## 2026-05-12 — Raw Photo First For OpenAI OCR
+- date: 2026-05-12
+- task: remove card rectification from the primary OpenAI OCR path and send the original uploaded image to `gpt-4o-mini` first
+- goal: simplify the hosted OCR path and let the model reason over the raw seller photo before any OpenCV card isolation logic runs
+- outcome: `services/ocr.py` now builds a `raw_photo` candidate for the OpenAI-first path, skips `extract_card_candidates(...)` until fallback is needed, and exposes `source=raw_photo` in Telegram admin debug when GPT handles the original image
+- validation: `.venv/bin/python -m unittest discover -s tests -v`
+- what went well: the fallback architecture stayed intact because only the primary candidate source changed
+- what was weak: raw-photo OCR may be worse on cluttered or multi-card images, so fallback thresholds still matter a lot
+- follow-up: test one clean raw Telegram photo and one cluttered/raw angled photo to compare how often `source=raw_photo` stays usable before falling back
+- confidence: medium-high
+
+## 2026-05-12 — Fixed Stale Shell Key Overriding `.env`
+- date: 2026-05-12
+- task: investigate Telegram OCR `401 invalid_api_key` despite `.env` containing a valid `sk-proj` key
+- goal: ensure the bot process uses the project `.env` key instead of stale desktop-shell env values
+- outcome: confirmed the shell exported `OPENAI_API_KEY=orx_...`, patched `config.py` to call `load_dotenv(override=True)`, verified `get_config()` now reads the `sk-proj` key, restarted the bot, and removed raw provider error bodies from seller-facing OCR warnings
+- validation: direct `get_config()` check showed `key_prefix=sk-proj`; bot restarted and reached `Application started`
+- what went well: the root cause was configuration precedence, not OCR logic or OpenAI account access
+- what was weak: the previous warning text exposed too much raw provider error detail in Telegram
+- follow-up: retry the same Telegram photo and confirm the OCR warning no longer shows the `orx_...` key error
+- confidence: high
+
+## 2026-05-12 — Lower Latency And Stronger JP Matching Core
+- date: 2026-05-12
+- task: reduce OpenAI OCR latency further and strengthen Japanese-name matching now that GPT handles OCR directly
+- goal: make the bot faster in the live listing flow while improving the backend matcher's ability to use Japanese OCR signals
+- outcome: removed hosted game detection from the OpenAI path in favor of heuristic-only game detection, shortened the OCR prompt/output budget, added kana/kanji-aware tokenization in both generic candidate generation and card identification, and added a JP regression test proving an exact `name_jp` OCR signal can match the catalog
+- validation: `.venv/bin/python -m unittest discover -s tests -v`; local smoke `classify_listing_images(['.tmp/front.jpg'])` completed in about 6319ms with `provider=openai_gpt4o_mini`, `source=raw_photo`, `fallback=False`
+- what went well: the biggest remaining latency win came from removing an entire hosted pre-pass rather than micro-optimizing the OCR call itself
+- what was weak: JP backend support is materially better but not "fully done" yet; full live QA still depends on real JP card photos and broader catalog/import completeness
+- follow-up: restart the live bot on this build, then test one JP card photo and one English photo to compare debug output, latency, and match quality
+- confidence: medium-high
+
+
+## 2026-05-12 — Exact Identifier Safety Guard
+- date: 2026-05-12
+- task: stop bad OCR ratios from auto-matching the wrong card
+- goal: prevent cases like `TR 3/182` from confidently resolving to Team Rocket `3/82` without name support
+- outcome: patched both the early exact-identifier branch and the generic matcher to validate Pokémon set totals before auto-matching, and added a regression test for the Nidoking-style failure
+- validation: `.venv/bin/python -m unittest discover -s tests -v`
+- what went well: the false positive came from one clear early-return assumption, and the full suite stayed green after the guard was added
+- what was weak: JP live-photo coverage and broader real-photo resolver evaluation are still lighter than the EN path
+- follow-up: run more live Telegram samples across old Pokémon sets and Japanese cards, then keep tightening printed-ratio trust rules only where regressions show up
+- user_response: mixed
+
+
+## 2026-05-12 — OCR Debug Truthfulness Pass
+- date: 2026-05-12
+- task: make live OCR failure messaging more truthful and diagnosable
+- goal: stop promising fallback in `/list` and `/auction` when the OpenAI raw-photo path is running no-fallback, and surface a safe warning summary in admin debug
+- outcome: patched both progress messages to describe the real hosted OCR behavior and added an admin-only `ocr_warn` line so future `No usable text detected` cases can be triaged without exposing raw API payloads to sellers
+- validation: `.venv/bin/python -m unittest discover -s tests -v`; `.venv/bin/python -m py_compile handlers/listing.py handlers/auctions.py`
+- what went well: the failure path was shared between listing and auction, so one small change improved both flows immediately
+- what was weak: we still need a real sample or stack trace if `/auction` has a second issue beyond the shared OCR failure mode
+- follow-up: restart the bot, retry one `/list` and one `/auction` image, and compare the new `ocr_warn` debug line
+- user_response: mixed
+
+
+## 2026-05-12 — OpenAI OCR Transport Reliability Pass
+- date: 2026-05-12
+- task: reduce request-level hosted OCR failures on Telegram photos
+- goal: make the raw-photo OpenAI path less likely to fail before extraction starts
+- outcome: switched image payloads from PNG data URLs to compressed JPEG, capped oversized images before upload, and added a one-shot retry for transient timeout/transport/5xx/429 failures
+- validation: `.venv/bin/python -m unittest discover -s tests -v`; direct `.tmp/front.jpg` OCR smoke still succeeds on `gpt-4o-mini`
+- what went well: this targets the request payload itself rather than only the matcher, which is the right layer for `Hosted OCR failed before text could be extracted` failures
+- what was weak: we still need a live retest on the exact seller photo that previously failed to confirm this fixes the real-world case
+- follow-up: restart the bot and retest one failing Telegram photo, watching whether `ocr_warn` changes from request failure to weak-text OCR or a normal match result
+- user_response: mixed
+

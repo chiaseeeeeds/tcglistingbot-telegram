@@ -75,35 +75,30 @@ class OCRPipelineTests(unittest.TestCase):
         self.assertEqual(result.structured.top_value('name_en'), 'Charizard ex')
         self.assertEqual(result.structured.top_value('name_jp'), 'リザードンex')
 
-    def test_openai_invalid_schema_falls_back_to_tesseract(self) -> None:
+    def test_openai_invalid_schema_returns_openai_warning(self) -> None:
         image_path = self._image_file()
         with patch('services.ocr.get_ocr_provider_name', return_value='openai_gpt4o_mini'), \
-             patch('services.ocr.extract_card_candidates', return_value=[self._candidate()]), \
              patch('services.ocr.extract_card_text_from_regions', side_effect=OpenAIOCRSchemaError('bad schema')), \
-             patch('services.ocr._ocr_identifier_passes_tesseract', return_value=['PAF 234/091']), \
-             patch('services.ocr._ocr_name_passes_tesseract', return_value=['NAME_EN: Charizard ex']), \
              patch('services.ocr._known_set_codes', return_value={'PAF'}), \
              patch('services.ocr._write_debug_artifacts', return_value=None):
             result = extract_text_from_image(image_path, game='pokemon')
 
-        self.assertEqual(result.provider, 'tesseract')
-        self.assertIn('IDENTIFIER: PAF 234/091', result.text)
-        self.assertTrue(any('fallback OCR' in warning for warning in result.warnings))
+        self.assertEqual(result.provider, 'openai_gpt4o_mini')
+        self.assertEqual(result.text, '')
+        self.assertTrue(any('Hosted OCR failed before text could be extracted' in warning for warning in result.warnings))
 
-    def test_openai_timeout_falls_back_without_crashing(self) -> None:
+    def test_openai_timeout_returns_openai_warning(self) -> None:
         image_path = self._image_file()
         with patch('services.ocr.get_ocr_provider_name', return_value='openai_gpt4o_mini'), \
-             patch('services.ocr.extract_card_candidates', return_value=[self._candidate()]), \
              patch('services.ocr.extract_card_text_from_regions', side_effect=OpenAIOCRRequestError('timeout')), \
-             patch('services.ocr._ocr_identifier_passes_tesseract', return_value=['PAF 234/091']), \
-             patch('services.ocr._ocr_name_passes_tesseract', return_value=['NAME_JP: リザードンex']), \
              patch('services.ocr._known_set_codes', return_value={'PAF'}), \
              patch('services.ocr._write_debug_artifacts', return_value=None):
             result = extract_text_from_image(image_path, game='pokemon')
 
-        self.assertEqual(result.provider, 'tesseract')
-        self.assertEqual(result.structured.top_value('name_jp'), 'リザードンex')
-        self.assertTrue(result.text)
+        self.assertEqual(result.provider, 'openai_gpt4o_mini')
+        self.assertEqual(result.source, 'raw_photo')
+        self.assertEqual(result.text, '')
+        self.assertTrue(any('Hosted OCR failed before text could be extracted' in warning for warning in result.warnings))
 
 
 if __name__ == '__main__':

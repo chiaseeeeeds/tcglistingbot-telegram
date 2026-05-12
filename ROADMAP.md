@@ -35,6 +35,8 @@ These are explicitly not blockers for minimal GA and should be treated as post-G
 - seller onboarding/setup exists
 - listing creation exists and is the strongest path in the product
 - OCR/matching architecture is moving in the right direction
+- raw-photo OpenAI OCR is now live; the immediate priority is resolver safety, JP evaluation coverage, and latency tuning rather than adding more OCR branches
+- live OCR QA now also needs truthful operator feedback; when hosted OCR changes, seller/admin messages must reflect the real fallback behavior and expose safe warning summaries for debugging
 - snapshot-backed offline OCR evaluation exists
 - multi-image listing intake with front/back classification now exists
 
@@ -324,3 +326,9 @@ Minimal Phase 1 GA is reached when Milestones 1 through 6 are complete for the P
 - April 14, 2026 privacy hardening: buyer self-service claim/payment commands now require DM context, which closes the accidental public claim-leak path from discussion comments
 - OCR backend sequencing changed: hosted OpenAI OCR is now the primary extraction path, with local Tesseract retained as the safety fallback rather than the default engine
 - near-term OCR hardening should focus on prompt/ROI tuning, latency/cost observation, and real-photo regression coverage instead of adding more Tesseract-only heuristics first
+- April 21, 2026 OCR update: the primary hosted OCR path is now optimized for one full rectified card image plus Telegram-visible provider/fallback debug, so the next tuning work should focus on real-photo latency and extraction quality rather than more ROI fan-out
+- April 21, 2026 latency hardening: the OCR flow now announces `gpt-4o-mini` immediately in Telegram and uses shorter hosted timeout caps before fallback, so the next latency decision is whether hosted game detection still earns its cost versus heuristic-only detection
+- April 22, 2026 reliability note: the recent Telegram photo-batch failure was a downstream classifier crash, not an OpenAI auth issue, so current OCR hardening should focus on quality/latency/fallback behavior rather than API-key wiring
+- May 12, 2026 OCR simplification: the hosted OCR path now starts from the raw uploaded photo instead of card rectification, so the next decision is whether fallback thresholds should be tightened for cluttered/multi-card images
+- May 12, 2026 config hardening: project `.env` values now override stale desktop-shell env values, which removes a major source of misleading live OCR auth failures during local bot testing
+- May 12, 2026 backend update: the OCR path is now faster because game detection is heuristic-only, and JP matching is materially stronger because backend tokenization now understands Japanese scripts rather than only Latin OCR tokens

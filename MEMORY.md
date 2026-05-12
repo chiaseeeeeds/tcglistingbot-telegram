@@ -16,8 +16,8 @@
 - `/start`, `/help`, `/setup`, `/ping`, and `/list` respond again
 - seller setup persists in Supabase
 - `/list` now starts as a photo-first flow in DM
-- OCR provider is local Tesseract
-- `/list` OCR now detects and rectifies the card first, then reads Pokémon identifier ROIs relative to the normalized card instead of the raw photo
+- OCR provider is now OpenAI `gpt-4o-mini` first via the Responses API, using the raw uploaded front photo before any rectification
+- `/list` OCR now sends the raw uploaded front photo first for hosted OCR; rectified/cropped card processing remains a secondary local recovery path only where still needed outside the hosted fast path
 - OCR debug artifacts are now saved locally for failed tuning sessions
 - OCR now aggregates signals across multiple fallback card crops, combining top-name OCR and identifier OCR instead of relying on one crop only
 - Catalog reads now page through the full `cards` table, so fuzzy resolution can use all imported Pokémon rows
@@ -201,3 +201,25 @@
 - `config.py` now validates `OPENAI_API_KEY`, `OPENAI_OCR_MODEL`, and `OPENAI_OCR_TIMEOUT_SECONDS` for the new OpenAI OCR provider while keeping `tesseract` and `google_vision` valid
 - added unit coverage for config validation, OpenAI success/fallback behavior in OCR, OpenAI-first game detection, and listing-image classification continuity
 - remaining tuning gaps: real-photo prompt tuning for low-quality / glare-heavy crops, live API latency/cost monitoring, and manual smoke on Pokémon EN, Pokémon JP, One Piece, and known bad images before calling the OCR path production-ready
+- date: 2026-04-21
+- OpenAI OCR primary now sends only the full rectified card image to `gpt-4o-mini` instead of batching many identifier/name ROI crops, which should materially reduce hosted OCR latency while keeping Tesseract ROI fallback intact
+- admin Telegram debug output in listing and auction OCR replies now shows the requested provider, actual provider used, model name, fallback status, and OCR latency so live testing can distinguish OpenAI success from timeout-driven fallback
+- date: 2026-04-21
+- OpenAI OCR now uses hard internal timeout caps: full-card OCR requests are capped at 12s and OpenAI game-detection probes are capped at 5s before falling back, so the seller flow should fail over sooner instead of waiting for the full env timeout everywhere
+- listing and auction flows now send an immediate Telegram progress reply that explicitly says when `gpt-4o-mini` is scanning the image, making live OCR latency easier to distinguish from a stuck bot
+- date: 2026-04-22
+- the seller-facing "I could not process that photo batch" failure after the GPT progress message was not an OpenAI key issue; the hosted OCR helper worked, but `services/card_identifier.py` crashed inside `identify_card_from_text(...)` because `logger` was referenced without being defined
+- fixing the missing module logger restored the listing-image classifier path; the remaining OCR behavior on the sampled `.tmp/front.jpg` is slower fallback behavior, not auth failure
+- date: 2026-05-12
+- OpenAI OCR primary now skips card rectification entirely and sends the raw uploaded photo first; rectified card candidates remain only for Tesseract fallback after OpenAI failure/weak output
+- admin Telegram debug now also shows `source=raw_photo` versus fallback crop sources, so live tests can confirm whether GPT handled the original image or the pipeline dropped into rectified fallback OCR
+- date: 2026-05-12
+- the `invalid_api_key` Telegram OCR warning was caused by environment precedence, not the `.env` value itself: the shell had `OPENAI_API_KEY=orx_...`, and `config.py` was calling `load_dotenv()` without override, so the bot process kept the stale shell key until config loading was changed to `load_dotenv(override=True)`
+- seller-facing OCR warnings no longer include raw OpenAI exception bodies, so Telegram replies will not echo provider error payloads or misleading key fragments back to the user
+- date: 2026-05-12
+- listing latency is lower again after removing hosted game detection from the OpenAI path; `classify_listing_images(['.tmp/front.jpg'])` now completes in about 6.3s end to end, with OCR itself around 5.3s on that sample
+- JP matching got a real backend improvement: both `services/card_identifier.py` and `services/candidate_generation.py` now tokenize kana/kanji sequences instead of only Latin tokens, and a regression test now confirms an exact `name_jp` OCR signal can match the JP catalog path successfully
+- exact identifier matching is now guarded by Pokémon set-total validation, so malformed OCR like `TR 3/182` no longer auto-matches a Team Rocket `/82` card unless there is separate strong name evidence
+- listing and auction progress messages no longer falsely promise automatic OCR fallback on the OpenAI raw-photo path, and admin Telegram debug now includes a sanitized `ocr_warn` line showing the first OCR warning without leaking raw provider payloads
+- OpenAI OCR now sends compressed JPEG data URLs instead of PNG for Telegram-style photo inputs and retries one transient request failure, which should reduce payload size, latency, and request-level hosted OCR failures on real seller photos
+- the OpenAI OCR prompt is now leaner and explicitly asks for best-effort partial extraction plus exact Japanese preservation, which reduces output budget and improves JP-oriented extraction behavior without changing the response schema

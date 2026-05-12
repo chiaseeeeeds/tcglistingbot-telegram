@@ -25,12 +25,12 @@ class GameDetectionTests(unittest.TestCase):
             ('bottom_window', Image.new('RGB', (100, 40), color='white')),
         ]
 
-    def test_strong_openai_pokemon_bypasses_tesseract(self) -> None:
+    def test_openai_provider_now_uses_heuristic_for_speed(self) -> None:
         image_path = self._image_file()
+        heuristic = GameDetectionResult(game='pokemon', confidence=0.8, reason='header and rules text look Pokémon-like', tokens_seen=['HP'])
         with patch('services.game_detection.get_config') as mock_config, \
              patch('services.game_detection._prepare_regions', return_value=self._regions()), \
-             patch('services.game_detection.detect_game_from_regions', return_value=OpenAIGameDetectionResult(game='pokemon', confidence=0.92, reason='saw HP and Weakness', tokens_seen=['HP', 'WEAKNESS'])), \
-             patch('services.game_detection._heuristic_game_detection', side_effect=AssertionError('heuristic should not run')):
+             patch('services.game_detection._heuristic_game_detection', return_value=heuristic):
             mock_config.return_value.ocr_provider = 'openai_gpt4o_mini'
             result = detect_game_from_image(image_path)
         self.assertEqual(result.game, 'pokemon')

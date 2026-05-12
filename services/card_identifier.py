@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import logging
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 from functools import lru_cache
@@ -14,7 +15,7 @@ from services.candidate_generation import generate_catalog_candidates
 from services.candidate_scoring import TextContext, NameScoringWeights, compute_name_evidence, score_name_evidence
 from services.ocr_signals import OCRStructuredResult
 
-_TOKEN_RE = re.compile(r'[A-Za-z0-9]+')
+_TOKEN_RE = re.compile(r'[A-Za-z0-9]+|[\u3040-\u30ffー]+|[\u4e00-\u9fff]+')
 _CARD_RATIO_RE = re.compile(r'\b(\d{1,3})\s*/\s*(\d{1,3})\b')
 _SET_BLOCK_RE = re.compile(r'\b([A-Z0-9]{2,5})\s*(?:EN|JP)?\s*(\d{1,3}/\d{1,3})\b', re.IGNORECASE)
 _MANUAL_IDENTIFIER_RE = re.compile(r'^\s*([A-Z0-9]{2,5})\s+(\d{1,3}/\d{1,3})\s*$', re.IGNORECASE)
@@ -23,6 +24,8 @@ _SET_NAME_SPLIT_RE = re.compile(r'\s*[—–:/|]+\s*')
 _NAME_STOPWORDS = {'name', 'identifier', 'pokemon', 'trainer', 'energy', 'stage', 'basic', 'ability'}
 _SET_NAME_STOPWORDS = {'series', 'set', 'expansion', 'scarlet', 'violet', 'sun', 'moon', 'sword', 'shield', 'black', 'white'}
 CARD_IDENTIFIER_BUILD_MARKER = 'card-identify-2026-04-12-shared-evidence-v17'
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -137,7 +140,9 @@ def _tokenize(value: str) -> set[str]:
     tokens: set[str] = set()
     for token in _TOKEN_RE.findall(value):
         normalized = _normalize_token(token)
-        if normalized.isalpha() and len(normalized) < 2:
+        if not normalized:
+            continue
+        if normalized.isascii() and normalized.isalpha() and len(normalized) < 2:
             continue
         if normalized in _NAME_STOPWORDS:
             continue
@@ -192,7 +197,7 @@ def _ocr_text_context(*, raw_text: str, structured: OCRStructuredResult | None =
     searchable_text = _structured_search_text(structured) or raw_text
     raw_lower = searchable_text.lower()
     raw_tokens = _tokenize(searchable_text)
-    raw_word_tokens = re.findall(r'[a-z]{4,}', raw_lower)
+    raw_word_tokens = list(dict.fromkeys([token for token in raw_tokens if len(token) >= 2]))
     return searchable_text, raw_lower, raw_tokens, raw_word_tokens
 
 
@@ -720,6 +725,7 @@ def identify_card_from_text(*, raw_text: str, game: str, structured: OCRStructur
     detected = _extract_identifiers_from_structured(structured, raw_text=raw_text, game=game) if structured is not None else _extract_identifiers(raw_text, game=game)
     detected_print_number = detected.get('detected_print_number', '')
     detected_left_number = detected_print_number.split('/')[0].lstrip('0') if detected_print_number else ''
+    detected_print_total = _detected_print_total(detected_print_number)
     detected_set_code = detected.get('detected_set_code', '').upper()
 
     if detected_set_code and detected_left_number:
@@ -741,28 +747,43 @@ def identify_card_from_text(*, raw_text: str, game: str, structured: OCRStructur
                 candidates=identifier_candidates,
                 structured=structured,
             )
-            candidate_options = [
-                _candidate_option(score=confidence, card=card, reasons=reasons if card == matched_card else ['Set code and printed number matched the catalog.'])
-                for card in identifier_candidates[:3]
-            ]
             if matched_card is not None:
-                return CardIdentificationResult(
-                    matched=True,
-                    confidence=confidence,
-                    display_name=_display_name_for_card(matched_card),
-                    card_id=str(matched_card.get('id') or ''),
-                    raw_text=raw_text,
-                    match_reasons=reasons,
-                    metadata={
-                        'game': game,
-                        'set_code': str(matched_card.get('set_code') or ''),
-                        'card_number': str(matched_card.get('card_number') or ''),
-                        'detected_print_number': detected_print_number,
-                        'resolver': 'exact_identifier',
-                        'service_build': CARD_IDENTIFIER_BUILD_MARKER,
-                    },
-                    candidate_options=candidate_options,
-                )
+                matched_set_code = str(matched_card.get('set_code') or '').strip().upper()
+                expected_total = _pokemon_set_card_counts().get(matched_set_code, '') if game == 'pokemon' and detected_print_total else ''
+                if expected_total and not _set_total_matches(set_code=matched_set_code, detected_total=detected_print_total):
+                    logger.info(
+                        'Skipping exact identifier auto-match due to mismatched set total',
+                        extra={
+                            'game': game,
+                            'detected_set_code': detected_set_code,
+                            'detected_print_number': detected_print_number,
+                            'matched_set_code': matched_set_code,
+                            'matched_card_number': str(matched_card.get('card_number') or ''),
+                            'expected_total': expected_total,
+                        },
+                    )
+                else:
+                    candidate_options = [
+                        _candidate_option(score=confidence, card=card, reasons=reasons if card == matched_card else ['Set code and printed number matched the catalog.'])
+                        for card in identifier_candidates[:3]
+                    ]
+                    return CardIdentificationResult(
+                        matched=True,
+                        confidence=confidence,
+                        display_name=_display_name_for_card(matched_card),
+                        card_id=str(matched_card.get('id') or ''),
+                        raw_text=raw_text,
+                        match_reasons=reasons,
+                        metadata={
+                            'game': game,
+                            'set_code': str(matched_card.get('set_code') or ''),
+                            'card_number': str(matched_card.get('card_number') or ''),
+                            'detected_print_number': detected_print_number,
+                            'resolver': 'exact_identifier',
+                            'service_build': CARD_IDENTIFIER_BUILD_MARKER,
+                        },
+                        candidate_options=candidate_options,
+                    )
 
     catalog = list_cards_for_game(game)
     candidate_catalog = generate_catalog_candidates(
@@ -965,6 +986,25 @@ def identify_card_from_text(*, raw_text: str, game: str, structured: OCRStructur
                 metadata={'game': game, 'resolver': 'generic_set_code_mismatch_guard', **debug_metadata, **detected},
                 candidate_options=candidate_options,
             )
+
+    if detected_set_code and detected_print_total and best_card is not None:
+        best_set_code = str(best_card.get('set_code') or '').strip().upper()
+        expected_total = _pokemon_set_card_counts().get(best_set_code, '') if game == 'pokemon' else ''
+        if expected_total and best_set_code.lower() == detected_set_code and not _set_total_matches(set_code=best_set_code, detected_total=detected_print_total):
+            if not _strong_name_signal(raw_text=raw_text, card=best_card, structured=structured):
+                return CardIdentificationResult(
+                    matched=False,
+                    confidence=round(min(best_score, 0.99), 2),
+                    display_name='Unknown card',
+                    card_id=None,
+                    raw_text=raw_text,
+                    match_reasons=[
+                        'OCR saw a printed ratio, but the total count does not fit the detected set.',
+                        f'Detected {detected_print_number}, but {best_set_code} cards should total /{expected_total}.',
+                    ],
+                    metadata={'game': game, 'resolver': 'generic_print_total_guard', **debug_metadata, **detected},
+                    candidate_options=candidate_options,
+                )
 
     if not detected_set_code and detected_left_number and len(near_best) > 3 and best_score < 0.52:
         return CardIdentificationResult(

@@ -1,13 +1,13 @@
-/Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py:822: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py:849: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
   conversation = ConversationHandler(
-/Users/chiawei/orchids-projects/telegram-bot-api/handlers/auctions.py:755: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/auctions.py:767: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
   conversation = ConversationHandler(
-2026-04-21 11:44:54,943 INFO __main__ Starting bot process.
-2026-04-21 11:44:55,439 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
-2026-04-21 11:44:55,440 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
-2026-04-21 11:44:55,440 INFO apscheduler.scheduler Added job "run_payment_deadline_cycle" to job store "default"
-2026-04-21 11:44:55,440 INFO apscheduler.scheduler Added job "refresh_auction_listing_messages" to job store "default"
-2026-04-21 11:44:55,440 INFO apscheduler.scheduler Scheduler started
-2026-04-21 11:44:55,504 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
-2026-04-21 11:44:55,570 INFO apscheduler.scheduler Scheduler started
-2026-04-21 11:44:55,571 INFO telegram.ext.Application Application started
+2026-05-12 12:03:09,257 INFO __main__ Starting bot process.
+2026-05-12 12:03:10,809 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 12:03:10,809 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 12:03:10,809 INFO apscheduler.scheduler Added job "run_payment_deadline_cycle" to job store "default"
+2026-05-12 12:03:10,809 INFO apscheduler.scheduler Added job "refresh_auction_listing_messages" to job store "default"
+2026-05-12 12:03:10,809 INFO apscheduler.scheduler Scheduler started
+2026-05-12 12:03:11,010 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-05-12 12:03:11,212 INFO apscheduler.scheduler Scheduler started
+2026-05-12 12:03:11,212 INFO telegram.ext.Application Application started

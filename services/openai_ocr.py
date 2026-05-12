@@ -57,10 +57,15 @@ class OpenAIGameDetectionResult:
 
 
 def _image_to_data_url(image: Image.Image) -> str:
+    prepared = image.convert('RGB')
+    max_side = 1400
+    if max(prepared.size) > max_side:
+        prepared = prepared.copy()
+        prepared.thumbnail((max_side, max_side), Image.Resampling.LANCZOS)
     buffer = io.BytesIO()
-    image.save(buffer, format='PNG')
+    prepared.save(buffer, format='JPEG', quality=85, optimize=True)
     encoded = base64.b64encode(buffer.getvalue()).decode('ascii')
-    return f'data:image/png;base64,{encoded}'
+    return f'data:image/jpeg;base64,{encoded}'
 
 
 OCR_RESPONSE_SCHEMA: dict[str, Any] = {
@@ -255,6 +260,7 @@ def _request_structured_output(
     schema: dict[str, Any],
     regions: list[tuple[str, Image.Image]],
     max_output_tokens: int,
+    timeout_seconds: float | None = None,
 ) -> dict[str, Any]:
     if not regions:
         raise OpenAIOCRRequestError('OpenAI OCR request requires at least one region image.')
@@ -286,19 +292,39 @@ def _request_structured_output(
         'Content-Type': 'application/json',
     }
 
-    try:
-        with httpx.Client(timeout=config.openai_ocr_timeout_seconds) as client:
-            response = client.post(_RESPONSES_API_URL, headers=headers, json=payload)
-            response.raise_for_status()
-    except httpx.TimeoutException as exc:
-        raise OpenAIOCRRequestError('OpenAI OCR request timed out.') from exc
-    except httpx.HTTPStatusError as exc:
-        body = exc.response.text[:400]
-        raise OpenAIOCRRequestError(
-            f'OpenAI OCR request failed with status {exc.response.status_code}: {body}'
-        ) from exc
-    except httpx.HTTPError as exc:
-        raise OpenAIOCRRequestError('OpenAI OCR transport failed.') from exc
+    request_timeout = float(timeout_seconds or config.openai_ocr_timeout_seconds)
+
+    last_error: Exception | None = None
+    for attempt in range(2):
+        try:
+            with httpx.Client(timeout=httpx.Timeout(request_timeout)) as client:
+                response = client.post(_RESPONSES_API_URL, headers=headers, json=payload)
+                response.raise_for_status()
+            break
+        except httpx.TimeoutException as exc:
+            last_error = exc
+            if attempt == 0:
+                logger.warning('OpenAI OCR request timed out on attempt %s; retrying once.', attempt + 1)
+                continue
+            raise OpenAIOCRRequestError('OpenAI OCR request timed out.') from exc
+        except httpx.HTTPStatusError as exc:
+            last_error = exc
+            status_code = exc.response.status_code
+            if attempt == 0 and status_code in {408, 409, 429, 500, 502, 503, 504}:
+                logger.warning('OpenAI OCR request failed with transient status %s on attempt %s; retrying once.', status_code, attempt + 1)
+                continue
+            body = exc.response.text[:400]
+            raise OpenAIOCRRequestError(
+                f'OpenAI OCR request failed with status {status_code}: {body}'
+            ) from exc
+        except httpx.HTTPError as exc:
+            last_error = exc
+            if attempt == 0:
+                logger.warning('OpenAI OCR transport failed on attempt %s; retrying once.', attempt + 1)
+                continue
+            raise OpenAIOCRRequestError('OpenAI OCR transport failed.') from exc
+    else:
+        raise OpenAIOCRRequestError('OpenAI OCR request failed before a response was received.') from last_error
 
     try:
         response_payload = response.json()
@@ -325,22 +351,20 @@ def extract_card_text_from_regions(
     """Extract OCR signals from labeled card ROI images."""
 
     prompt = (
-        'You are extracting visible printed trading-card text from one or more card images. '
-        'The image may be a full rectified card or a focused region. '
-        'Only return text that is actually visible on the card. Ignore playmats, sleeves, '
-        'background graphics, reflections, blur artifacts, and guessed text. '
-        'For each labeled region, capture identifier text, ratio text, set code, English name, '
-        'Japanese name, and raw visible text when present. Return empty strings for missing fields. '
-        'When a full-card image is provided, use the whole card context to infer the best visible '
-        'name, identifier, and set fields. The best_guess object should contain the single most '
-        'useful combined guess across all regions.'
+        'Extract visible printed trading-card text from the provided card image. '
+        'Use best-effort OCR and prefer partial text over blank fields. '
+        'Preserve Japanese text exactly when visible. Ignore playmats, sleeves, fingers, glare artifacts, '
+        'and background noise. Capture identifier text, ratio text, set code, English name, Japanese name, '
+        'and raw visible text. When uncertain, keep the uncertain field short but do not hallucinate extra details. '
+        'The best_guess object should contain the single most useful combined guess from the image.'
     )
     payload = _request_structured_output(
         prompt=prompt,
         schema_name='tcg_card_ocr_batch',
         schema=OCR_RESPONSE_SCHEMA,
         regions=regions,
-        max_output_tokens=450,
+        max_output_tokens=220,
+        timeout_seconds=min(float(get_config().openai_ocr_timeout_seconds), 12.0),
     )
     return _validate_ocr_payload(payload)
 
@@ -361,5 +385,6 @@ def detect_game_from_regions(
         schema=GAME_DETECTION_SCHEMA,
         regions=regions,
         max_output_tokens=120,
+        timeout_seconds=min(float(get_config().openai_ocr_timeout_seconds), 5.0),
     )
     return _validate_game_payload(payload)

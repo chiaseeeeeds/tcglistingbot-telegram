@@ -36,6 +36,7 @@ class ListingImageClassifierTests(unittest.TestCase):
             text='IDENTIFIER: PAF 234/091 | NAME_EN: Charizard ex',
             provider=provider,
             model='gpt-4o-mini' if provider == 'openai_gpt4o_mini' else provider,
+            source='raw_photo' if provider == 'openai_gpt4o_mini' else 'detected_test',
             requested_provider=provider,
             used_fallback=False,
             latency_ms=1200,
