@@ -88,6 +88,7 @@ class OCRResult:
     latency_ms: int
     warnings: list[str]
     structured: OCRStructuredResult
+    debug_error: str = ''
 
 
 @dataclass(frozen=True)
@@ -105,6 +106,7 @@ class _CandidateOCR:
     roi_labels: list[str]
     identifier_layout_family: str
     warnings: list[str]
+    debug_error: str = ''
 
 
 @dataclass(frozen=True)
@@ -607,6 +609,16 @@ def _ratio_plausibility(ratio: str) -> int:
     return bonus
 
 
+def _ratio_sort_key(ratio: str) -> tuple[int, int, int, int]:
+    left_text, _, right_text = ratio.partition('/')
+    try:
+        left = int(left_text)
+        right = int(right_text)
+    except ValueError:
+        return (0, 0, 0, 0)
+    return (len(left_text.lstrip('0') or '0'), left, -abs(right - left), right)
+
+
 def _best_ratio(chunks: list[str]) -> tuple[str, int]:
     scores: Counter[str] = Counter()
     for chunk in chunks:
@@ -632,7 +644,8 @@ def _best_ratio(chunks: list[str]) -> tuple[str, int]:
                     scores[repaired_ratio] += 20 + _ratio_plausibility(repaired_ratio)
     if not scores:
         return '', 0
-    ratio, score = scores.most_common(1)[0]
+    ratio = max(scores, key=lambda candidate: (scores[candidate], _ratio_sort_key(candidate)))
+    score = scores[ratio]
     return ratio, score
 
 
@@ -780,6 +793,7 @@ def _finalize_candidate_ocr(
     identifier_layout_family: str,
     game: str | None,
     warnings: list[str] | None = None,
+    debug_error: str = '',
 ) -> _CandidateOCR:
     best_identifier, identifier_score = _select_best_identifier(identifier_chunks, game=game)
     best_name, name_score = _select_best_name(name_chunks)
@@ -805,6 +819,7 @@ def _finalize_candidate_ocr(
         roi_labels=batch.roi_labels,
         identifier_layout_family=identifier_layout_family,
         warnings=list(warnings or []),
+        debug_error=debug_error,
     )
 
 
@@ -814,6 +829,7 @@ def _empty_openai_candidate(
     candidate: CardImageCandidate,
     batch: _PreparedCandidateBatch,
     warning: str,
+    debug_error: str = '',
 ) -> _CandidateOCR:
     return _finalize_candidate_ocr(
         candidate=candidate,
@@ -824,7 +840,26 @@ def _empty_openai_candidate(
         identifier_layout_family='generic_identifier_zone',
         game=None,
         warnings=[warning],
+        debug_error=debug_error,
     )
+
+
+def _openai_debug_error(exc: Exception) -> str:
+    if isinstance(exc, OCRNotConfiguredError):
+        return 'not_configured'
+    if isinstance(exc, OpenAIOCRSchemaError):
+        return 'schema'
+    if isinstance(exc, OpenAIOCRRequestError):
+        message = str(exc).lower()
+        status_match = re.search(r'status\s+(\d{3})', message)
+        if status_match:
+            return f'http_{status_match.group(1)}'
+        if 'timed out' in message:
+            return 'timeout'
+        if 'transport' in message:
+            return 'transport'
+        return 'request'
+    return exc.__class__.__name__.lower()
 
 
 def _score_candidate_with_tesseract(
@@ -973,20 +1008,12 @@ def _score_candidate(*, source_path: Path, candidate: CardImageCandidate, game: 
                 candidate.source,
                 exc,
             )
-            try:
-                fallback_batch = _prepare_candidate_batch(candidate=candidate, game=game)
-                return _score_candidate_with_tesseract(
-                    candidate=candidate,
-                    batch=fallback_batch,
-                    game=game,
-                    warnings=['Hosted OCR failed before text could be extracted. Falling back to local OCR.'],
-                )
-            except pytesseract.TesseractNotFoundError:
-                return _empty_openai_candidate(
-                    candidate=candidate,
-                    batch=batch,
-                    warning='Hosted OCR failed before text could be extracted.',
-                )
+            return _empty_openai_candidate(
+                candidate=candidate,
+                batch=batch,
+                warning='Hosted OCR failed before text could be extracted.',
+                debug_error=_openai_debug_error(exc),
+            )
     batch = _prepare_candidate_batch(candidate=candidate, game=game)
     return _score_candidate_with_current_provider(candidate=candidate, batch=batch, game=game)
 
@@ -1074,5 +1101,6 @@ def extract_text_from_image(image_path: str | Path, *, game: str | None = None) 
         used_fallback=best_candidate.provider != provider,
         latency_ms=latency_ms,
         warnings=deduped_warnings,
+        debug_error=best_candidate.debug_error,
         structured=structured_result,
     )

@@ -20,6 +20,7 @@ _CARD_RATIO_RE = re.compile(r'\b(\d{1,3})\s*/\s*(\d{1,3})\b')
 _SET_BLOCK_RE = re.compile(r'\b([A-Z0-9]{2,5})\s*(?:EN|JP)?\s*(\d{1,3}/\d{1,3})\b', re.IGNORECASE)
 _MANUAL_IDENTIFIER_RE = re.compile(r'^\s*([A-Z0-9]{2,5})\s+(\d{1,3}/\d{1,3})\s*$', re.IGNORECASE)
 _COMPACT_RATIO_RE = re.compile(r'(?<!\d)(\d{6})(?!\d)')
+_IDENTIFIER_BLOCK_RE = re.compile(r'IDENTIFIER\s*:\s*([^\n|]+)', re.IGNORECASE)
 _SET_NAME_SPLIT_RE = re.compile(r'\s*[—–:/|]+\s*')
 _NAME_STOPWORDS = {'name', 'identifier', 'pokemon', 'trainer', 'energy', 'stage', 'basic', 'ability'}
 _SET_NAME_STOPWORDS = {'series', 'set', 'expansion', 'scarlet', 'violet', 'sun', 'moon', 'sword', 'shield', 'black', 'white'}
@@ -156,17 +157,28 @@ def _extract_identifiers_from_structured(structured: OCRStructuredResult, *, raw
     metadata: dict[str, str] = {}
     set_code_text = structured.top_value('set_code_text').strip().upper()
     printed_ratio = structured.top_value('printed_ratio').strip().upper()
+    identifier_text = structured.top_value('identifier').strip().upper()
     set_name_text = structured.top_value('set_name_text').strip()
 
     if set_code_text and not set_code_text.isdigit():
         metadata['detected_set_code'] = set_code_text
-    if printed_ratio and _CARD_RATIO_RE.search(printed_ratio):
-        metadata['detected_print_number'] = printed_ratio
+    ratio_candidates = [
+        candidate
+        for candidate in (
+            printed_ratio,
+            _extract_best_ratio(identifier_text),
+            _extract_best_ratio(raw_text),
+        )
+        if candidate
+    ]
+    selected_ratio = _select_preferred_ratio(ratio_candidates)
+    if selected_ratio:
+        metadata['detected_print_number'] = selected_ratio
     if set_name_text and game == 'pokemon' and 'detected_set_code' not in metadata:
         metadata.update(_detect_pokemon_set_from_text(set_name_text))
     if game == 'pokemon' and 'detected_set_code' not in metadata and 'detected_set_name' not in metadata:
         name_alias_text = ' '.join(signal.value for signal in structured.signals if signal.kind in {'set_name_text', 'name_en', 'name_jp'})
-        if name_alias_text.strip():
+        if name_alias_text.strip() and not _looks_like_modern_print_ratio(selected_ratio):
             metadata.update(_detect_pokemon_set_from_text(name_alias_text))
     if 'detected_print_number' not in metadata or (game == 'pokemon' and 'detected_set_code' not in metadata):
         fallback = _extract_identifiers(raw_text, game=game)
@@ -233,7 +245,8 @@ def _extract_identifiers(raw_text: str, *, game: str | None = None) -> dict[str,
 
     metadata: dict[str, str] = {}
     upper_text = raw_text.upper()
-    set_match = _SET_BLOCK_RE.search(upper_text)
+    identifier_block = _extract_identifier_block(upper_text)
+    set_match = _SET_BLOCK_RE.search(identifier_block) or _SET_BLOCK_RE.search(upper_text)
     if set_match:
         candidate_set_code = set_match.group(1).strip().upper()
         candidate_print_number = set_match.group(2).replace(' ', '')
@@ -241,20 +254,75 @@ def _extract_identifiers(raw_text: str, *, game: str | None = None) -> dict[str,
             metadata['detected_set_code'] = candidate_set_code
             metadata['detected_print_number'] = candidate_print_number
 
-    ratio_match = _CARD_RATIO_RE.search(raw_text)
-    if ratio_match and 'detected_print_number' not in metadata:
-        metadata['detected_print_number'] = f'{ratio_match.group(1)}/{ratio_match.group(2)}'
+    if 'detected_print_number' not in metadata:
+        ratio_candidates = [
+            candidate
+            for candidate in (
+                _extract_best_ratio(identifier_block),
+                _extract_best_ratio(raw_text),
+            )
+            if candidate
+        ]
+        selected_ratio = _select_preferred_ratio(ratio_candidates)
+        if selected_ratio:
+            metadata['detected_print_number'] = selected_ratio
 
     if 'detected_print_number' not in metadata:
-        compact_match = _COMPACT_RATIO_RE.search(upper_text.replace(' ', ''))
+        compact_source = identifier_block or upper_text
+        compact_match = _COMPACT_RATIO_RE.search(compact_source.replace(' ', '')) or _COMPACT_RATIO_RE.search(upper_text.replace(' ', ''))
         if compact_match:
             digits = compact_match.group(1)
             metadata['detected_print_number'] = f'{digits[:3]}/{digits[3:]}'
 
     if game == 'pokemon' and 'detected_set_code' not in metadata:
-        metadata.update(_detect_pokemon_set_from_text(raw_text))
+        detected_print_number = str(metadata.get('detected_print_number') or '')
+        if not _looks_like_modern_print_ratio(detected_print_number):
+            metadata.update(_detect_pokemon_set_from_text(raw_text))
 
     return metadata
+
+
+def _extract_identifier_block(raw_text: str) -> str:
+    match = _IDENTIFIER_BLOCK_RE.search(raw_text)
+    return match.group(1).strip().upper() if match else ''
+
+
+def _ratio_sort_key(ratio: str) -> tuple[int, int, int, int]:
+    left_text, _, total_text = ratio.partition('/')
+    try:
+        left = int(left_text)
+        total = int(total_text)
+    except ValueError:
+        return (0, 0, 0, 0)
+    return (len(left_text.lstrip('0') or '0'), left, -abs(total - left), total)
+
+
+def _extract_best_ratio(raw_text: str) -> str:
+    candidates = [f'{left}/{right}' for left, right in _CARD_RATIO_RE.findall(raw_text)]
+    return _select_preferred_ratio(candidates)
+
+
+def _select_preferred_ratio(candidates: list[str]) -> str:
+    if not candidates:
+        return ''
+    counts: dict[str, int] = {}
+    first_seen: dict[str, int] = {}
+    for index, candidate in enumerate(candidates):
+        normalized = candidate.strip().upper().replace(' ', '')
+        if not normalized:
+            continue
+        counts[normalized] = counts.get(normalized, 0) + 1
+        first_seen.setdefault(normalized, index)
+    if not counts:
+        return ''
+    return max(
+        counts,
+        key=lambda ratio: (
+            counts[ratio],
+            _ratio_sort_key(ratio),
+            -first_seen[ratio],
+        ),
+    )
 
 
 def parse_manual_identifier(value: str) -> dict[str, str] | None:
@@ -325,6 +393,17 @@ def _detected_print_total(detected_print_number: str) -> str:
     if not detected_print_number or '/' not in detected_print_number:
         return ''
     return detected_print_number.split('/', 1)[1].strip().lstrip('0') or '0'
+
+
+def _looks_like_modern_print_ratio(detected_print_number: str) -> bool:
+    if not detected_print_number or '/' not in detected_print_number:
+        return False
+    left, _, total = detected_print_number.partition('/')
+    left = left.strip().lstrip('0') or '0'
+    total = total.strip().lstrip('0') or '0'
+    if not left.isdigit() or not total.isdigit():
+        return False
+    return int(left) >= 100 or int(total) >= 100
 
 
 

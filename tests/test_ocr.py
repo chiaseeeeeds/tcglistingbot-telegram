@@ -9,7 +9,7 @@ from PIL import Image
 
 from services.card_detection import CardImageCandidate
 from services.openai_ocr import OpenAIOCRBatchResult, OpenAIOCRRegion, OpenAIOCRRequestError, OpenAIOCRSchemaError
-from services.ocr import extract_text_from_image
+from services.ocr import _select_best_identifier, extract_text_from_image
 
 
 class OCRPipelineTests(unittest.TestCase):
@@ -83,8 +83,9 @@ class OCRPipelineTests(unittest.TestCase):
              patch('services.ocr._write_debug_artifacts', return_value=None):
             result = extract_text_from_image(image_path, game='pokemon')
 
-        self.assertEqual(result.provider, 'tesseract')
-        self.assertTrue(result.used_fallback)
+        self.assertEqual(result.provider, 'openai_gpt4o_mini')
+        self.assertFalse(result.used_fallback)
+        self.assertEqual(result.debug_error, 'schema')
         self.assertTrue(any('Hosted OCR failed before text could be extracted' in warning for warning in result.warnings))
 
     def test_openai_timeout_returns_openai_warning(self) -> None:
@@ -95,11 +96,61 @@ class OCRPipelineTests(unittest.TestCase):
              patch('services.ocr._write_debug_artifacts', return_value=None):
             result = extract_text_from_image(image_path, game='pokemon')
 
-        self.assertEqual(result.provider, 'tesseract')
+        self.assertEqual(result.provider, 'openai_gpt4o_mini')
         self.assertEqual(result.source, 'raw_photo')
-        self.assertTrue(result.used_fallback)
+        self.assertFalse(result.used_fallback)
+        self.assertEqual(result.debug_error, 'request')
         self.assertTrue(any('Hosted OCR failed before text could be extracted' in warning for warning in result.warnings))
 
+
+    def test_openai_partial_payload_is_tolerated(self) -> None:
+        image_path = self._image_file()
+        partial_result = OpenAIOCRBatchResult(
+            regions=[],
+            best_guess=OpenAIOCRRegion(
+                label='',
+                identifier_text='',
+                ratio_text='',
+                set_code='',
+                name_en='',
+                name_jp='',
+                raw_text='',
+            ),
+            warnings=[],
+        )
+        payload = {
+            'regions': [
+                {
+                    'label': 'raw_photo',
+                    'name_en': 'Nidoking',
+                    'raw_text': 'Nidoking 11/102',
+                    'ratio_text':  '11/102',
+                    'extra_field': 'ignored',
+                }
+            ],
+            'best_guess': {
+                'label': 'raw_photo',
+                'name_en': 'Nidoking',
+                'raw_text': 'Nidoking 11/102',
+            },
+            'warnings': [None, 'visible text found'],
+            'extra_top_level': True,
+        }
+        with patch('services.ocr.get_ocr_provider_name', return_value='openai_gpt4o_mini'), \
+             patch('services.ocr.extract_card_text_from_regions', return_value=__import__('services.openai_ocr', fromlist=['_validate_ocr_payload'])._validate_ocr_payload(payload)), \
+             patch('services.ocr._known_set_codes', return_value={'BS'}), \
+             patch('services.ocr._write_debug_artifacts', return_value=None):
+            result = extract_text_from_image(image_path, game='pokemon')
+
+        self.assertEqual(result.provider, 'openai_gpt4o_mini')
+        self.assertFalse(result.used_fallback)
+        self.assertIn('NAME_EN: Nidoking', result.text)
+
+    def test_identifier_selection_prefers_longer_ratio_when_scores_tie(self) -> None:
+        identifier, score = _select_best_identifier(['3/182', '233/182'], game='pokemon')
+
+        self.assertEqual(identifier, '233/182')
+        self.assertGreater(score, 0)
 
 if __name__ == '__main__':
     unittest.main()

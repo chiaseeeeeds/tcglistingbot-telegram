@@ -240,4 +240,9 @@
 - DONE: admin Telegram debug now includes a sanitized first OCR warning line (`ocr_warn`) for faster live QA when OpenAI returns no usable text
 - DONE: listing and auction OCR progress text no longer claims an automatic fallback that the raw-photo OpenAI path does not currently perform
 - DONE: OpenAI OCR now sends compressed JPEG data URLs and retries one transient hosted request to reduce raw-photo request failures
+- DONE: admin Telegram OCR debug now exposes a compact `ocr_err` reason for OpenAI request/schema failures while keeping the primary path OpenAI-only
+- DONE: auction photo-batch finalization now logs start/end timing just like listing finalization for easier flow-by-flow comparison
+- DONE: matcher now blocks modern-card title text from inferring legacy Pokémon set codes like `TR`/`AQ` when the printed ratio already looks modern
+- DONE: resolver now cross-checks structured OCR ratios against the rendered `IDENTIFIER:` text and prefers the more specific explicit ratio, preventing live `233/182` OCR from degrading into `3/182`
+- TODO: live-retest the exact `233/182 Team Rocket's Nidoking ex` photo in both `/list` and `/auction` and confirm debug now reports `print=233/182`
 - TODO: run live JP Telegram OCR tests and continue hardening set detection / candidate ranking for real Japanese photos

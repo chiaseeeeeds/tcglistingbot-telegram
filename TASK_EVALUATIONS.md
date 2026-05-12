@@ -791,3 +791,38 @@ Use this log after meaningful implementation tasks.
 - follow-up: restart the bot and retest one failing Telegram photo, watching whether `ocr_warn` changes from request failure to weak-text OCR or a normal match result
 - user_response: mixed
 
+
+## 2026-05-12 — OpenAI-Only OCR Diagnostics Pass
+- date: 2026-05-12
+- task: remove the forced local OCR fallback and diagnose hosted OCR failures more directly
+- goal: keep OCR provider behavior aligned with the user's OpenAI-only preference while making listing vs auction failures distinguishable
+- outcome: removed the temporary Tesseract fallback, added admin-only `ocr_err` diagnostics derived from OpenAI request/schema failures, and added timing logs around auction photo-batch finalization
+- validation: `.venv/bin/python -m unittest discover -s tests -v`
+- what went well: the OCR core stays aligned with the product direction, and future failures should now tell us whether the problem is `schema`, `timeout`, `transport`, or an HTTP status family
+- what was weak: we still need a live `/auction` repro after this build to confirm whether the issue truly differs from `/list`
+- follow-up: restart the bot, retry the same `/auction` flow, and compare the new `ocr_err` plus auction timing logs against `/list`
+- user_response: frustrated
+
+
+## 2026-05-12 — Legacy Alias Collision Hardening
+- date: 2026-05-12
+- task: stop modern cards from being pulled into old-set matches by title text
+- goal: prevent names like `Team Rocket ...` or `Team Aqua ...` from being treated as old Pokémon set codes when the printed ratio already identifies a modern card
+- outcome: restricted set-alias inference for modern-looking print ratios and added regressions for Team Rocket + Team Aqua collision cases, including the raw-text fallback path
+- validation: `.venv/bin/python -m unittest discover -s tests -v`
+- what went well: this closes the exact class of bug behind the Nidoking/Blastoise confusion instead of only fixing one sample
+- what was weak: similar alias collisions may still exist in other TCGs or promo/alphanumeric identifier flows that are less covered today
+- follow-up: continue adding collision tests whenever a new real photo reveals a title phrase that can masquerade as a set alias
+- user_response: frustrated
+
+
+## 2026-05-12 — Ratio Reconciliation Resolver Fix
+- date: 2026-05-12
+- task: stop resolver metadata from degrading `233/182` into `3/182`
+- goal: make the matcher trust the strongest explicit identifier signal when structured OCR and rendered OCR text disagree
+- outcome: added resolver-side ratio reconciliation across `printed_ratio`, `identifier`, and the rendered `IDENTIFIER:` block; added OCR tie-breaks that prefer the more specific longer left-side ratio; added regressions for the exact Team Rocket's Nidoking ex failure class
+- validation: `.venv/bin/python -m unittest discover -s tests -p 'test_*.py'`
+- what went well: this fixes the user-reported failure at the resolver boundary instead of assuming a better OCR model is the answer
+- what was weak: we still need a live Telegram retest to confirm the running bot now emits `print=233/182` on the real sample photo
+- follow-up: restart the bot and retry the exact `/list` and `/auction` seller photo that previously produced `print=3/182`
+- user_response: frustrated

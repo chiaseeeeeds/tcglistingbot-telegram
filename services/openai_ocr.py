@@ -185,8 +185,23 @@ def _extract_output_text(payload: dict[str, Any]) -> str:
     return ''
 
 
+def _normalize_openai_string(value: Any) -> str:
+    if value is None:
+        return ''
+    if isinstance(value, (int, float)):
+        return str(value)
+    if isinstance(value, str):
+        return ' '.join(value.split())
+    if isinstance(value, list):
+        parts = [str(item).strip() for item in value if str(item).strip()]
+        return ' '.join(parts)
+    return ''
+
+
 def _validate_region(raw_region: dict[str, Any]) -> OpenAIOCRRegion:
-    expected_keys = {
+    if not isinstance(raw_region, dict):
+        raise OpenAIOCRSchemaError('OpenAI OCR region must be an object.')
+    expected_keys = (
         'label',
         'identifier_text',
         'ratio_text',
@@ -194,34 +209,26 @@ def _validate_region(raw_region: dict[str, Any]) -> OpenAIOCRRegion:
         'name_en',
         'name_jp',
         'raw_text',
-    }
-    if set(raw_region.keys()) != expected_keys:
-        raise OpenAIOCRSchemaError('OpenAI OCR region schema mismatch.')
-    values: dict[str, str] = {}
-    for key in expected_keys:
-        value = raw_region.get(key, '')
-        if not isinstance(value, str):
-            raise OpenAIOCRSchemaError(f'OpenAI OCR field {key!r} must be a string.')
-        values[key] = ' '.join(value.split())
+    )
+    values = {key: _normalize_openai_string(raw_region.get(key, '')) for key in expected_keys}
     return OpenAIOCRRegion(**values)
 
 
 def _validate_ocr_payload(payload: dict[str, Any]) -> OpenAIOCRBatchResult:
-    if set(payload.keys()) != {'regions', 'best_guess', 'warnings'}:
-        raise OpenAIOCRSchemaError('OpenAI OCR payload schema mismatch.')
-    raw_regions = payload.get('regions')
-    raw_best_guess = payload.get('best_guess')
-    raw_warnings = payload.get('warnings')
-    if not isinstance(raw_regions, list) or not isinstance(raw_best_guess, dict) or not isinstance(raw_warnings, list):
-        raise OpenAIOCRSchemaError('OpenAI OCR payload contains invalid field types.')
+    if not isinstance(payload, dict):
+        raise OpenAIOCRSchemaError('OpenAI OCR payload must be an object.')
+    raw_regions = payload.get('regions', [])
+    raw_best_guess = payload.get('best_guess', {})
+    raw_warnings = payload.get('warnings', [])
+    if not isinstance(raw_regions, list):
+        raw_regions = []
+    if not isinstance(raw_best_guess, dict):
+        raw_best_guess = {}
+    if not isinstance(raw_warnings, list):
+        raw_warnings = []
     regions = [_validate_region(item) for item in raw_regions if isinstance(item, dict)]
-    if len(regions) != len(raw_regions):
-        raise OpenAIOCRSchemaError('OpenAI OCR payload contains non-object regions.')
-    warnings: list[str] = []
-    for warning in raw_warnings:
-        if not isinstance(warning, str):
-            raise OpenAIOCRSchemaError('OpenAI OCR warnings must be strings.')
-        warnings.append(' '.join(warning.split()))
+    warnings = [_normalize_openai_string(warning) for warning in raw_warnings]
+    warnings = [warning for warning in warnings if warning]
     return OpenAIOCRBatchResult(
         regions=regions,
         best_guess=_validate_region(raw_best_guess),
@@ -339,10 +346,99 @@ def _request_structured_output(
     try:
         parsed = json.loads(output_text)
     except json.JSONDecodeError as exc:
+        logger.warning('OpenAI OCR output was not valid JSON: %s', output_text[:300])
         raise OpenAIOCRSchemaError('OpenAI OCR structured output was not valid JSON.') from exc
     if not isinstance(parsed, dict):
         raise OpenAIOCRSchemaError('OpenAI OCR structured output must be a JSON object.')
     return parsed
+
+
+def _request_plain_text_output(
+    *,
+    prompt: str,
+    regions: list[tuple[str, Image.Image]],
+    max_output_tokens: int,
+    timeout_seconds: float | None = None,
+) -> str:
+    config = get_config()
+    payload = {
+        'model': config.openai_ocr_model,
+        'input': [
+            {
+                'role': 'user',
+                'content': _build_content(prompt=prompt, regions=regions),
+            }
+        ],
+        'max_output_tokens': max_output_tokens,
+    }
+    headers = {
+        'Authorization': f'Bearer {config.openai_api_key}',
+        'Content-Type': 'application/json',
+    }
+    request_timeout = float(timeout_seconds or config.openai_ocr_timeout_seconds)
+    with httpx.Client(timeout=httpx.Timeout(request_timeout)) as client:
+        response = client.post(_RESPONSES_API_URL, headers=headers, json=payload)
+        response.raise_for_status()
+    response_payload = response.json()
+    output_text = _extract_output_text(response_payload)
+    if not output_text:
+        raise OpenAIOCRSchemaError('OpenAI OCR plain-text fallback returned no text.')
+    return output_text
+
+
+def _parse_plain_text_ocr_output(output_text: str) -> OpenAIOCRBatchResult:
+    values = {
+        'label': 'raw_photo',
+        'identifier_text': '',
+        'ratio_text': '',
+        'set_code': '',
+        'name_en': '',
+        'name_jp': '',
+        'raw_text': '',
+    }
+    warnings: list[str] = []
+    current_key = ''
+    key_map = {
+        'LABEL': 'label',
+        'IDENTIFIER_TEXT': 'identifier_text',
+        'RATIO_TEXT': 'ratio_text',
+        'SET_CODE': 'set_code',
+        'NAME_EN': 'name_en',
+        'NAME_JP': 'name_jp',
+        'RAW_TEXT': 'raw_text',
+        'WARNING': 'warning',
+        'WARNINGS': 'warning',
+    }
+    for raw_line in output_text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if ':' in line:
+            raw_key, raw_value = line.split(':', 1)
+            normalized_key = key_map.get(raw_key.strip().upper())
+            if normalized_key == 'warning':
+                warning = _normalize_openai_string(raw_value)
+                if warning:
+                    warnings.append(warning)
+                current_key = 'warning'
+                continue
+            if normalized_key:
+                values[normalized_key] = _normalize_openai_string(raw_value)
+                current_key = normalized_key
+                continue
+        if current_key == 'warning':
+            warning = _normalize_openai_string(line)
+            if warning:
+                warnings.append(warning)
+        elif current_key in values:
+            continuation = _normalize_openai_string(line)
+            if continuation:
+                values[current_key] = f"{values[current_key]} {continuation}".strip()
+        else:
+            values['raw_text'] = f"{values['raw_text']} {line}".strip()
+
+    region = OpenAIOCRRegion(**values)
+    return OpenAIOCRBatchResult(regions=[region], best_guess=region, warnings=warnings)
 
 
 def extract_card_text_from_regions(
@@ -358,15 +454,30 @@ def extract_card_text_from_regions(
         'and raw visible text. When uncertain, keep the uncertain field short but do not hallucinate extra details. '
         'The best_guess object should contain the single most useful combined guess from the image.'
     )
-    payload = _request_structured_output(
-        prompt=prompt,
-        schema_name='tcg_card_ocr_batch',
-        schema=OCR_RESPONSE_SCHEMA,
-        regions=regions,
-        max_output_tokens=220,
-        timeout_seconds=min(float(get_config().openai_ocr_timeout_seconds), 12.0),
-    )
-    return _validate_ocr_payload(payload)
+    timeout_seconds = min(float(get_config().openai_ocr_timeout_seconds), 12.0)
+    try:
+        payload = _request_structured_output(
+            prompt=prompt,
+            schema_name='tcg_card_ocr_batch',
+            schema=OCR_RESPONSE_SCHEMA,
+            regions=regions,
+            max_output_tokens=220,
+            timeout_seconds=timeout_seconds,
+        )
+        return _validate_ocr_payload(payload)
+    except OpenAIOCRSchemaError:
+        fallback_prompt = (
+            'Extract visible printed trading-card text from the provided card image and reply in plain text only. '
+            'Use exactly these keys, one per line: LABEL, IDENTIFIER_TEXT, RATIO_TEXT, SET_CODE, NAME_EN, NAME_JP, RAW_TEXT. '
+            'Add WARNING lines only if needed. Leave unknown fields blank. Do not return JSON or markdown.'
+        )
+        output_text = _request_plain_text_output(
+            prompt=fallback_prompt,
+            regions=regions,
+            max_output_tokens=180,
+            timeout_seconds=timeout_seconds,
+        )
+        return _parse_plain_text_ocr_output(output_text)
 
 
 def detect_game_from_regions(

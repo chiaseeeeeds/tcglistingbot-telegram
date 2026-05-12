@@ -198,6 +198,7 @@ def _admin_debug_line(*, update: Update | None, identification, candidate_option
     requested_provider = str(getattr(ocr_result, 'requested_provider', 'unknown') or 'unknown')
     used_fallback = bool(getattr(ocr_result, 'used_fallback', False))
     latency_ms = int(getattr(ocr_result, 'latency_ms', 0) or 0)
+    ocr_debug_error = str(getattr(ocr_result, 'debug_error', '') or '')
     ocr_warning = ''
     if ocr_result is not None:
         warnings = list(getattr(ocr_result, 'warnings', []) or [])
@@ -214,6 +215,7 @@ def _admin_debug_line(*, update: Update | None, identification, candidate_option
         f"fallback=<code>{used_fallback}</code> "
         f"latency=<code>{latency_ms}ms</code>\n"
         + (f"ocr_warn=<code>{escape(ocr_warning[:72])}</code>\n" if ocr_warning else '')
+        + (f"ocr_err=<code>{escape(ocr_debug_error[:32])}</code>\n" if ocr_debug_error else '')
         + f"matched=<code>{identification.matched}</code> "
         f"conf=<code>{identification.confidence:.2f}</code> "
         f"catalog=<code>{escape(catalog_size[:12])}</code>\n"
