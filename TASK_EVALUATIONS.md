@@ -881,3 +881,8 @@ Use this log after meaningful implementation tasks.
 - what was weak: reserve prices and per-auction payment deadlines are still not first-class backend features yet
 - follow-up: decide whether to add reserve-price enforcement and per-auction payment-deadline overrides as new listing fields plus RPC logic
 - user_response: wants the full auction flow thought through without hand-holding
+
+## 2026-05-12 — Auction Flow Completion Pass
+- added first-class reserve price and per-auction payment window support end to end
+- fixed forced seller auction ending so `end now` no longer depends on the due-time worker path
+- added reserve-not-met close handling with safer messaging and tests

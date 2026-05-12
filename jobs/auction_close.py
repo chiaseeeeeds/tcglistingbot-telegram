@@ -101,6 +101,50 @@ async def _notify_auction_closed_without_bids(
     except Exception as exc:
         logger.info('Could not DM seller %s about bidless auction close: %s', seller.get('telegram_id'), exc)
 
+async def _notify_auction_reserve_not_met(
+    *,
+    application: Application,
+    listing: dict,
+    highest_bid_claim: dict | None,
+    seller: dict | None,
+) -> None:
+    reserve_text = f'SGD {float(listing.get("reserve_price_sgd") or 0):.2f}'
+    top_bid_text = f'SGD {float((highest_bid_claim or {}).get("bid_amount_sgd") or listing.get("current_bid_sgd") or listing.get("starting_bid_sgd") or 0):.2f}'
+
+    if highest_bid_claim and highest_bid_claim.get('buyer_telegram_id'):
+        try:
+            await application.bot.send_message(
+                chat_id=int(highest_bid_claim['buyer_telegram_id']),
+                text=(
+                    '<b>Auction ended without a winner.</b>\n\n'
+                    f'Item: <code>{listing.get("card_name")}</code>\n'
+                    f'Your top bid: <code>{top_bid_text}</code>\n'
+                    f'Reserve: <code>{reserve_text}</code>\n\n'
+                    'The seller reserve was not met.'
+                ),
+                parse_mode='HTML',
+            )
+        except Exception as exc:
+            logger.info('Could not DM highest bidder %s about reserve-not-met auction: %s', highest_bid_claim.get('buyer_telegram_id'), exc)
+
+    if seller is None:
+        return
+    try:
+        await application.bot.send_message(
+            chat_id=int(seller['telegram_id']),
+            text=(
+                '<b>Auction ended without a winner.</b>\n\n'
+                f'Item: <code>{listing.get("card_name")}</code>\n'
+                f'Highest bid: <code>{top_bid_text}</code>\n'
+                f'Reserve: <code>{reserve_text}</code>\n'
+                'The Telegram post has been updated to show that the reserve was not met.'
+            ),
+            parse_mode='HTML',
+        )
+    except Exception as exc:
+        logger.info('Could not DM seller %s about reserve-not-met auction: %s', seller.get('telegram_id'), exc)
+
+
 
 async def refresh_auction_listing_messages(application: Application) -> None:
     """Refresh visible auction listing messages as time-left buckets change."""

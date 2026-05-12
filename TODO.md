@@ -253,3 +253,5 @@
 - DONE: `/auction` now asks for explicit seller-defined rules and supports exact local end date/time input in addition to quick duration presets
 - DONE: `/auction` now captures anti-snipe minutes explicitly instead of silently relying on the schema default
 - TODO: if we want per-auction payment-deadline overrides or reserve-price enforcement, add first-class listing fields + RPC support rather than faking those settings in chat-only text
+- validate and apply `migrations/012_auction_reserve_and_payment_deadline.sql` in Supabase before next production deploy
+- consider optional seller choice for public vs private reserve display if auction UX needs it

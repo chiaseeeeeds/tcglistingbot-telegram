@@ -506,3 +506,181 @@ httpx.ReadError: [Errno 35] Resource temporarily unavailable
 2026-05-12 19:22:22,576 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:23:22 +08)" (scheduled at 2026-05-12 19:22:22.574225+08:00)
 2026-05-12 19:22:23,147 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:23:22 +08)" executed successfully
 2026-05-12 19:22:23,148 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:23:22 +08)" executed successfully
+2026-05-12 19:23:22,574 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:24:22 +08)" (scheduled at 2026-05-12 19:23:22.573620+08:00)
+2026-05-12 19:23:22,577 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:24:22 +08)" (scheduled at 2026-05-12 19:23:22.574225+08:00)
+2026-05-12 19:23:23,179 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:24:22 +08)" executed successfully
+2026-05-12 19:23:23,179 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:24:22 +08)" executed successfully
+2026-05-12 19:24:05,069 INFO telegram.ext.Application Application is stopping. This might take a moment.
+2026-05-12 19:24:05,069 INFO apscheduler.scheduler Scheduler has been shut down
+2026-05-12 19:24:05,080 INFO telegram.ext.Application Application.stop() complete
+2026-05-12 19:24:05,083 INFO apscheduler.scheduler Scheduler has been shut down
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+ImportError: cannot import name '_notify_auction_reserve_not_met' from 'jobs.auction_close' (/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py)
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+ImportError: cannot import name '_notify_auction_reserve_not_met' from 'jobs.auction_close' (/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py)
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+ImportError: cannot import name '_notify_auction_reserve_not_met' from 'jobs.auction_close' (/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py)
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+ImportError: cannot import name '_notify_auction_reserve_not_met' from 'jobs.auction_close' (/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py)
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+ImportError: cannot import name '_notify_auction_reserve_not_met' from 'jobs.auction_close' (/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py)
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+ImportError: cannot import name '_notify_auction_reserve_not_met' from 'jobs.auction_close' (/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py)
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+ImportError: cannot import name '_notify_auction_reserve_not_met' from 'jobs.auction_close' (/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py)
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+ImportError: cannot import name '_notify_auction_reserve_not_met' from 'jobs.auction_close' (/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py)
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+ImportError: cannot import name '_notify_auction_reserve_not_met' from 'jobs.auction_close' (/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py)
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+ImportError: cannot import name '_notify_auction_reserve_not_met' from 'jobs.auction_close' (/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py)
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+ImportError: cannot import name '_notify_auction_reserve_not_met' from 'jobs.auction_close' (/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py)
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+ImportError: cannot import name '_notify_auction_reserve_not_met' from 'jobs.auction_close' (/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py)
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+ImportError: cannot import name '_notify_auction_reserve_not_met' from 'jobs.auction_close' (/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py)
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+ImportError: cannot import name '_notify_auction_reserve_not_met' from 'jobs.auction_close' (/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py)
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+ImportError: cannot import name '_notify_auction_reserve_not_met' from 'jobs.auction_close' (/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py)
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py", line 119
+    '<b>Auction ended without a winner.</b>
+                                           ^
+SyntaxError: EOL while scanning string literal
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py", line 119
+    '<b>Auction ended without a winner.</b>
+                                           ^
+SyntaxError: EOL while scanning string literal
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py", line 146
+    'The Telegram post has been updated to show that the reserve was not met.'
+IndentationError: unexpected indent
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py", line 146
+    'The Telegram post has been updated to show that the reserve was not met.'
+IndentationError: unexpected indent
+Traceback (most recent call last):
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/main.py", line 20, in <module>
+    from handlers.seller_tools import register_seller_tool_handlers
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/handlers/seller_tools.py", line 36, in <module>
+    from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
+  File "/Users/chiawei/orchids-projects/telegram-bot-api/jobs/auction_close.py", line 146
+    'The Telegram post has been updated to show that the reserve was not met.'
+IndentationError: unexpected indent
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py:851: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/auctions.py:991: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+2026-05-12 19:26:09,711 INFO __main__ Starting bot process.
+2026-05-12 19:26:11,745 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 19:26:11,746 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 19:26:11,746 INFO apscheduler.scheduler Added job "run_payment_deadline_cycle" to job store "default"
+2026-05-12 19:26:11,746 INFO apscheduler.scheduler Added job "refresh_auction_listing_messages" to job store "default"
+2026-05-12 19:26:11,746 INFO apscheduler.scheduler Scheduler started
+2026-05-12 19:26:11,917 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-05-12 19:26:12,089 INFO apscheduler.scheduler Scheduler started
+2026-05-12 19:26:12,089 INFO telegram.ext.Application Application started
+2026-05-12 19:26:30,733 INFO telegram.ext.Application Application is stopping. This might take a moment.
+2026-05-12 19:26:30,733 INFO apscheduler.scheduler Scheduler has been shut down
+2026-05-12 19:26:30,744 INFO telegram.ext.Application Application.stop() complete
+2026-05-12 19:26:30,747 INFO apscheduler.scheduler Scheduler has been shut down
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/listing.py:851: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+/Users/chiawei/orchids-projects/telegram-bot-api/handlers/auctions.py:991: PTBUserWarning: If 'per_message=False', 'CallbackQueryHandler' will not be tracked for every message. Read this FAQ entry to learn more about the per_* settings: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Frequently-Asked-Questions#what-do-the-per_-settings-in-conversationhandler-do.
+  conversation = ConversationHandler(
+2026-05-12 19:26:31,623 INFO __main__ Starting bot process.
+2026-05-12 19:26:32,632 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 19:26:32,632 INFO apscheduler.scheduler Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-12 19:26:32,633 INFO apscheduler.scheduler Added job "run_payment_deadline_cycle" to job store "default"
+2026-05-12 19:26:32,633 INFO apscheduler.scheduler Added job "refresh_auction_listing_messages" to job store "default"
+2026-05-12 19:26:32,633 INFO apscheduler.scheduler Scheduler started
+2026-05-12 19:26:32,801 INFO __main__ Bot ready as @TCGlistingbot (8703476740) in polling mode.
+2026-05-12 19:26:32,969 INFO apscheduler.scheduler Scheduler started
+2026-05-12 19:26:32,969 INFO telegram.ext.Application Application started
+2026-05-12 19:27:32,634 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:28:32 +08)" (scheduled at 2026-05-12 19:27:32.632367+08:00)
+2026-05-12 19:27:32,634 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:28:32 +08)" (scheduled at 2026-05-12 19:27:32.632833+08:00)
+2026-05-12 19:27:33,472 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:28:32 +08)" executed successfully
+2026-05-12 19:27:33,472 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:28:32 +08)" executed successfully
+2026-05-12 19:28:32,634 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:29:32 +08)" (scheduled at 2026-05-12 19:28:32.632367+08:00)
+2026-05-12 19:28:32,635 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:29:32 +08)" (scheduled at 2026-05-12 19:28:32.632833+08:00)
+2026-05-12 19:28:32,752 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:29:32 +08)" executed successfully
+2026-05-12 19:28:32,753 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:29:32 +08)" executed successfully

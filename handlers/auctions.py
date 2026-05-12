@@ -789,9 +789,7 @@ async def capture_auction_payment_deadline(update: Update, context: ContextTypes
 
     context.user_data['auction_payment_deadline_hours'] = deadline_hours
     await update.effective_message.reply_text(
-        'Enter the auction rules/terms, or reply with <code>skip</code>.
-
-Examples: <code>Payment in 24h, no bid retractions, highest bid wins</code>.',
+        'Enter the auction rules/terms, or reply with <code>skip</code>.\n\nExamples: <code>Payment in 24h, no bid retractions, highest bid wins</code>.',
         parse_mode='HTML',
         reply_markup=None,
     )
