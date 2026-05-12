@@ -133,6 +133,8 @@ def format_auction_listing(
     current_bid_sgd: float | None,
     bid_increment_sgd: float | None = None,
     anti_snipe_minutes: int | None = None,
+    reserve_price_sgd: float | None = None,
+    payment_deadline_hours: int | None = None,
     condition_notes: str,
     custom_description: str,
     seller_display_name: str,
@@ -155,15 +157,20 @@ def format_auction_listing(
         f'🏁 Starting bid: <b>SGD {starting_bid_sgd:.2f}</b>',
         f'📈 Min increment: <b>SGD {bid_increment_sgd:.2f}</b>' if bid_increment_sgd is not None else '📈 Min increment: <b>Ask seller</b>',
         f'🛡️ Anti-snipe: <b>{anti_snipe_minutes}m extension</b>' if anti_snipe_minutes and anti_snipe_minutes > 0 else '🛡️ Anti-snipe: <b>Off</b>',
+        f'🎯 Reserve: <b>SGD {reserve_price_sgd:.2f}</b>' if reserve_price_sgd is not None else '🎯 Reserve: <b>None</b>',
+        f'⏰ Payment window: <b>{payment_deadline_hours}h</b>' if payment_deadline_hours is not None else None,
         f'🗓️ Ends: <b>{html.escape(end_absolute)}</b>',
         f'⏳ Time left: <b>{html.escape(time_left)}</b>',
         f'✅ Seller: <b>{safe_seller}</b>',
         f'📝 Condition: {safe_condition}',
     ]
+    lines = [line for line in lines if line is not None]
     if safe_description:
         lines.append(f'📜 Rules: {safe_description}')
     lines.append('')
-    if status == 'auction_closed':
+    if status == 'auction_reserve_not_met':
+        lines.append('Auction ended. Reserve was not met.')
+    elif status == 'auction_closed':
         lines.append('Auction has ended.')
     else:
         lines.append('Reply with your bid amount like <b>12</b> or <b>12.50</b> to bid.')

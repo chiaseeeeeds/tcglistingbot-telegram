@@ -232,8 +232,8 @@ async def record_auction_bid_atomic(
     raise RuntimeError('Auction bid RPC returned no payload.')
 
 
-async def close_auction_atomic(*, listing_id: str, payment_deadline_hours: int) -> dict[str, Any]:
-    """Close a due auction atomically and promote the highest bidder when present."""
+async def close_auction_atomic(*, listing_id: str, payment_deadline_hours: int, force: bool = False) -> dict[str, Any]:
+    """Close an auction atomically and promote the highest bidder when present."""
 
     payment_deadline = datetime.now(timezone.utc) + timedelta(hours=payment_deadline_hours)
     data = await call_rpc(
@@ -241,6 +241,7 @@ async def close_auction_atomic(*, listing_id: str, payment_deadline_hours: int) 
         {
             'p_listing_id': listing_id,
             'p_payment_deadline': payment_deadline.isoformat(),
+            'p_force': force,
         },
     )
     if isinstance(data, list):

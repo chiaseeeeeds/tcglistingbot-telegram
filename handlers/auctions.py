@@ -43,12 +43,13 @@ from services.listing_image_classifier import classify_listing_images
 from services.ocr import OCRNotConfiguredError
 from services.price_lookup import PriceReference, lookup_price_references
 from services.set_symbol_matcher import rerank_candidate_options_by_symbol
+from utils.auction_settings import resolve_listing_payment_deadline_hours
 from utils.formatters import format_auction_listing
 from utils.photo_quality import format_quality_summary
 
 logger = logging.getLogger(__name__)
 
-PHOTO, TITLE, STARTING_BID, BID_INCREMENT, DURATION, ANTI_SNIPE, RULES, NOTES, CONFIRM = range(9)
+PHOTO, TITLE, STARTING_BID, BID_INCREMENT, DURATION, ANTI_SNIPE, RESERVE, PAYMENT_DEADLINE, RULES, NOTES, CONFIRM = range(11)
 
 
 AUCTION_DURATION_OPTIONS_HOURS = (6, 12, 24, 48)
@@ -102,6 +103,8 @@ def _clear_auction_state(context: ContextTypes.DEFAULT_TYPE) -> None:
         'auction_duration_hours',
         'auction_end_time',
         'auction_anti_snipe_minutes',
+        'auction_reserve_price_sgd',
+        'auction_payment_deadline_hours',
         'auction_rules',
         'auction_notes',
         'auction_selected_price_source',
@@ -158,6 +161,8 @@ def _auction_preview(
     bid_increment_sgd: float,
     auction_end_time: str,
     anti_snipe_minutes: int,
+    reserve_price_sgd: float | None,
+    payment_deadline_hours: int,
     rules: str,
     notes: str,
     price_refs: list[PriceReference],
@@ -166,6 +171,7 @@ def _auction_preview(
 ) -> str:
     rules_text = rules if rules else 'No special auction rules'
     notes_text = notes if notes else 'No extra notes'
+    reserve_text = f'SGD {reserve_price_sgd:.2f}' if reserve_price_sgd is not None else 'No reserve'
     price_lines = []
     if price_refs:
         for reference in price_refs:
@@ -188,8 +194,10 @@ def _auction_preview(
         f'Title: <code>{title}</code>\n'
         f'Starting bid: <code>SGD {starting_bid_sgd:.2f}</code>\n'
         f'Bid increment: <code>SGD {bid_increment_sgd:.2f}</code>\n'
+        f'Reserve: <code>{reserve_text}</code>\n'
         f'Ends: <code>{end_text}</code>\n'
         f'Anti-snipe: <code>{anti_snipe_minutes}m</code>\n'
+        f'Winner payment window: <code>{payment_deadline_hours}h</code>\n'
         f'Photos: <code>{image_count}</code>\n'
         f'Front/back: <code>{"yes" if has_back else "front only"}</code>\n'
         f'Rules: <code>{rules_text}</code>\n'
@@ -679,6 +687,34 @@ async def _store_auction_end_time(*, end_time: str, duration_hours: float, updat
     return ANTI_SNIPE
 
 
+def _default_auction_payment_deadline_hours(*, seller_config: dict[str, object] | None) -> int:
+    return resolve_listing_payment_deadline_hours(
+        listing={'listing_type': 'auction'},
+        seller_config=seller_config,
+        default_hours=get_config().default_payment_deadline_hours,
+    )
+
+
+def _parse_optional_auction_reserve_input(value: str, *, starting_bid_sgd: float) -> float | None:
+    text = value.strip()
+    if not text or text.lower() == 'skip':
+        return None
+    reserve_price_sgd = float(text)
+    if reserve_price_sgd < starting_bid_sgd:
+        raise ValueError('reserve_below_starting_bid')
+    return reserve_price_sgd
+
+
+def _parse_optional_auction_payment_deadline_input(value: str) -> int | None:
+    text = value.strip().lower()
+    if not text or text == 'skip':
+        return None
+    hours = int(float(text))
+    if hours < 1 or hours > 168:
+        raise ValueError('deadline_out_of_range')
+    return hours
+
+
 async def capture_auction_anti_snipe(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.effective_message is None or update.effective_message.text is None:
         return ANTI_SNIPE
@@ -700,7 +736,62 @@ async def capture_auction_anti_snipe(update: Update, context: ContextTypes.DEFAU
 
     context.user_data['auction_anti_snipe_minutes'] = minutes
     await update.effective_message.reply_text(
-        'Enter the auction rules/terms, or reply with <code>skip</code>.\n\nExamples: <code>Payment in 24h, no bid retractions, highest bid wins</code>.',
+        'Enter the reserve price in SGD, or reply with <code>skip</code> for no reserve. The reserve must be at least the starting bid.',
+        parse_mode='HTML',
+        reply_markup=None,
+    )
+    return RESERVE
+
+
+async def capture_auction_reserve(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.effective_message is None or update.effective_message.text is None:
+        return RESERVE
+
+    try:
+        reserve_price_sgd = _parse_optional_auction_reserve_input(
+            update.effective_message.text,
+            starting_bid_sgd=float(context.user_data['auction_starting_bid_sgd']),
+        )
+    except ValueError:
+        await update.effective_message.reply_text(
+            'Enter a reserve at or above the starting bid, or reply with <code>skip</code> for no reserve.',
+            parse_mode='HTML',
+        )
+        return RESERVE
+
+    context.user_data['auction_reserve_price_sgd'] = reserve_price_sgd
+    default_deadline_hours = _default_auction_payment_deadline_hours(
+        seller_config=context.user_data.get('auction_seller_config'),
+    )
+    await update.effective_message.reply_text(
+        f'Enter the winner payment window in hours, or reply with <code>skip</code> to use the seller default <code>{default_deadline_hours}h</code>. Allowed range: <code>1</code> to <code>168</code>.',
+        parse_mode='HTML',
+        reply_markup=None,
+    )
+    return PAYMENT_DEADLINE
+
+
+async def capture_auction_payment_deadline(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if update.effective_message is None or update.effective_message.text is None:
+        return PAYMENT_DEADLINE
+
+    try:
+        deadline_hours = _parse_optional_auction_payment_deadline_input(update.effective_message.text)
+    except ValueError:
+        default_deadline_hours = _default_auction_payment_deadline_hours(
+            seller_config=context.user_data.get('auction_seller_config'),
+        )
+        await update.effective_message.reply_text(
+            f'Enter winner payment hours between <code>1</code> and <code>168</code>, or reply with <code>skip</code> to use <code>{default_deadline_hours}h</code>.',
+            parse_mode='HTML',
+        )
+        return PAYMENT_DEADLINE
+
+    context.user_data['auction_payment_deadline_hours'] = deadline_hours
+    await update.effective_message.reply_text(
+        'Enter the auction rules/terms, or reply with <code>skip</code>.
+
+Examples: <code>Payment in 24h, no bid retractions, highest bid wins</code>.',
         parse_mode='HTML',
         reply_markup=None,
     )
@@ -729,6 +820,15 @@ async def capture_auction_notes(update: Update, context: ContextTypes.DEFAULT_TY
     text = update.effective_message.text.strip()
     notes = '' if text.lower() == 'skip' else text
     context.user_data['auction_notes'] = notes
+    seller_config = context.user_data.get('auction_seller_config')
+    payment_deadline_hours = resolve_listing_payment_deadline_hours(
+        listing={
+            'listing_type': 'auction',
+            'auction_payment_deadline_hours': context.user_data.get('auction_payment_deadline_hours'),
+        },
+        seller_config=seller_config,
+        default_hours=get_config().default_payment_deadline_hours,
+    )
     await update.effective_message.reply_text(
         _auction_preview(
             game=str(context.user_data['auction_game']),
@@ -737,6 +837,12 @@ async def capture_auction_notes(update: Update, context: ContextTypes.DEFAULT_TY
             bid_increment_sgd=float(context.user_data['auction_bid_increment_sgd']),
             auction_end_time=str(context.user_data['auction_end_time']),
             anti_snipe_minutes=int(context.user_data.get('auction_anti_snipe_minutes') or 2),
+            reserve_price_sgd=(
+                float(context.user_data['auction_reserve_price_sgd'])
+                if context.user_data.get('auction_reserve_price_sgd') is not None
+                else None
+            ),
+            payment_deadline_hours=payment_deadline_hours,
             rules=str(context.user_data.get('auction_rules') or ''),
             notes=notes,
             price_refs=list(context.user_data.get('auction_price_refs') or []),
@@ -766,6 +872,14 @@ async def confirm_auction_listing(update: Update, context: ContextTypes.DEFAULT_
         return CONFIRM
 
     seller_config = context.user_data['auction_seller_config']
+    payment_deadline_hours = resolve_listing_payment_deadline_hours(
+        listing={
+            'listing_type': 'auction',
+            'auction_payment_deadline_hours': context.user_data.get('auction_payment_deadline_hours'),
+        },
+        seller_config=seller_config,
+        default_hours=get_config().default_payment_deadline_hours,
+    )
     listing_text = format_auction_listing(
         card_name=str(context.user_data['auction_title']),
         game=str(context.user_data['auction_game']),
@@ -773,6 +887,12 @@ async def confirm_auction_listing(update: Update, context: ContextTypes.DEFAULT_
         current_bid_sgd=None,
         bid_increment_sgd=float(context.user_data['auction_bid_increment_sgd']),
         anti_snipe_minutes=int(context.user_data.get('auction_anti_snipe_minutes') or 2),
+        reserve_price_sgd=(
+            float(context.user_data['auction_reserve_price_sgd'])
+            if context.user_data.get('auction_reserve_price_sgd') is not None
+            else None
+        ),
+        payment_deadline_hours=payment_deadline_hours,
         condition_notes=str(context.user_data['auction_notes']),
         custom_description=str(context.user_data.get('auction_rules') or ''),
         seller_display_name=seller_config.get('seller_display_name') or 'Seller',
@@ -838,6 +958,16 @@ async def confirm_auction_listing(update: Update, context: ContextTypes.DEFAULT_
         bid_increment_sgd=float(context.user_data['auction_bid_increment_sgd']),
         auction_end_time=str(context.user_data['auction_end_time']),
         anti_snipe_minutes=int(context.user_data.get('auction_anti_snipe_minutes') or 2),
+        reserve_price_sgd=(
+            float(context.user_data['auction_reserve_price_sgd'])
+            if context.user_data.get('auction_reserve_price_sgd') is not None
+            else None
+        ),
+        auction_payment_deadline_hours=(
+            int(context.user_data['auction_payment_deadline_hours'])
+            if context.user_data.get('auction_payment_deadline_hours') is not None
+            else None
+        ),
     )
     logger.info('Posted auction listing %s to channel %s.', listing['id'], sent_message.chat.id)
     await update.effective_message.reply_text(
@@ -880,6 +1010,8 @@ def register_auction_handlers(application: Application) -> None:
                 MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_duration),
             ],
             ANTI_SNIPE: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_auction_anti_snipe)],
+            RESERVE: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_auction_reserve)],
+            PAYMENT_DEADLINE: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_auction_payment_deadline)],
             RULES: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_auction_rules)],
             NOTES: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, capture_auction_notes)],
             CONFIRM: [MessageHandler(filters.ChatType.PRIVATE & filters.TEXT & ~filters.COMMAND, confirm_auction_listing)],

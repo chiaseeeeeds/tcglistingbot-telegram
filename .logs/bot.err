@@ -482,3 +482,27 @@ httpx.ReadError: [Errno 35] Resource temporarily unavailable
 2026-05-12 19:16:22,576 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:17:22 +08)" (scheduled at 2026-05-12 19:16:22.574225+08:00)
 2026-05-12 19:16:23,149 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:17:22 +08)" executed successfully
 2026-05-12 19:16:23,149 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:17:22 +08)" executed successfully
+2026-05-12 19:17:22,575 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:18:22 +08)" (scheduled at 2026-05-12 19:17:22.573620+08:00)
+2026-05-12 19:17:22,576 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:18:22 +08)" (scheduled at 2026-05-12 19:17:22.574225+08:00)
+2026-05-12 19:17:23,355 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:18:22 +08)" executed successfully
+2026-05-12 19:17:23,356 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:18:22 +08)" executed successfully
+2026-05-12 19:18:22,575 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:19:22 +08)" (scheduled at 2026-05-12 19:18:22.573620+08:00)
+2026-05-12 19:18:22,576 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:19:22 +08)" (scheduled at 2026-05-12 19:18:22.574225+08:00)
+2026-05-12 19:18:23,205 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:19:22 +08)" executed successfully
+2026-05-12 19:18:23,206 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:19:22 +08)" executed successfully
+2026-05-12 19:19:22,575 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:20:22 +08)" (scheduled at 2026-05-12 19:19:22.573620+08:00)
+2026-05-12 19:19:22,577 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:20:22 +08)" (scheduled at 2026-05-12 19:19:22.574225+08:00)
+2026-05-12 19:19:22,782 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:20:22 +08)" executed successfully
+2026-05-12 19:19:22,783 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:20:22 +08)" executed successfully
+2026-05-12 19:20:22,574 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:21:22 +08)" (scheduled at 2026-05-12 19:20:22.573620+08:00)
+2026-05-12 19:20:22,577 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:21:22 +08)" (scheduled at 2026-05-12 19:20:22.574225+08:00)
+2026-05-12 19:20:23,125 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:21:22 +08)" executed successfully
+2026-05-12 19:20:23,126 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:21:22 +08)" executed successfully
+2026-05-12 19:21:22,575 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:22:22 +08)" (scheduled at 2026-05-12 19:21:22.573620+08:00)
+2026-05-12 19:21:22,576 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:22:22 +08)" (scheduled at 2026-05-12 19:21:22.574225+08:00)
+2026-05-12 19:21:22,692 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:22:22 +08)" executed successfully
+2026-05-12 19:21:22,693 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:22:22 +08)" executed successfully
+2026-05-12 19:22:22,574 INFO apscheduler.executors.default Running job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:23:22 +08)" (scheduled at 2026-05-12 19:22:22.573620+08:00)
+2026-05-12 19:22:22,576 INFO apscheduler.executors.default Running job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:23:22 +08)" (scheduled at 2026-05-12 19:22:22.574225+08:00)
+2026-05-12 19:22:23,147 INFO apscheduler.executors.default Job "refresh_auction_listing_messages (trigger: interval[0:01:00], next run at: 2026-05-12 19:23:22 +08)" executed successfully
+2026-05-12 19:22:23,148 INFO apscheduler.executors.default Job "run_payment_deadline_cycle (trigger: interval[0:01:00], next run at: 2026-05-12 19:23:22 +08)" executed successfully

@@ -30,6 +30,8 @@ def create_listing(
     bid_increment_sgd: float | None = None,
     auction_end_time: str | None = None,
     anti_snipe_minutes: int | None = None,
+    reserve_price_sgd: float | None = None,
+    auction_payment_deadline_hours: int | None = None,
 ) -> dict[str, Any]:
     """Insert a posted listing row and return the created record."""
 
@@ -55,6 +57,8 @@ def create_listing(
         'bid_increment_sgd': round(bid_increment_sgd, 2) if bid_increment_sgd is not None else None,
         'auction_end_time': auction_end_time,
         'anti_snipe_minutes': int(anti_snipe_minutes) if anti_snipe_minutes is not None else None,
+        'reserve_price_sgd': round(reserve_price_sgd, 2) if reserve_price_sgd is not None else None,
+        'auction_payment_deadline_hours': int(auction_payment_deadline_hours) if auction_payment_deadline_hours is not None else None,
     }
     response = get_client().table('listings').insert(payload).execute()
     listing = extract_single(response)

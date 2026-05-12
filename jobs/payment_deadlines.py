@@ -16,6 +16,7 @@ from db.payment_proofs import set_submitted_payment_proofs_status_for_claim
 from db.seller_configs import get_seller_config_by_seller_id
 from db.sellers import get_seller_by_id
 from services.payment_requests import build_buyer_payment_message, ensure_payment_request_for_claim, paynow_text
+from utils.auction_settings import resolve_listing_payment_deadline_hours
 
 logger = logging.getLogger(__name__)
 PAYMENT_DEADLINE_JOB_ID = 'payment-deadline-worker'
@@ -147,8 +148,10 @@ async def run_payment_deadline_cycle(application: Application) -> None:
 
         seller = await asyncio.to_thread(get_seller_by_id, str(listing['seller_id']))
         seller_config = await asyncio.to_thread(get_seller_config_by_seller_id, str(listing['seller_id']))
-        payment_deadline_hours = int(
-            (seller_config or {}).get('payment_deadline_hours') or config.default_payment_deadline_hours
+        payment_deadline_hours = resolve_listing_payment_deadline_hours(
+            listing=listing,
+            seller_config=seller_config,
+            default_hours=config.default_payment_deadline_hours,
         )
 
         try:

@@ -38,6 +38,7 @@ from handlers.claims import _resolve_listing_from_reply
 from handlers.transactions import complete_sale_for_listing
 from services.image_storage import upload_payment_proof_photo
 from services.payment_requests import build_buyer_payment_message, ensure_payment_request_for_claim
+from utils.auction_settings import resolve_listing_payment_deadline_hours
 
 logger = logging.getLogger(__name__)
 _PAYMENT_REFERENCE_RE = re.compile(r'(TCG-[A-Z0-9]{8})', re.IGNORECASE)
@@ -98,7 +99,11 @@ async def _execute_claim_withdrawal(
 ) -> None:
     seller = await asyncio.to_thread(get_seller_by_id, str(listing['seller_id']))
     seller_config = await asyncio.to_thread(get_seller_config_by_seller_id, str(listing['seller_id']))
-    payment_deadline_hours = int((seller_config or {}).get('payment_deadline_hours') or get_config().default_payment_deadline_hours)
+    payment_deadline_hours = resolve_listing_payment_deadline_hours(
+        listing=listing,
+        seller_config=seller_config,
+        default_hours=get_config().default_payment_deadline_hours,
+    )
 
     try:
         result = await withdraw_claim_atomic(
@@ -393,7 +398,11 @@ async def pay_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 listing=listing,
                 claim=selected_claim,
                 seller_config=seller_config,
-                deadline_hours=int((seller_config or {}).get('payment_deadline_hours') or 24),
+                deadline_hours=resolve_listing_payment_deadline_hours(
+                    listing=listing,
+                    seller_config=seller_config,
+                    default_hours=get_config().default_payment_deadline_hours,
+                ),
                 intro='Payment selected.',
             ),
             parse_mode='HTML',
@@ -479,7 +488,11 @@ async def payment_select_callback(update: Update, context: ContextTypes.DEFAULT_
             listing=listing,
             claim=claim,
             seller_config=seller_config,
-            deadline_hours=int((seller_config or {}).get('payment_deadline_hours') or 24),
+            deadline_hours=resolve_listing_payment_deadline_hours(
+                listing=listing,
+                seller_config=seller_config,
+                default_hours=get_config().default_payment_deadline_hours,
+            ),
             intro='Payment selected.',
         ),
         parse_mode='HTML',
@@ -573,7 +586,11 @@ async def claim_withdraw_confirm_callback(update: Update, context: ContextTypes.
 
     seller = await asyncio.to_thread(get_seller_by_id, str(listing['seller_id']))
     seller_config = await asyncio.to_thread(get_seller_config_by_seller_id, str(listing['seller_id']))
-    payment_deadline_hours = int((seller_config or {}).get('payment_deadline_hours') or get_config().default_payment_deadline_hours)
+    payment_deadline_hours = resolve_listing_payment_deadline_hours(
+        listing=listing,
+        seller_config=seller_config,
+        default_hours=get_config().default_payment_deadline_hours,
+    )
 
     try:
         result = await withdraw_claim_atomic(

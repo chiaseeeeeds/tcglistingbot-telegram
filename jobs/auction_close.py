@@ -20,6 +20,7 @@ from services.payment_requests import (
     build_buyer_payment_message,
     ensure_payment_request_for_claim,
 )
+from utils.auction_settings import resolve_listing_payment_deadline_hours
 from utils.formatters import auction_refresh_marker, format_auction_listing
 
 logger = logging.getLogger(__name__)
@@ -124,8 +125,10 @@ async def refresh_auction_listing_messages(application: Application) -> None:
             if not first_seen:
                 continue
 
-            deadline_hours = int(
-                (seller_config or {}).get('payment_deadline_hours') or config.default_payment_deadline_hours
+            deadline_hours = resolve_listing_payment_deadline_hours(
+                listing=listing,
+                seller_config=seller_config,
+                default_hours=config.default_payment_deadline_hours,
             )
             result = await close_auction_atomic(
                 listing_id=str(listing['id']),
@@ -148,6 +151,14 @@ async def refresh_auction_listing_messages(application: Application) -> None:
                     ),
                     anti_snipe_minutes=(
                         int(latest_listing.get('anti_snipe_minutes')) if latest_listing.get('anti_snipe_minutes') is not None else None
+                    ),
+                    reserve_price_sgd=(
+                        float(latest_listing.get('reserve_price_sgd')) if latest_listing.get('reserve_price_sgd') is not None else None
+                    ),
+                    payment_deadline_hours=resolve_listing_payment_deadline_hours(
+                        listing=latest_listing,
+                        seller_config=seller_config,
+                        default_hours=config.default_payment_deadline_hours,
                     ),
                     condition_notes=str(latest_listing.get('condition_notes') or ''),
                     custom_description=str(latest_listing.get('custom_description') or ''),
@@ -181,6 +192,14 @@ async def refresh_auction_listing_messages(application: Application) -> None:
                     anti_snipe_minutes=(
                         int(latest_listing.get('anti_snipe_minutes')) if latest_listing.get('anti_snipe_minutes') is not None else None
                     ),
+                    reserve_price_sgd=(
+                        float(latest_listing.get('reserve_price_sgd')) if latest_listing.get('reserve_price_sgd') is not None else None
+                    ),
+                    payment_deadline_hours=resolve_listing_payment_deadline_hours(
+                        listing=latest_listing,
+                        seller_config=seller_config,
+                        default_hours=config.default_payment_deadline_hours,
+                    ),
                     condition_notes=str(latest_listing.get('condition_notes') or ''),
                     custom_description=str(latest_listing.get('custom_description') or ''),
                     seller_display_name=(seller_config or {}).get('seller_display_name') or 'Seller',
@@ -194,6 +213,45 @@ async def refresh_auction_listing_messages(application: Application) -> None:
                     seller=seller,
                 )
                 logger.info('Closed auction listing %s without bids.', latest_listing.get('id'))
+                continue
+
+            if action == 'reserve_not_met':
+                highest_bid_claim = result.get('highest_bid_claim') or {}
+                text = format_auction_listing(
+                    card_name=str(latest_listing.get('card_name') or 'Card'),
+                    game=str(latest_listing.get('game') or 'pokemon'),
+                    starting_bid_sgd=float(latest_listing.get('starting_bid_sgd') or 0),
+                    current_bid_sgd=(
+                        float(latest_listing.get('current_bid_sgd')) if latest_listing.get('current_bid_sgd') is not None else None
+                    ),
+                    bid_increment_sgd=(
+                        float(latest_listing.get('bid_increment_sgd')) if latest_listing.get('bid_increment_sgd') is not None else None
+                    ),
+                    anti_snipe_minutes=(
+                        int(latest_listing.get('anti_snipe_minutes')) if latest_listing.get('anti_snipe_minutes') is not None else None
+                    ),
+                    reserve_price_sgd=(
+                        float(latest_listing.get('reserve_price_sgd')) if latest_listing.get('reserve_price_sgd') is not None else None
+                    ),
+                    payment_deadline_hours=resolve_listing_payment_deadline_hours(
+                        listing=latest_listing,
+                        seller_config=seller_config,
+                        default_hours=config.default_payment_deadline_hours,
+                    ),
+                    condition_notes=str(latest_listing.get('condition_notes') or ''),
+                    custom_description=str(latest_listing.get('custom_description') or ''),
+                    seller_display_name=(seller_config or {}).get('seller_display_name') or 'Seller',
+                    auction_end_time=latest_listing.get('auction_end_time'),
+                    status='auction_reserve_not_met',
+                )
+                await edit_listing_messages(application=application, listing=latest_listing, text=text)
+                await _notify_auction_reserve_not_met(
+                    application=application,
+                    listing=latest_listing,
+                    highest_bid_claim=highest_bid_claim,
+                    seller=seller,
+                )
+                logger.info('Closed auction listing %s without winner because reserve was not met.', latest_listing.get('id'))
                 continue
 
             logger.info(
@@ -219,6 +277,12 @@ async def refresh_auction_listing_messages(application: Application) -> None:
             current_bid_sgd=(float(listing.get('current_bid_sgd')) if listing.get('current_bid_sgd') is not None else None),
             bid_increment_sgd=(float(listing.get('bid_increment_sgd')) if listing.get('bid_increment_sgd') is not None else None),
             anti_snipe_minutes=(int(listing.get('anti_snipe_minutes')) if listing.get('anti_snipe_minutes') is not None else None),
+            reserve_price_sgd=(float(listing.get('reserve_price_sgd')) if listing.get('reserve_price_sgd') is not None else None),
+            payment_deadline_hours=resolve_listing_payment_deadline_hours(
+                listing=listing,
+                seller_config=seller_config,
+                default_hours=config.default_payment_deadline_hours,
+            ),
             condition_notes=str(listing.get('condition_notes') or ''),
             custom_description=str(listing.get('custom_description') or ''),
             seller_display_name=(seller_config or {}).get('seller_display_name') or 'Seller',

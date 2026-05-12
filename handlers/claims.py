@@ -26,6 +26,7 @@ from services.payment_requests import (
     build_seller_claim_notice,
     ensure_payment_request_for_claim,
 )
+from utils.auction_settings import resolve_listing_payment_deadline_hours
 from utils.formatters import format_auction_listing
 
 logger = logging.getLogger(__name__)
@@ -333,6 +334,14 @@ async def _handle_auction_bid_comment(
         anti_snipe_minutes=(
             int(latest_listing.get('anti_snipe_minutes')) if latest_listing.get('anti_snipe_minutes') is not None else None
         ),
+        reserve_price_sgd=(
+            float(latest_listing.get('reserve_price_sgd')) if latest_listing.get('reserve_price_sgd') is not None else None
+        ),
+        payment_deadline_hours=resolve_listing_payment_deadline_hours(
+            listing=latest_listing,
+            seller_config=seller_config,
+            default_hours=get_config().default_payment_deadline_hours,
+        ),
         condition_notes=str(latest_listing.get('condition_notes') or ''),
         custom_description=str(latest_listing.get('custom_description') or ''),
         seller_display_name=(seller_config or {}).get('seller_display_name') or 'Seller',
@@ -475,7 +484,11 @@ async def _handle_fixed_claim_comment(
         return
 
     config = get_config()
-    deadline_hours = int((seller_config or {}).get('payment_deadline_hours') or config.default_payment_deadline_hours)
+    deadline_hours = resolve_listing_payment_deadline_hours(
+        listing=listing,
+        seller_config=seller_config,
+        default_hours=config.default_payment_deadline_hours,
+    )
 
     try:
         claim = await claim_listing_atomic(

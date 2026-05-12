@@ -10,6 +10,8 @@ from typing import Any
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
 
+from config import get_config
+
 from db.blacklist import (
     count_blacklist_entries,
     list_blacklist_entries,
@@ -31,8 +33,9 @@ from db.sellers import get_seller_by_telegram_id, set_vacation_mode
 from db.transactions import get_transactions_for_seller
 from handlers.transactions import complete_sale_for_listing
 from db.claims import close_auction_atomic
-from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids
+from jobs.auction_close import _notify_auction_award, _notify_auction_closed_without_bids, _notify_auction_reserve_not_met
 from services.listing_message_editor import edit_listing_messages
+from utils.auction_settings import resolve_listing_payment_deadline_hours
 from utils.formatters import format_auction_listing
 
 PAGE_SIZE = 5
@@ -712,6 +715,12 @@ async def seller_dashboard_callback(update: Update, context: ContextTypes.DEFAUL
             current_bid_sgd=(float(latest_listing.get('current_bid_sgd')) if latest_listing.get('current_bid_sgd') is not None else None),
             bid_increment_sgd=(float(latest_listing.get('bid_increment_sgd')) if latest_listing.get('bid_increment_sgd') is not None else None),
             anti_snipe_minutes=(int(latest_listing.get('anti_snipe_minutes')) if latest_listing.get('anti_snipe_minutes') is not None else None),
+            reserve_price_sgd=(float(latest_listing.get('reserve_price_sgd')) if latest_listing.get('reserve_price_sgd') is not None else None),
+            payment_deadline_hours=resolve_listing_payment_deadline_hours(
+                listing=latest_listing,
+                seller_config=seller_config,
+                default_hours=get_config().default_payment_deadline_hours,
+            ),
             condition_notes=str(latest_listing.get('condition_notes') or ''),
             custom_description=str(latest_listing.get('custom_description') or ''),
             seller_display_name=(seller_config or {}).get('seller_display_name') or 'Seller',
@@ -757,8 +766,12 @@ async def seller_dashboard_callback(update: Update, context: ContextTypes.DEFAUL
             await _render_dashboard_message(update, text='Live auction not found for this seller.', reply_markup=_back_home_keyboard())
             return
         seller_config = await asyncio.to_thread(get_seller_config_by_seller_id, str(seller['id']))
-        payment_deadline_hours = int((seller_config or {}).get('payment_deadline_hours') or 24)
-        result = await close_auction_atomic(listing_id=listing_id, payment_deadline_hours=payment_deadline_hours)
+        payment_deadline_hours = resolve_listing_payment_deadline_hours(
+            listing=listing,
+            seller_config=seller_config,
+            default_hours=get_config().default_payment_deadline_hours,
+        )
+        result = await close_auction_atomic(listing_id=listing_id, payment_deadline_hours=payment_deadline_hours, force=True)
         action_result = str(result.get('action') or 'noop')
         latest_listing = result.get('listing') or listing
         if action_result == 'awarded':
@@ -770,6 +783,12 @@ async def seller_dashboard_callback(update: Update, context: ContextTypes.DEFAUL
                 current_bid_sgd=(float(latest_listing.get('current_bid_sgd')) if latest_listing.get('current_bid_sgd') is not None else None),
                 bid_increment_sgd=(float(latest_listing.get('bid_increment_sgd')) if latest_listing.get('bid_increment_sgd') is not None else None),
                 anti_snipe_minutes=(int(latest_listing.get('anti_snipe_minutes')) if latest_listing.get('anti_snipe_minutes') is not None else None),
+                reserve_price_sgd=(float(latest_listing.get('reserve_price_sgd')) if latest_listing.get('reserve_price_sgd') is not None else None),
+                payment_deadline_hours=resolve_listing_payment_deadline_hours(
+                    listing=latest_listing,
+                    seller_config=seller_config,
+                    default_hours=get_config().default_payment_deadline_hours,
+                ),
                 condition_notes=str(latest_listing.get('condition_notes') or ''),
                 custom_description=str(latest_listing.get('custom_description') or ''),
                 seller_display_name=(seller_config or {}).get('seller_display_name') or 'Seller',
@@ -798,6 +817,12 @@ async def seller_dashboard_callback(update: Update, context: ContextTypes.DEFAUL
                 current_bid_sgd=(float(latest_listing.get('current_bid_sgd')) if latest_listing.get('current_bid_sgd') is not None else None),
                 bid_increment_sgd=(float(latest_listing.get('bid_increment_sgd')) if latest_listing.get('bid_increment_sgd') is not None else None),
                 anti_snipe_minutes=(int(latest_listing.get('anti_snipe_minutes')) if latest_listing.get('anti_snipe_minutes') is not None else None),
+                reserve_price_sgd=(float(latest_listing.get('reserve_price_sgd')) if latest_listing.get('reserve_price_sgd') is not None else None),
+                payment_deadline_hours=resolve_listing_payment_deadline_hours(
+                    listing=latest_listing,
+                    seller_config=seller_config,
+                    default_hours=get_config().default_payment_deadline_hours,
+                ),
                 condition_notes=str(latest_listing.get('condition_notes') or ''),
                 custom_description=str(latest_listing.get('custom_description') or ''),
                 seller_display_name=(seller_config or {}).get('seller_display_name') or 'Seller',
@@ -807,6 +832,35 @@ async def seller_dashboard_callback(update: Update, context: ContextTypes.DEFAUL
             await edit_listing_messages(application=context.application, listing=latest_listing, text=text)
             await _notify_auction_closed_without_bids(application=context.application, listing=latest_listing, seller=seller)
             summary = '✅ <b>Auction ended with no bids.</b>'
+        elif action_result == 'reserve_not_met':
+            highest_bid_claim = result.get('highest_bid_claim') or {}
+            text = format_auction_listing(
+                card_name=str(latest_listing.get('card_name') or 'Card'),
+                game=str(latest_listing.get('game') or 'pokemon'),
+                starting_bid_sgd=float(latest_listing.get('starting_bid_sgd') or 0),
+                current_bid_sgd=(float(latest_listing.get('current_bid_sgd')) if latest_listing.get('current_bid_sgd') is not None else None),
+                bid_increment_sgd=(float(latest_listing.get('bid_increment_sgd')) if latest_listing.get('bid_increment_sgd') is not None else None),
+                anti_snipe_minutes=(int(latest_listing.get('anti_snipe_minutes')) if latest_listing.get('anti_snipe_minutes') is not None else None),
+                reserve_price_sgd=(float(latest_listing.get('reserve_price_sgd')) if latest_listing.get('reserve_price_sgd') is not None else None),
+                payment_deadline_hours=resolve_listing_payment_deadline_hours(
+                    listing=latest_listing,
+                    seller_config=seller_config,
+                    default_hours=get_config().default_payment_deadline_hours,
+                ),
+                condition_notes=str(latest_listing.get('condition_notes') or ''),
+                custom_description=str(latest_listing.get('custom_description') or ''),
+                seller_display_name=(seller_config or {}).get('seller_display_name') or 'Seller',
+                auction_end_time=latest_listing.get('auction_end_time'),
+                status='auction_reserve_not_met',
+            )
+            await edit_listing_messages(application=context.application, listing=latest_listing, text=text)
+            await _notify_auction_reserve_not_met(
+                application=context.application,
+                listing=latest_listing,
+                highest_bid_claim=highest_bid_claim,
+                seller=seller,
+            )
+            summary = '✅ <b>Auction ended without a winner because the reserve was not met.</b>'
         else:
             summary = 'This auction was already closed or could not be ended right now.'
         keyboard = InlineKeyboardMarkup(
